@@ -29,12 +29,7 @@ func main() {
 
 			buff := make([]byte, 1024)
 			_, err = conn.Read(buff)
-			_, _ = conn.Write([]byte("+PONG\r\n"))
-
-			switch string(buff)[0:4] {
-			case "redis-cli PING":
-				_, _ = conn.Write([]byte("+PONG\r\n"))
-			}
+			_, _ = conn.Write([]byte("+PONG\r\n+PONG\n"))
 
 			if err != nil {
 				fmt.Println("Error accepting connection: ", err.Error())
