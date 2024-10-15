@@ -29,6 +29,7 @@ func main() {
 
 			buff := make([]byte, 1024)
 			_, err = conn.Read(buff)
+			_, _ = conn.Write([]byte("+PONG\r\n"))
 
 			switch string(buff)[0:4] {
 			case "redis-cli PING":
