@@ -28,6 +28,7 @@ func main() {
 			defer conn.Close()
 
 			buff := make([]byte, 1024)
+
 			_, err = conn.Read(buff)
 			_, _ = conn.Write([]byte("+PONG\r\n+PONG\n"))
 
