@@ -28,32 +28,37 @@ func ParseType(q string) int {
 	}
 }
 
+func TestLen(q string) int {
+	return len(q)
+}
+
 func ParseArray(q string) []string {
-	vs := q[1:]
+	s := q[1:]
 	sli := make([]string, 0)
-	for i := 0; i < len(vs); i++ {
-		if vs[i:i+1] == "$" {
+	for i := 0; i < len(s); i++ {
+		if string(s[i]) == "$" {
 			ni := i + 1
 			nj := i + 2
 
-			if nj > len(vs) {
-				break
-			}
-
-			sl, err := strconv.Atoi(vs[ni:nj])
+			sl, err := strconv.Atoi(s[ni:nj])
 			if sl == 0 || err != nil {
 				break
 			}
 
-			st := nj + 4
+			st := nj + 2
 			fi := st + sl
 
-			if fi > len(vs) {
+			if fi > len(s) {
 				break
 			}
 
-			sli = append(sli, vs[st:fi])
+			sli = append(sli, s[st:fi])
 		}
 	}
+
 	return sli
+}
+
+func ParseNumberValue(q string) string {
+	return ""
 }

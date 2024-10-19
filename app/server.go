@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/repr"
 	"net"
 	"os"
+
+	"github.com/codecrafters-io/redis-starter-go/app/repr"
 )
 
 // Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
@@ -12,26 +13,25 @@ var _ = net.Listen
 var _ = os.Exit
 
 func handleClient(conn net.Conn) {
-	buff := make([]byte, 1024)
+	buff := make([]byte, 2024)
+
 	for {
 		conn.Read(buff)
-
 		s := string(buff)
-		c := repr.ParseArray(s)
 
-		if len(c) < 2 {
-			conn.Write([]byte{})
-		}
+		//query without value type mark
+		v := s[1:]
+		c := repr.ParseArray(v)
 
-		switch c[0] {
+		cmd := c[0]
+		switch cmd {
 		case "ECHO":
-			conn.Write([]byte(fmt.Sprintf(`+%s\r\n`, c[1])))
+			conn.Write([]byte(fmt.Sprintf("+%s\r\n", c[1])))
 		case "PING":
 			conn.Write([]byte("+PONG\r\n"))
-		default:
-			conn.Write([]byte{})
 		}
 	}
+
 }
 
 func main() {
