@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/codecrafters-io/redis-starter-go/app/repr"
 	"net"
 	"os"
 )
@@ -14,7 +15,22 @@ func handleClient(conn net.Conn) {
 	buff := make([]byte, 1024)
 	for {
 		conn.Read(buff)
-		conn.Write([]byte("+PONG\r\n"))
+
+		s := string(buff)
+		c := repr.ParseArray(s)
+
+		if len(c) < 2 {
+			conn.Write([]byte{})
+		}
+
+		switch c[0] {
+		case "ECHO":
+			conn.Write([]byte(fmt.Sprintf(`+%s\r\n`, c[1])))
+		case "PING":
+			conn.Write([]byte("+PONG\r\n"))
+		default:
+			conn.Write([]byte{})
+		}
 	}
 }
 
