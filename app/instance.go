@@ -23,7 +23,7 @@ func (ri *RedisInstance) ToResponse(input string) string {
 	return fmt.Sprintf("+%s\r\n", input)
 }
 
-func (ri *RedisInstance) handleClient(conn net.Conn) {
+func (ri *RedisInstance) HandleClient(conn net.Conn) {
 	buff := make([]byte, 2024)
 
 	for {

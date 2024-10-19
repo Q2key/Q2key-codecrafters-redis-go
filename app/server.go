@@ -32,6 +32,6 @@ func main() {
 			continue
 		}
 
-		go redis.handleClient(conn)
+		go redis.HandleClient(conn)
 	}
 }
