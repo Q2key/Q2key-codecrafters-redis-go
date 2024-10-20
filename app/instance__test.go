@@ -11,12 +11,12 @@ func TestShouldBeExpired2000(t *testing.T) {
 		Store: map[string]RedisValue{},
 	}
 
-	r.SetExpiring("key", "value", 2000)
+	r.Set("key", "value", 2000)
 
 	time.Sleep(3 * time.Second)
 
 	v := r.Get("key")
-	if !r.IsExpired(v) {
+	if !v.IsExpired() {
 		t.Fail()
 	}
 
@@ -29,12 +29,12 @@ func TestShouldBeExpired100(t *testing.T) {
 		Store: map[string]RedisValue{},
 	}
 
-	r.SetExpiring("key", "value", 100)
+	r.Set("key", "value", 100)
 
 	time.Sleep(101 * time.Millisecond)
 
 	v := r.Get("key")
-	if !r.IsExpired(v) {
+	if !v.IsExpired() {
 		t.Fail()
 	}
 
@@ -47,10 +47,10 @@ func TestShouldNotBeExpired1(t *testing.T) {
 		Store: map[string]RedisValue{},
 	}
 
-	r.SetExpiring("key", "value", 0)
+	r.Set("key", "value", 0)
 	v := r.Get("key")
 
-	if r.IsExpired(v) {
+	if v.IsExpired() {
 		t.Fail()
 		return
 	}
@@ -69,12 +69,12 @@ func TestShouldNotBeExpired2(t *testing.T) {
 		Store: map[string]RedisValue{},
 	}
 
-	r.SetExpiring("key", "value", 4000)
+	r.Set("key", "value", 4000)
 	v := r.Get("key")
 
 	time.Sleep(3 * time.Second)
 
-	if r.IsExpired(v) {
+	if v.IsExpired() {
 		t.Fail()
 
 	}
@@ -92,7 +92,7 @@ func TestSetExpiring1000(t *testing.T) {
 		Store: map[string]RedisValue{},
 	}
 
-	r.SetExpiring("key", "value", 1000)
+	r.Set("key", "value", 1000)
 
 	v := r.Get("key")
 
@@ -111,7 +111,7 @@ func TestSetExpiring0(t *testing.T) {
 		Store: map[string]RedisValue{},
 	}
 
-	r.SetExpiring("key", "value", 0)
+	r.Set("key", "value", 0)
 
 	v := r.Get("key")
 	t.Logf("Created: %s\r\n", v.Created.Format(time.RFC3339Nano))

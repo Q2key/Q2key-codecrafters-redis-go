@@ -19,36 +19,30 @@ type RedisValue struct {
 	Created time.Time
 }
 
+func (rv *RedisValue) IsExpired() bool {
+	if rv.Expired.IsZero() {
+		return false
+	}
+
+	now := time.Now()
+
+	diff := rv.Expired.UnixMilli() - now.UnixMilli()
+
+	return diff <= 0
+}
+
 func (ri *RedisInstance) Get(key string) RedisValue {
 	return ri.Store[key]
 }
 
-func (ri *RedisInstance) SetExpiring(key string, value string, expired int64) {
+func (ri *RedisInstance) Set(key string, value string, expired int64) {
 	now := time.Now().UTC()
 	var exp time.Time
 	if expired != 0 {
 		exp = now.Add(time.Duration(expired) * time.Millisecond)
 	}
 
-	//fmt.Printf("\r\nExpired in:[%d]\r\n", expired)
-	//fmt.Printf("\r\nCreated:[%s]\r\n", now.Format(time.RFC3339Nano))
-	//fmt.Printf("\nExpired:[%s]\r\n", exp.Format(time.RFC3339Nano))
-
 	ri.Store[key] = RedisValue{Value: value, Created: now, Expired: exp}
-}
-
-func (ri *RedisInstance) IsExpired(value RedisValue) bool {
-	if value.Expired.IsZero() {
-		return false
-	}
-
-	now := time.Now()
-
-	fmt.Printf("\r\nRequested:[%s]", now.Format(time.RFC3339Nano))
-
-	diff := value.Expired.UnixMilli() - now.UnixMilli()
-
-	return diff <= 0
 }
 
 func (ri *RedisInstance) ToOkString(input string) []byte {
@@ -75,7 +69,7 @@ func (ri *RedisInstance) HandleClient(conn net.Conn) {
 		case "GET":
 			key := c[1]
 			val := ri.Get(key)
-			if ri.IsExpired(val) {
+			if val.IsExpired() {
 				conn.Write(ri.ToErrorString())
 			} else {
 				conn.Write(ri.ToOkString(val.Value))
@@ -88,7 +82,8 @@ func (ri *RedisInstance) HandleClient(conn net.Conn) {
 				exp, _ = strconv.Atoi(c[4])
 			}
 
-			ri.SetExpiring(key, val, int64(exp))
+			ri.Set(key, val, int64(exp))
+
 			conn.Write(ri.ToOkString("OK"))
 		case "ECHO":
 			conn.Write(ri.ToOkString(c[1]))
