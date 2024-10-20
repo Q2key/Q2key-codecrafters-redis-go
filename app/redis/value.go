@@ -8,14 +8,14 @@ type Value struct {
 	Created time.Time
 }
 
-func (rv *Value) IsExpired() bool {
-	if rv.Expired.IsZero() {
+func (r *Value) IsExpired() bool {
+	if r.Expired.IsZero() {
 		return false
 	}
 
 	now := time.Now()
 
-	diff := rv.Expired.UnixMilli() - now.UnixMilli()
+	diff := r.Expired.UnixMilli() - now.UnixMilli()
 
 	return diff <= 0
 }
