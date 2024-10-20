@@ -1,4 +1,4 @@
-package main
+package redis
 
 import (
 	"testing"
@@ -7,8 +7,8 @@ import (
 
 func TestShouldBeExpired2000(t *testing.T) {
 
-	r := RedisInstance{
-		Store: map[string]RedisValue{},
+	r := Store{
+		store: map[string]Value{},
 	}
 
 	r.Set("key", "value", 2000)
@@ -25,8 +25,8 @@ func TestShouldBeExpired2000(t *testing.T) {
 
 func TestShouldBeExpired100(t *testing.T) {
 
-	r := RedisInstance{
-		Store: map[string]RedisValue{},
+	r := Store{
+		store: map[string]Value{},
 	}
 
 	r.Set("key", "value", 100)
@@ -43,8 +43,8 @@ func TestShouldBeExpired100(t *testing.T) {
 
 func TestShouldNotBeExpired1(t *testing.T) {
 
-	r := RedisInstance{
-		Store: map[string]RedisValue{},
+	r := Store{
+		store: map[string]Value{},
 	}
 
 	r.Set("key", "value", 0)
@@ -65,8 +65,8 @@ func TestShouldNotBeExpired1(t *testing.T) {
 
 func TestShouldNotBeExpired2(t *testing.T) {
 
-	r := RedisInstance{
-		Store: map[string]RedisValue{},
+	r := Store{
+		store: map[string]Value{},
 	}
 
 	r.Set("key", "value", 4000)
@@ -88,8 +88,8 @@ func TestShouldNotBeExpired2(t *testing.T) {
 
 func TestSetExpiring1000(t *testing.T) {
 
-	r := RedisInstance{
-		Store: map[string]RedisValue{},
+	r := Store{
+		store: map[string]Value{},
 	}
 
 	r.Set("key", "value", 1000)
@@ -107,8 +107,8 @@ func TestSetExpiring1000(t *testing.T) {
 
 func TestSetExpiring0(t *testing.T) {
 
-	r := RedisInstance{
-		Store: map[string]RedisValue{},
+	r := Store{
+		store: map[string]Value{},
 	}
 
 	r.Set("key", "value", 0)

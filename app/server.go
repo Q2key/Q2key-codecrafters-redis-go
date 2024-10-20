@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/codecrafters-io/redis-starter-go/app/redis"
 	"net"
 	"os"
 )
@@ -24,7 +25,7 @@ func main() {
 
 	defer ln.Close()
 
-	redis := &RedisInstance{Store: map[string]RedisValue{}}
+	srv := redis.NewHandler()
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -32,6 +33,6 @@ func main() {
 			continue
 		}
 
-		go redis.HandleClient(conn)
+		go srv.HandleClient(conn)
 	}
 }
