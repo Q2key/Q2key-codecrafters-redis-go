@@ -58,7 +58,3 @@ func ParseArray(q string) []string {
 
 	return sli
 }
-
-func ParseNumberValue(q string) string {
-	return ""
-}

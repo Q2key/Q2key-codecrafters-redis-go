@@ -24,7 +24,7 @@ func main() {
 
 	defer ln.Close()
 
-	redis := &RedisInstance{Store: map[string]string{}}
+	redis := &RedisInstance{Store: map[string]RedisValue{}}
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
