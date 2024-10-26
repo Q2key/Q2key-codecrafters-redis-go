@@ -6,7 +6,6 @@ import (
 )
 
 func TestSetExpiring1000(t *testing.T) {
-
 	r := Store{
 		store: map[string]Value{},
 	}
@@ -25,7 +24,6 @@ func TestSetExpiring1000(t *testing.T) {
 }
 
 func TestSetExpiring0(t *testing.T) {
-
 	r := Store{
 		store: map[string]Value{},
 	}
@@ -40,5 +38,6 @@ func TestSetExpiring0(t *testing.T) {
 		t.Fail()
 	}
 
+	t.Log("Hello wol}ld!")
 	t.Log("OK!")
 }

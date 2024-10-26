@@ -1,6 +1,7 @@
 package repr
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -15,7 +16,7 @@ const (
 
 func ParseType(q string) int {
 	fb := q[0:1]
-	//error
+	// error
 	switch fb {
 	case "*":
 		return Array
@@ -57,4 +58,26 @@ func ParseArray(q string) []string {
 	}
 
 	return sli
+}
+
+func ToRegularString(input string) []byte {
+	return []byte(fmt.Sprintf("+%s\r\n", input))
+}
+
+func ToStringArray(input []string) []byte {
+	n := len(input)
+	r := fmt.Sprintf("*%d", n)
+	for i := 0; i < n; i++ {
+		s := input[i]
+		r += fmt.Sprintf("\r\n$%d\r\n%s", len(s), s)
+	}
+	r += "\r\n"
+	return []byte(r)
+}
+
+func ToErrorString(input *string) []byte {
+	if input != nil {
+		return make([]byte, 0)
+	}
+	return []byte("$-1\r\n")
 }

@@ -25,8 +25,19 @@ func TestParseArray(t *testing.T) {
 		t.Error()
 	}
 
-	str = "*1\r\n$4\r\nPING\r\n"
-	res = ParseArray(str[1:])
+	t.Log("OK")
+}
+
+func TestToStrigArray(t *testing.T) {
+	inp := []string{"dir", "temp"}
+	res := string(ToStringArray(inp))
+	// *<number-of-elements>\r\n<element-1>...<element-n>
+
+	exp := "*2\r\n$3\r\ndir\r\n$4\r\ntemp\r\n"
+	if res != exp {
+		t.Errorf("Got %s", res)
+		t.Fail()
+	}
 
 	t.Log("OK")
 }

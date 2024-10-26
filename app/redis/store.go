@@ -1,16 +1,39 @@
 package redis
 
 import (
-	"fmt"
 	"time"
 )
 
+type Config struct {
+	dir        string
+	dbfilename string
+}
+
+func (r *Config) SetDir(val string) {
+	r.dir = val
+}
+
+func (r *Config) SetDbFilenabe(val string) {
+	r.dbfilename = val
+}
+
 type Store struct {
-	store map[string]Value
+	store  map[string]Value
+	config *Config
 }
 
 func NewRedisStore() Store {
-	return Store{store: map[string]Value{}}
+	return Store{
+		store: map[string]Value{},
+	}
+}
+
+func (r *Store) GetConfig() *Config {
+	return r.config
+}
+
+func (r *Store) SetConfig(config *Config) {
+	r.config = config
 }
 
 func (r *Store) Get(key string) Value {
@@ -25,12 +48,4 @@ func (r *Store) Set(key string, value string, expired int64) {
 	}
 
 	r.store[key] = Value{Value: value, Created: now, Expired: exp}
-}
-
-func (r *Store) ToOkString(input string) []byte {
-	return []byte(fmt.Sprintf("+%s\r\n", input))
-}
-
-func (r *Store) ToErrorString() []byte {
-	return []byte("$-1\r\n")
 }

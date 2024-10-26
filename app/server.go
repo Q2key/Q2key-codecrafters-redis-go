@@ -2,20 +2,23 @@ package main
 
 import (
 	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/redis"
 	"net"
 	"os"
+
+	"github.com/codecrafters-io/redis-starter-go/app/redis"
 )
 
 // Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
-var _ = net.Listen
-var _ = os.Exit
+var (
+	_ = net.Listen
+	_ = os.Exit
+)
 
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
 
-	//Uncomment this block to pass the first stage
+	// Uncomment this block to pass the first stage
 
 	ln, err := net.Listen("tcp", "0.0.0.0:6379")
 	if err != nil {
@@ -25,7 +28,28 @@ func main() {
 
 	defer ln.Close()
 
+	args := os.Args
+	cfg := &redis.Config{}
+	if len(args) > 1 {
+		for i := 1; i < len(args); i++ {
+			a := args[i]
+			if i+1 == len(args) {
+				break
+			}
+
+			v := args[i+1]
+			if a == "--dir" {
+				cfg.SetDir(v)
+			}
+
+			if a == "--dbfilename" {
+				cfg.SetDbFilenabe(v)
+			}
+		}
+	}
+
 	srv := redis.NewHandler()
+	srv.Store.SetConfig(cfg)
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
