@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/redis"
 	"log"
 	"net"
 
 	"github.com/codecrafters-io/redis-starter-go/app/commands"
+	"github.com/codecrafters-io/redis-starter-go/app/redis"
 	"github.com/codecrafters-io/redis-starter-go/app/repr"
 )
 
