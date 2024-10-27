@@ -17,6 +17,14 @@ func (r *Config) SetDbFilenabe(val string) {
 	r.dbfilename = val
 }
 
+func (r *Config) GetDir() string {
+	return r.dir
+}
+
+func (r *Config) GetDbFileName() string {
+	return r.dbfilename
+}
+
 type Store struct {
 	store  map[string]Value
 	config *Config

@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/codecrafters-io/redis-starter-go/app/repr"
+	"github.com/codecrafters-io/redis-starter-go/handlers"
+	"log"
 	"net"
 	"os"
 
@@ -48,8 +51,15 @@ func main() {
 		}
 	}
 
-	srv := redis.NewHandler()
-	srv.Store.SetConfig(cfg)
+	store := redis.NewRedisStore()
+
+	configHandler := handlers.NewConfigHandler(&store)
+	getHandler := handlers.NewGetHandler(&store)
+	setHandler := handlers.NewSetHandler(&store)
+	pingHandler := handlers.NewPingHandler(&store)
+	echoHandler := handlers.NewEchoHandler(&store)
+	keysHandler := handlers.NewKeysHandler(&store)
+
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -57,6 +67,31 @@ func main() {
 			continue
 		}
 
-		go srv.HandleClient(conn)
+		go func() {
+			buff := make([]byte, 2024)
+			for {
+				conn.Read(buff)
+				// query without value type mark
+				err, cmd := repr.ParseCommand(string(buff))
+				if err != nil {
+					log.Fatal("redis command error:", err)
+				}
+
+				switch (*cmd).Name() {
+				case "CONFIG":
+					configHandler.Handler(&conn, *cmd)
+				case "GET":
+					getHandler.Handler(&conn, *cmd)
+				case "SET":
+					setHandler.Handler(&conn, *cmd)
+				case "ECHO":
+					echoHandler.Handler(&conn, *cmd)
+				case "PING":
+					pingHandler.Handler(&conn, *cmd)
+				case "KEYS":
+					keysHandler.Handler(&conn, *cmd)
+				}
+			}
+		}()
 	}
 }

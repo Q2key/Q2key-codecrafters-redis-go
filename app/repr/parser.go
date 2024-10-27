@@ -1,7 +1,9 @@
 package repr
 
 import (
+	"errors"
 	"fmt"
+	"github.com/codecrafters-io/redis-starter-go/app/commands"
 	"strconv"
 )
 
@@ -29,10 +31,6 @@ func ParseType(q string) int {
 	}
 }
 
-func TestLen(q string) int {
-	return len(q)
-}
-
 func ParseArray(q string) []string {
 	s := q[1:]
 	sli := make([]string, 0)
@@ -58,6 +56,32 @@ func ParseArray(q string) []string {
 	}
 
 	return sli
+}
+
+func ParseCommand(raw string) (error, *commands.Command[string]) {
+	inp := ParseArray(raw)
+	switch inp[0] {
+	case "GET":
+		cmd := new(commands.Get).FromArgs(inp)
+		return nil, &cmd
+	case "SET":
+		cmd := new(commands.Set).FromArgs(inp)
+		return nil, &cmd
+	case "CONFIG":
+		cmd := new(commands.Config).FromArgs(inp)
+		return nil, &cmd
+	case "ECHO":
+		cmd := new(commands.Echo).FromArgs(inp)
+		return nil, &cmd
+	case "PING":
+		cmd := new(commands.Ping).FromArgs(inp)
+		return nil, &cmd
+	case "KEYS":
+		cmd := new(commands.Keys).FromArgs(inp)
+		return nil, &cmd
+	default:
+		return errors.New(fmt.Sprintf("Unknown command: %s", inp[0])), nil
+	}
 }
 
 func ToRegularString(input string) []byte {
