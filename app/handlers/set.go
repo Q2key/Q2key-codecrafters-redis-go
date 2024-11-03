@@ -1,26 +1,25 @@
 package handlers
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/app/command"
+	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/repr"
 	"log"
 	"net"
 	"strconv"
-
-	"github.com/codecrafters-io/redis-starter-go/app/commands"
-	"github.com/codecrafters-io/redis-starter-go/app/redis"
 )
 
-func NewSetHandler(store *redis.Store) *SetHandler {
+func NewSetHandler(store *core.Instance) *SetHandler {
 	return &SetHandler{
 		store: *store,
 	}
 }
 
 type SetHandler struct {
-	store redis.Store
+	store core.Instance
 }
 
-func (h *SetHandler) Handler(conn *net.Conn, c commands.Command[string]) {
+func (h *SetHandler) Handler(conn *net.Conn, c command.Command[string]) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
@@ -38,5 +37,5 @@ func (h *SetHandler) Handler(conn *net.Conn, c commands.Command[string]) {
 	}
 
 	h.store.Set(key, val, int64(exp))
-	(*conn).Write(repr.ToRegularString("OK"))
+	(*conn).Write([]byte(repr.FromString("OK")))
 }

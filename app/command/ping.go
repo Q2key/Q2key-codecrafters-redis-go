@@ -1,4 +1,4 @@
-package commands
+package command
 
 type Ping struct {
 	args []string

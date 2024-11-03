@@ -1,4 +1,4 @@
-package redis
+package core
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 )
 
 func TestSetExpiring1000(t *testing.T) {
-	r := Store{
+	r := Instance{
 		store: map[string]Value{},
 	}
 
@@ -24,7 +24,7 @@ func TestSetExpiring1000(t *testing.T) {
 }
 
 func TestSetExpiring0(t *testing.T) {
-	r := Store{
+	r := Instance{
 		store: map[string]Value{},
 	}
 

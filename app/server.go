@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/repr"
-	"github.com/codecrafters-io/redis-starter-go/handlers"
+	"github.com/codecrafters-io/redis-starter-go/app/command"
+	"github.com/codecrafters-io/redis-starter-go/app/core"
+	"github.com/codecrafters-io/redis-starter-go/app/handlers"
 	"log"
 	"net"
 	"os"
-
-	"github.com/codecrafters-io/redis-starter-go/app/redis"
 )
 
 // Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
@@ -31,34 +30,14 @@ func main() {
 
 	defer ln.Close()
 
-	args := os.Args
-	cfg := &redis.Config{}
-	if len(args) > 1 {
-		for i := 1; i < len(args); i++ {
-			a := args[i]
-			if i+1 == len(args) {
-				break
-			}
+	s := core.NewRedisInstance().WithArgs(os.Args)
 
-			v := args[i+1]
-			if a == "--dir" {
-				cfg.SetDir(v)
-			}
-
-			if a == "--dbfilename" {
-				cfg.SetDbFilenabe(v)
-			}
-		}
-	}
-
-	store := redis.NewRedisStore()
-
-	configHandler := handlers.NewConfigHandler(&store)
-	getHandler := handlers.NewGetHandler(&store)
-	setHandler := handlers.NewSetHandler(&store)
-	pingHandler := handlers.NewPingHandler(&store)
-	echoHandler := handlers.NewEchoHandler(&store)
-	keysHandler := handlers.NewKeysHandler(&store)
+	configHandler := handlers.NewConfigHandler(s)
+	getHandler := handlers.NewGetHandler(s)
+	setHandler := handlers.NewSetHandler(s)
+	pingHandler := handlers.NewPingHandler(s)
+	echoHandler := handlers.NewEchoHandler(s)
+	keysHandler := handlers.NewKeysHandler(s)
 
 	for {
 		conn, err := ln.Accept()
@@ -72,7 +51,7 @@ func main() {
 			for {
 				conn.Read(buff)
 				// query without value type mark
-				err, cmd := repr.ParseCommand(string(buff))
+				err, cmd := command.ParseCommand(string(buff))
 				if err != nil {
 					log.Fatal("redis command error:", err)
 				}

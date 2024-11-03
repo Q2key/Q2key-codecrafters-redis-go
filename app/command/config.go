@@ -1,4 +1,4 @@
-package commands
+package command
 
 type Config struct {
 	args []string

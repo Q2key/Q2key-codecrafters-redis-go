@@ -1,4 +1,4 @@
-package redis
+package core
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 )
 
 func TestGetSetValue(t *testing.T) {
-	s := NewRedisStore()
+	s := NewRedisInstance()
 
 	s.Set("Key0", "Value0", 0)
 	s.Set("Key1", "Value1", 0)
@@ -29,7 +29,7 @@ func TestGetSetValue(t *testing.T) {
 
 func TestShouldBeExpired2000(t *testing.T) {
 
-	r := Store{
+	r := Instance{
 		store: map[string]Value{},
 	}
 
@@ -47,7 +47,7 @@ func TestShouldBeExpired2000(t *testing.T) {
 
 func TestShouldBeExpired100(t *testing.T) {
 
-	r := Store{
+	r := Instance{
 		store: map[string]Value{},
 	}
 
@@ -65,7 +65,7 @@ func TestShouldBeExpired100(t *testing.T) {
 
 func TestShouldBeExpired101(t *testing.T) {
 
-	r := Store{
+	r := Instance{
 		store: map[string]Value{},
 	}
 
@@ -83,7 +83,7 @@ func TestShouldBeExpired101(t *testing.T) {
 
 func TestShouldNotBeExpired0(t *testing.T) {
 
-	r := Store{
+	r := Instance{
 		store: map[string]Value{},
 	}
 
@@ -92,7 +92,6 @@ func TestShouldNotBeExpired0(t *testing.T) {
 
 	if v.IsExpired() {
 		t.Fail()
-		return
 	}
 
 	if v.Value != "value" {
@@ -105,7 +104,7 @@ func TestShouldNotBeExpired0(t *testing.T) {
 
 func TestShouldNotBeExpired4000(t *testing.T) {
 
-	r := Store{
+	r := Instance{
 		store: map[string]Value{},
 	}
 
@@ -120,6 +119,27 @@ func TestShouldNotBeExpired4000(t *testing.T) {
 	}
 
 	if v.Value != "value" {
+		t.Fail()
+	}
+
+	t.Log("OK!")
+}
+
+func TestReturnCorrectConfig(t *testing.T) {
+	s := &Instance{
+		store: make(map[string]Value),
+		Config: &Config{
+			dir:        "temp",
+			dbfilename: "develop",
+		},
+	}
+
+	s.Config.SetDbFileName("develop")
+	if s.Config.dbfilename != "develop" {
+		t.Fail()
+	}
+
+	if s.Config.dir != "temp" {
 		t.Fail()
 	}
 
