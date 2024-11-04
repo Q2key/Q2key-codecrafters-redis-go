@@ -11,11 +11,7 @@ func (r *Get) FromArgs(c []string) Command[string] {
 }
 
 func (r *Get) Validate() bool {
-	if len(r.args) < 2 {
-		return false
-	}
-
-	return false
+	return true
 }
 
 func (r *Get) Name() string {

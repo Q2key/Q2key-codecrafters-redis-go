@@ -11,7 +11,7 @@ func (r *Ping) FromArgs(args []string) Command[string] {
 }
 
 func (r *Ping) Validate() bool {
-	return len(r.args) < 2
+	return true
 }
 
 func (r *Ping) Name() string {

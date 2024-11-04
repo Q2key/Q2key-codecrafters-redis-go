@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/codecrafters-io/redis-starter-go/app/command"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/repr"
@@ -10,24 +11,26 @@ import (
 
 func NewGetHandler(store *core.Instance) *GetHandler {
 	return &GetHandler{
-		store: *store,
+		store: store,
 	}
 }
 
 type GetHandler struct {
-	store core.Instance
+	store *core.Instance
 }
 
 func (h *GetHandler) Handler(conn *net.Conn, c command.Command[string]) {
+	fmt.Printf("\r\ninvoke get handler %v", c.Args())
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
 
-	key := c.Args()[0]
+	key := c.Args()[1]
 	val := h.store.Get(key)
+
 	if val.IsExpired() {
 		(*conn).Write([]byte(repr.ErrorString()))
 	} else {
-		(*conn).Write([]byte(repr.FromString(val.Value)))
+		(*conn).Write([]byte(repr.FromString(val.Val)))
 	}
 }

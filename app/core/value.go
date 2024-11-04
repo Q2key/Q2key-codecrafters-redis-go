@@ -1,9 +1,11 @@
 package core
 
-import "time"
+import (
+	"time"
+)
 
 type Value struct {
-	Value   string
+	Val     string
 	Expired time.Time
 	Created time.Time
 }

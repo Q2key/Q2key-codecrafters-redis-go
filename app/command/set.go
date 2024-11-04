@@ -11,7 +11,7 @@ func (r *Set) FromArgs(args []string) Command[string] {
 }
 
 func (r *Set) Validate() bool {
-	return len(r.args) < 2
+	return true
 }
 
 func (r *Set) Name() string {

@@ -10,12 +10,12 @@ import (
 
 func NewEchoHandler(store *core.Instance) *EchoHandler {
 	return &EchoHandler{
-		store: *store,
+		store: store,
 	}
 }
 
 type EchoHandler struct {
-	store core.Instance
+	store *core.Instance
 }
 
 func (h *EchoHandler) Handler(conn *net.Conn, c command.Command[string]) {

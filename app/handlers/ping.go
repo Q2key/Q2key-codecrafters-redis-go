@@ -10,12 +10,12 @@ import (
 
 func NewPingHandler(store *core.Instance) *PingHandler {
 	return &PingHandler{
-		store: *store,
+		store: store,
 	}
 }
 
 type PingHandler struct {
-	store core.Instance
+	store *core.Instance
 }
 
 func (h *PingHandler) Handler(conn *net.Conn, c command.Command[string]) {

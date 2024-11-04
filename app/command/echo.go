@@ -11,7 +11,7 @@ func (r *Echo) FromArgs(args []string) Command[string] {
 }
 
 func (r *Echo) Validate() bool {
-	return len(r.args) < 2
+	return true
 }
 
 func (r *Echo) Name() string {

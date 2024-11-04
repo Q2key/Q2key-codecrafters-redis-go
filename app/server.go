@@ -30,7 +30,7 @@ func main() {
 
 	defer ln.Close()
 
-	s := core.NewRedisInstance().WithArgs(os.Args)
+	s := core.NewRedisInstanceWithArgs(os.Args)
 
 	configHandler := handlers.NewConfigHandler(s)
 	getHandler := handlers.NewGetHandler(s)

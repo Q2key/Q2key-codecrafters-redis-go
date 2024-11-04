@@ -11,12 +11,12 @@ import (
 
 func NewKeysHandler(store *core.Instance) *KeysHandler {
 	return &KeysHandler{
-		store: *store,
+		store: store,
 	}
 }
 
 type KeysHandler struct {
-	store core.Instance
+	store *core.Instance
 }
 
 func (h *KeysHandler) Handler(conn *net.Conn, c command.Command[string]) {

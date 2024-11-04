@@ -6,26 +6,24 @@ import (
 )
 
 type RedisDB struct {
-	name string
-	path string
+	Path string
 	Meta map[string]string
 	Aux  map[string]string
 	Data map[string]string
 }
 
-func NewRedisDB(name string, path string) *RedisDB {
+func NewRedisDB(path string) *RedisDB {
 	return &RedisDB{
-		name: name,
-		path: path,
+		Path: path,
 	}
 }
 
-func (r *RedisDB) Create(path string) error {
-	if r.IsFileExists(path) {
+func (r *RedisDB) Create() error {
+	if r.IsFileExists(r.Path) {
 		return errors.New("file exists")
 	}
 
-	f, err := os.Create(path)
+	f, err := os.Create(r.Path)
 	defer f.Close()
 
 	if err != nil {
@@ -43,12 +41,12 @@ func (r *RedisDB) IsFileExists(path string) bool {
 	return true
 }
 
-func (r *RedisDB) Connect(path string) error {
-	if !r.IsFileExists(path) {
+func (r *RedisDB) Connect() error {
+	if !r.IsFileExists(r.Path) {
 		return errors.New("file not exists")
 	}
 
-	f, err := os.Open(path)
+	f, err := os.Open(r.Path)
 	defer func(f *os.File) {
 		_ = f.Close()
 	}(f)
@@ -66,8 +64,6 @@ func (r *RedisDB) Connect(path string) error {
 		return err
 	}
 
-	r.Meta = make(map[string]string)
-	r.Aux = make(map[string]string)
 	r.Data = make(map[string]string)
 	for i, b := range buff {
 		if b == 0x00 {
@@ -105,33 +101,47 @@ func (r *RedisDB) Save(store *Instance) (error, *Instance) {
 	return nil, nil
 }
 
-func (r *RedisDB) Name() string {
-	return r.name
-}
-
-func (r *RedisDB) Path() string {
-	return r.path
-}
-
 func (r *RedisDB) Flush(buff []byte, file os.File) error {
 	return nil
 }
 
+const (
+	AUX          = 0xFA
+	RESIZEDB     = 0xFB
+	EXPIRETIMEMS = 0xFC
+	EXPIRETIME   = 0xFD
+	SELECTDB     = 0xFE
+	EOF          = 0xFF
+)
+
+const NULL = 0b00
+
+/*
+Byte 	Name 	Description
+0xFF 	EOF 	End of the RDB file
+0xFE 	SELECTDB 	Database Selector
+0xFD 	EXPIRETIME 	Expire time in seconds, see Key Expiry Timestamp
+0xFC 	EXPIRETIMEMS 	Expire time in milliseconds, see Key Expiry Timestamp
+0xFB 	RESIZEDB 	Hash table sizes for the main keyspace and expires, see Resizedb information
+0xFA 	AUX 	Auxiliary fields. Arbitrary key-value settings, see Auxiliary fields
+*/
+
 func (r *RedisDB) checkByte(b byte) bool {
 	switch b {
-	case 0xFA:
+	case AUX:
 		return false
-	case 0xFE:
+	case SELECTDB:
 		return false
-	case 0xFB:
+	case RESIZEDB:
 		return false
-	case 0xFD:
+	case EXPIRETIME:
 		return false
-	case 0xFC:
+	case EXPIRETIMEMS:
 		return false
-	case 0b00:
+	case NULL:
 		return false
-	default:
-		return true
+	case EOF:
+		return false
 	}
+	return true
 }

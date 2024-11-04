@@ -7,8 +7,6 @@ import (
 
 func TestCreateDatabaseShouldBeOk1(t *testing.T) {
 	fp := "./my.test.rdb"
-	dn := "developerdb"
-
 	defer func(name string) {
 		err := os.Remove(name)
 		if err != nil {
@@ -16,13 +14,13 @@ func TestCreateDatabaseShouldBeOk1(t *testing.T) {
 		}
 	}(fp)
 
-	db := NewRedisDB(dn, fp)
+	db := NewRedisDB(fp)
 	if db == nil {
 		t.Error("db is nil")
 		return
 	}
 
-	err := db.Create(fp)
+	err := db.Create()
 	if err != nil {
 		t.Error(err)
 		return
@@ -39,9 +37,8 @@ func TestCreateDatabaseShouldBeOk1(t *testing.T) {
 func TestConnectDatabaseShouldBeOk2(t *testing.T) {
 	//defer os.Remove("./my.test.rdb")
 	fp := "../../dump.rdb"
-	dn := "developerdb"
-	db := NewRedisDB(dn, fp)
-	err := db.Connect(fp)
+	db := NewRedisDB(fp)
+	err := db.Connect()
 	if err != nil {
 		t.Errorf(err.Error())
 		return

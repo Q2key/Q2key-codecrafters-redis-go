@@ -15,7 +15,6 @@ type Command[T string | int] interface {
 
 func ParseCommand(raw string) (error, *Command[string]) {
 	inp := repr.ToArgs(raw)
-	fmt.Printf("\r\n%s", inp[1])
 	switch inp[0] {
 	case "GET":
 		cmd := new(Get).FromArgs(inp)

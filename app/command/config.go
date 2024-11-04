@@ -9,7 +9,7 @@ func (r *Config) FromArgs(args []string) Command[string] {
 }
 
 func (r *Config) Validate() bool {
-	return len(r.args) < 3
+	return true
 }
 
 func (r *Config) Name() string {

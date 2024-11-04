@@ -10,12 +10,12 @@ import (
 
 func NewConfigHandler(store *core.Instance) *ConfigHandler {
 	return &ConfigHandler{
-		store: *store,
+		store: store,
 	}
 }
 
 type ConfigHandler struct {
-	store core.Instance
+	store *core.Instance
 }
 
 func (h *ConfigHandler) Handler(conn *net.Conn, c command.Command[string]) {
