@@ -35,7 +35,6 @@ func TestCreateDatabaseShouldBeOk1(t *testing.T) {
 }
 
 func TestConnectDatabaseShouldBeOk2(t *testing.T) {
-	//defer os.Remove("./my.test.rdb")
 	fp := "../../dump.rdb"
 	db := NewRedisDB(fp)
 	err := db.Connect()

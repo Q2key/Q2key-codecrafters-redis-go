@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"github.com/codecrafters-io/redis-starter-go/app/command"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/repr"
@@ -21,7 +20,6 @@ type SetHandler struct {
 }
 
 func (h *SetHandler) Handler(conn *net.Conn, c command.Command[string]) {
-	fmt.Printf("\r\ninvoke set handler %v", c.Args())
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
@@ -39,8 +37,6 @@ func (h *SetHandler) Handler(conn *net.Conn, c command.Command[string]) {
 	}
 
 	h.store.Set(key, val, int64(exp))
-
-	fmt.Printf("\r\nstore %v", h.store.Store())
 
 	(*conn).Write([]byte(repr.FromString("OK")))
 }

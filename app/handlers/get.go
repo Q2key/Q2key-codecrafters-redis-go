@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"github.com/codecrafters-io/redis-starter-go/app/command"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/repr"
@@ -20,7 +19,6 @@ type GetHandler struct {
 }
 
 func (h *GetHandler) Handler(conn *net.Conn, c command.Command[string]) {
-	fmt.Printf("\r\ninvoke get handler %v", c.Args())
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}

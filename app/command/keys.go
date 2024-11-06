@@ -11,7 +11,7 @@ func (r *Keys) FromArgs(args []string) Command[string] {
 }
 
 func (r *Keys) Validate() bool {
-	return len(r.args) >= 2
+	return true
 }
 
 func (r *Keys) Name() string {

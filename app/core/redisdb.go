@@ -87,6 +87,10 @@ func (r *RedisDB) Connect() error {
 			val := string(vbf[1 : vl+1])
 
 			r.Data[key] = val
+		} else if b == EXPIRETIMEMS {
+			//fmt.Printf("Expiretime ms")
+		} else if b == EXPIRETIME {
+			//fmt.Printf("Expiretime")
 		}
 	}
 

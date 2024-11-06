@@ -35,6 +35,7 @@ func ParseCommand(raw string) (error, *Command[string]) {
 		cmd := new(Keys).FromArgs(inp)
 		return nil, &cmd
 	default:
-		return errors.New(fmt.Sprintf("Unknown command: %s", inp[0])), nil
+		output := fmt.Sprintf("Unknown command: %s", inp[0])
+		return errors.New(output), nil
 	}
 }
