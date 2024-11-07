@@ -36,7 +36,7 @@ func (h *SetHandler) Handler(conn *net.Conn, c command.Command[string]) {
 		exp, _ = strconv.Atoi(args[4])
 	}
 
-	h.store.Set(key, val, int64(exp))
+	h.store.Set(key, val, uint64(exp))
 
 	(*conn).Write([]byte(repr.FromString("OK")))
 }

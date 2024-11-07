@@ -27,6 +27,7 @@ func (h *GetHandler) Handler(conn *net.Conn, c command.Command[string]) {
 	val := h.store.Get(key)
 
 	if val.IsExpired() {
+
 		(*conn).Write([]byte(repr.ErrorString()))
 	} else {
 		(*conn).Write([]byte(repr.FromString(val.Val)))

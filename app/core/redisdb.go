@@ -1,15 +1,17 @@
 package core
 
 import (
+	"encoding/binary"
 	"errors"
 	"os"
 )
 
 type RedisDB struct {
-	Path string
-	Meta map[string]string
-	Aux  map[string]string
-	Data map[string]string
+	Path    string
+	Meta    map[string]string
+	Aux     map[string]string
+	Data    map[string]string
+	Expires map[string]uint64
 }
 
 func NewRedisDB(path string) *RedisDB {
@@ -65,32 +67,47 @@ func (r *RedisDB) Connect() error {
 	}
 
 	r.Data = make(map[string]string)
+	r.Expires = make(map[string]uint64)
+
+	j := 0
 	for i, b := range buff {
+		if b == 0xFC {
+			x := i + 1
+			y := x + 8
+			j = y
+
+			b := buff[x:y]
+			exp := r.ParseMSecDateTimeStamp(&b)
+
+			ok, key, _ := r.ParseValuePair(j+1, &buff)
+			if ok {
+				r.Expires[*key] = exp
+			}
+		}
+
+		if b == 0xFD {
+			x := i + 1
+			y := x + 4
+			j = y
+
+			b := buff[x:y]
+			exp := r.ParseMSecDateTimeStamp(&b)
+
+			ok, key, _ := r.ParseValuePair(j+1, &buff)
+			if ok {
+				r.Expires[*key] = exp
+			}
+		}
+
+		if i < j {
+			continue
+		}
+
 		if b == 0x00 {
-			kbf := buff[i+1:]
-			kb := kbf[0]
-			if !r.checkByte(kb) {
-				continue
+			ok, key, val := r.ParseValuePair(i+1, &buff)
+			if ok {
+				r.Data[*key] = *val
 			}
-
-			kl := int(kb)
-
-			vbf := kbf[1+kl:]
-			vb := vbf[0]
-			if !r.checkByte(vb) {
-				continue
-			}
-
-			vl := int(vb)
-
-			key := string(kbf[1 : kl+1])
-			val := string(vbf[1 : vl+1])
-
-			r.Data[key] = val
-		} else if b == EXPIRETIMEMS {
-			//fmt.Printf("Expiretime ms")
-		} else if b == EXPIRETIME {
-			//fmt.Printf("Expiretime")
 		}
 	}
 
@@ -107,6 +124,38 @@ func (r *RedisDB) Save(store *Instance) (error, *Instance) {
 
 func (r *RedisDB) Flush(buff []byte, file os.File) error {
 	return nil
+}
+
+func (r *RedisDB) ParseValuePair(i int, buff *[]byte) (bool, *string, *string) {
+	sb := (*buff)[i:]
+	first := sb[0]
+
+	if !r.checkByte(first) {
+		return false, nil, nil
+	}
+
+	kl := int(first)
+
+	vbf := sb[1+kl:]
+	vb := vbf[0]
+	if !r.checkByte(vb) {
+		return false, nil, nil
+	}
+
+	vl := int(vb)
+
+	key := string(sb[1 : kl+1])
+	val := string(vbf[1 : vl+1])
+
+	return true, &key, &val
+}
+
+func (r *RedisDB) ParseMSecDateTimeStamp(buff *[]byte) uint64 {
+	return binary.BigEndian.Uint64(*buff)
+}
+
+func (r *RedisDB) ParseSecDateTimeStamp(buff *[]byte) uint64 {
+	return binary.BigEndian.Uint64(*buff)
 }
 
 const (

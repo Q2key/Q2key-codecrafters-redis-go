@@ -71,7 +71,12 @@ func NewRedisInstanceWithArgs(args []string) *Instance {
 	}
 
 	for k, v := range db.Data {
-		ri.Set(k, v, 0)
+		exp, ok := db.Expires[k]
+		if !ok {
+			exp = 0
+		}
+
+		ri.Set(k, v, exp)
 	}
 
 	return ri
@@ -96,7 +101,7 @@ func (r *Instance) Store() *map[string]Value {
 	return &r.store
 }
 
-func (r *Instance) Set(key string, value string, expired int64) {
+func (r *Instance) Set(key string, value string, expired uint64) {
 	now := time.Now().UTC()
 	var exp time.Time
 	if expired != 0 {
