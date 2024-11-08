@@ -52,7 +52,6 @@ func NewRedisInstanceWithArgs(args []string) *Instance {
 		return ri
 	}
 
-	//todo move to db
 	dbpath := fmt.Sprintf("%s/%s", ri.Config.dir, ri.Config.dbfilename)
 
 	db := NewRedisDB(dbpath)
@@ -86,6 +85,20 @@ func (r *Instance) Get(key string) Value {
 	return r.store[key]
 }
 
+func (r *Instance) Set(key string, value string, expired uint64) {
+	now := time.Now().UTC()
+	var exp time.Time
+	if expired != 0 {
+		exp = now.Add(time.Duration(expired) * time.Millisecond)
+	}
+
+	v := &Value{
+		Value: value, Expired: exp,
+	}
+
+	r.store[key] = *v
+}
+
 func (r *Instance) Keys(token string) []string {
 	res := make([]string, 0)
 	switch token {
@@ -101,14 +114,10 @@ func (r *Instance) Store() *map[string]Value {
 	return &r.store
 }
 
-func (r *Instance) Set(key string, value string, expired uint64) {
-	now := time.Now().UTC()
-	var exp time.Time
-	if expired != 0 {
-		exp = now.Add(time.Duration(expired) * time.Millisecond)
-	}
-	v := &Value{
-		Val: value, Created: now, Expired: exp,
-	}
-	r.store[key] = *v
+func (r *Instance) SetExpiredAt(key string, expired uint64) {
+
+}
+
+func (r *Instance) SetExpiredIn(key string, expired uint64) {
+
 }

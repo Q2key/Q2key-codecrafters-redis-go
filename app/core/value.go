@@ -5,9 +5,8 @@ import (
 )
 
 type Value struct {
-	Val     string
+	Value   string
 	Expired time.Time
-	Created time.Time
 }
 
 func (r *Value) IsExpired() bool {

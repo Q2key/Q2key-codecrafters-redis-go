@@ -12,15 +12,15 @@ func TestGetSetValue(t *testing.T) {
 	s.Set("Key1", "Value1", 0)
 	s.Set("Key2", "Value2", 0)
 
-	if s.Get("Key0").Val != "Value0" {
+	if s.Get("Key0").Value != "Value0" {
 		t.Fail()
 	}
 
-	if s.Get("Key1").Val != "Value1" {
+	if s.Get("Key1").Value != "Value1" {
 		t.Fail()
 	}
 
-	if s.Get("Key2").Val != "Value2" {
+	if s.Get("Key2").Value != "Value2" {
 		t.Fail()
 	}
 
@@ -94,7 +94,7 @@ func TestShouldNotBeExpired0(t *testing.T) {
 		t.Fail()
 	}
 
-	if v.Val != "value" {
+	if v.Value != "value" {
 		t.Fail()
 
 	}
@@ -118,7 +118,7 @@ func TestShouldNotBeExpired4000(t *testing.T) {
 
 	}
 
-	if v.Val != "value" {
+	if v.Value != "value" {
 		t.Fail()
 	}
 

@@ -1,8 +1,8 @@
 package core
 
 import (
-	"encoding/binary"
 	"errors"
+	"fmt"
 	"os"
 )
 
@@ -74,29 +74,15 @@ func (r *RedisDB) Connect() error {
 		if b == 0xFC {
 			x := i + 1
 			y := x + 8
-			j = y
 
 			b := buff[x:y]
-			exp := r.ParseMSecDateTimeStamp(&b)
-
-			ok, key, _ := r.ParseValuePair(j+1, &buff)
+			exp := ParseMSecDateTimeStamp(&b)
+			ok, key, _ := ParseValuePair(y+1, &buff)
 			if ok {
 				r.Expires[*key] = exp
 			}
-		}
 
-		if b == 0xFD {
-			x := i + 1
-			y := x + 4
 			j = y
-
-			b := buff[x:y]
-			exp := r.ParseMSecDateTimeStamp(&b)
-
-			ok, key, _ := r.ParseValuePair(j+1, &buff)
-			if ok {
-				r.Expires[*key] = exp
-			}
 		}
 
 		if i < j {
@@ -104,13 +90,14 @@ func (r *RedisDB) Connect() error {
 		}
 
 		if b == 0x00 {
-			ok, key, val := r.ParseValuePair(i+1, &buff)
+			ok, key, val := ParseValuePair(i+1, &buff)
 			if ok {
 				r.Data[*key] = *val
 			}
 		}
 	}
 
+	fmt.Printf("\r\n%v", r.Expires)
 	return nil
 }
 
@@ -124,77 +111,4 @@ func (r *RedisDB) Save(store *Instance) (error, *Instance) {
 
 func (r *RedisDB) Flush(buff []byte, file os.File) error {
 	return nil
-}
-
-func (r *RedisDB) ParseValuePair(i int, buff *[]byte) (bool, *string, *string) {
-	sb := (*buff)[i:]
-	first := sb[0]
-
-	if !r.checkByte(first) {
-		return false, nil, nil
-	}
-
-	kl := int(first)
-
-	vbf := sb[1+kl:]
-	vb := vbf[0]
-	if !r.checkByte(vb) {
-		return false, nil, nil
-	}
-
-	vl := int(vb)
-
-	key := string(sb[1 : kl+1])
-	val := string(vbf[1 : vl+1])
-
-	return true, &key, &val
-}
-
-func (r *RedisDB) ParseMSecDateTimeStamp(buff *[]byte) uint64 {
-	return binary.BigEndian.Uint64(*buff)
-}
-
-func (r *RedisDB) ParseSecDateTimeStamp(buff *[]byte) uint64 {
-	return binary.BigEndian.Uint64(*buff)
-}
-
-const (
-	AUX          = 0xFA
-	RESIZEDB     = 0xFB
-	EXPIRETIMEMS = 0xFC
-	EXPIRETIME   = 0xFD
-	SELECTDB     = 0xFE
-	EOF          = 0xFF
-)
-
-const NULL = 0b00
-
-/*
-Byte 	Name 	Description
-0xFF 	EOF 	End of the RDB file
-0xFE 	SELECTDB 	Database Selector
-0xFD 	EXPIRETIME 	Expire time in seconds, see Key Expiry Timestamp
-0xFC 	EXPIRETIMEMS 	Expire time in milliseconds, see Key Expiry Timestamp
-0xFB 	RESIZEDB 	Hash table sizes for the main keyspace and expires, see Resizedb information
-0xFA 	AUX 	Auxiliary fields. Arbitrary key-value settings, see Auxiliary fields
-*/
-
-func (r *RedisDB) checkByte(b byte) bool {
-	switch b {
-	case AUX:
-		return false
-	case SELECTDB:
-		return false
-	case RESIZEDB:
-		return false
-	case EXPIRETIME:
-		return false
-	case EXPIRETIMEMS:
-		return false
-	case NULL:
-		return false
-	case EOF:
-		return false
-	}
-	return true
 }
