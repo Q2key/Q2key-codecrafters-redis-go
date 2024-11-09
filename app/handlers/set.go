@@ -30,13 +30,13 @@ func (h *SetHandler) Handler(conn *net.Conn, c command.Command[string]) {
 
 	args := c.Args()
 	key, val := args[1], args[2]
-	var exp int
+
+	h.store.Set(key, val)
 
 	if len(args) >= 4 {
-		exp, _ = strconv.Atoi(args[4])
+		exp, _ := strconv.Atoi(args[4])
+		h.store.SetExpiredIn(key, uint64(exp))
 	}
-
-	h.store.Set(key, val, uint64(exp))
 
 	(*conn).Write([]byte(repr.FromString("OK")))
 }

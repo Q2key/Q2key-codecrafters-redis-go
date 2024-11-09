@@ -9,7 +9,7 @@ func TestSetExpiring0(t *testing.T) {
 		store: map[string]Value{},
 	}
 
-	r.Set("key", "value", 0)
+	r.Set("key", "value")
 
 	v := r.Get("key")
 

@@ -8,9 +8,9 @@ import (
 func TestGetSetValue(t *testing.T) {
 	s := NewRedisInstance()
 
-	s.Set("Key0", "Value0", 0)
-	s.Set("Key1", "Value1", 0)
-	s.Set("Key2", "Value2", 0)
+	s.Set("Key0", "Value0")
+	s.Set("Key1", "Value1")
+	s.Set("Key2", "Value2")
 
 	if s.Get("Key0").Value != "Value0" {
 		t.Fail()
@@ -33,7 +33,8 @@ func TestShouldBeExpired2000(t *testing.T) {
 		store: map[string]Value{},
 	}
 
-	r.Set("key", "value", 2000)
+	r.Set("key", "value")
+	r.SetExpiredIn("key", 2000)
 
 	time.Sleep(3 * time.Second)
 
@@ -51,7 +52,8 @@ func TestShouldBeExpired100(t *testing.T) {
 		store: map[string]Value{},
 	}
 
-	r.Set("key", "value", 100)
+	r.Set("key", "value")
+	r.SetExpiredIn("key", 100)
 
 	time.Sleep(101 * time.Millisecond)
 
@@ -69,7 +71,8 @@ func TestShouldBeExpired101(t *testing.T) {
 		store: map[string]Value{},
 	}
 
-	r.Set("key", "value", 101)
+	r.Set("key", "value")
+	r.SetExpiredIn("key", 101)
 
 	time.Sleep(101 * time.Millisecond)
 
@@ -87,7 +90,7 @@ func TestShouldNotBeExpired0(t *testing.T) {
 		store: map[string]Value{},
 	}
 
-	r.Set("key", "value", 0)
+	r.Set("key", "value")
 	v := r.Get("key")
 
 	if v.IsExpired() {
@@ -108,7 +111,8 @@ func TestShouldNotBeExpired4000(t *testing.T) {
 		store: map[string]Value{},
 	}
 
-	r.Set("key", "value", 4000)
+	r.Set("key", "value")
+	r.SetExpiredIn("key", 4000)
 	v := r.Get("key")
 
 	time.Sleep(3 * time.Second)

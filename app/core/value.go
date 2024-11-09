@@ -20,3 +20,7 @@ func (r *Value) IsExpired() bool {
 
 	return diff <= 0
 }
+
+func (r *Value) SetExpired(expired time.Time) {
+	r.Expired = expired
+}

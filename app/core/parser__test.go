@@ -1,6 +1,10 @@
 package core
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+	"time"
+)
 
 func TestParseMSecDateTimeStamp(t *testing.T) {
 
@@ -9,6 +13,17 @@ func TestParseMSecDateTimeStamp(t *testing.T) {
 	if ext != 1713824559637 {
 		t.Fail()
 	}
+
+	tm := time.UnixMilli(int64(ext)).UTC()
+	fmt.Println(tm)
+
+	t.Log("OK!")
+}
+
+func TestParseMSecDateTimeStamp2(t *testing.T) {
+
+	tm := time.UnixMicro(1956528000000).UTC()
+	fmt.Println(tm)
 
 	t.Log("OK!")
 }

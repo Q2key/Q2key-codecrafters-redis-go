@@ -25,7 +25,6 @@ func NewRedisInstanceWithArgs(args []string) *Instance {
 		dbfilename: "",
 	}
 
-	fmt.Printf("\r\narguments: %v", args)
 	if len(args) > 1 {
 		for i := 1; i < len(args); i++ {
 			a := args[i]
@@ -70,12 +69,11 @@ func NewRedisInstanceWithArgs(args []string) *Instance {
 	}
 
 	for k, v := range db.Data {
+		ri.Set(k, v)
 		exp, ok := db.Expires[k]
-		if !ok {
-			exp = 0
+		if ok {
+			ri.SetExpiredAt(k, exp)
 		}
-
-		ri.Set(k, v, exp)
 	}
 
 	return ri
@@ -85,18 +83,11 @@ func (r *Instance) Get(key string) Value {
 	return r.store[key]
 }
 
-func (r *Instance) Set(key string, value string, expired uint64) {
-	now := time.Now().UTC()
-	var exp time.Time
-	if expired != 0 {
-		exp = now.Add(time.Duration(expired) * time.Millisecond)
+func (r *Instance) Set(key string, value string) {
+	var e time.Time
+	r.store[key] = Value{
+		Value: value, Expired: e,
 	}
-
-	v := &Value{
-		Value: value, Expired: exp,
-	}
-
-	r.store[key] = *v
 }
 
 func (r *Instance) Keys(token string) []string {
@@ -115,9 +106,19 @@ func (r *Instance) Store() *map[string]Value {
 }
 
 func (r *Instance) SetExpiredAt(key string, expired uint64) {
-
+	tm := time.UnixMilli(int64(expired)).UTC()
+	val, ok := r.store[key]
+	if ok {
+		val.SetExpired(tm)
+	}
+	r.store[key] = val
 }
 
-func (r *Instance) SetExpiredIn(key string, expired uint64) {
-
+func (r *Instance) SetExpiredIn(key string, expiredIn uint64) {
+	exp := time.Now().UTC().Add(time.Duration(expiredIn) * time.Millisecond)
+	val, ok := r.store[key]
+	if ok {
+		val.SetExpired(exp)
+	}
+	r.store[key] = val
 }
