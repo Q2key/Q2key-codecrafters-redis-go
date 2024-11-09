@@ -2,7 +2,6 @@ package core
 
 import (
 	"errors"
-	"fmt"
 	"os"
 )
 
@@ -75,6 +74,10 @@ func (r *RedisDB) Connect() error {
 			x := i + 1
 			y := x + 8
 
+			if len(buff[x:]) < 8 {
+				continue
+			}
+
 			b := buff[x:y]
 			exp := ParseMSecDateTimeStamp(&b)
 			ok, key, _ := ParseValuePair(y+1, &buff)
@@ -88,6 +91,10 @@ func (r *RedisDB) Connect() error {
 		if b == EXPIRETIME {
 			x := i + 1
 			y := x + 4
+
+			if len(buff[x:]) < 4 {
+				continue
+			}
 
 			b := buff[x:y]
 			exp := ParseMSecDateTimeStamp(&b)
@@ -111,8 +118,6 @@ func (r *RedisDB) Connect() error {
 		}
 	}
 
-	fmt.Printf("\r\n%v", r.Expires)
-	fmt.Printf("\r\n%v", r.Data)
 	return nil
 }
 

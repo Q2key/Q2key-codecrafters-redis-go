@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/codecrafters-io/redis-starter-go/app/command"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/repr"
@@ -23,11 +24,17 @@ func (h *GetHandler) Handler(conn *net.Conn, c command.Command[string]) {
 		log.Fatal()
 	}
 
+	fmt.Println(h.store.Store())
+
 	key := c.Args()[1]
 	val := h.store.Get(key)
+
+	fmt.Printf("\r\nVAL %v", val)
 	if val.IsExpired() {
+		fmt.Println("Ixpired")
 		(*conn).Write([]byte(repr.ErrorString()))
 	} else {
+		fmt.Println("Not Ixpired")
 		(*conn).Write([]byte(repr.FromString(val.Value)))
 	}
 }
