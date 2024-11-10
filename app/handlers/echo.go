@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"github.com/codecrafters-io/redis-starter-go/app/command"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/repr"
@@ -9,23 +8,20 @@ import (
 	"net"
 )
 
-func NewEchoHandler(store *core.Instance) *EchoHandler {
+func NewEchoHandler(instance *core.Instance) *EchoHandler {
 	return &EchoHandler{
-		store: store,
+		instance: instance,
 	}
 }
 
 type EchoHandler struct {
-	store *core.Instance
+	instance *core.Instance
 }
 
 func (h *EchoHandler) Handler(conn *net.Conn, c command.Command[string]) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
-
-	value := c.Args()
-	fmt.Printf("\r\necho %v", value)
 
 	(*conn).Write([]byte(repr.FromString(c.Args()[1])))
 }

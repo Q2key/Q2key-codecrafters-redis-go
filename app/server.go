@@ -28,7 +28,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	defer ln.Close()
+	//defer ln.Close()
 
 	s := core.NewRedisInstanceWithArgs(os.Args)
 
@@ -47,7 +47,7 @@ func main() {
 		}
 
 		go func() {
-			buff := make([]byte, 2024)
+			buff := make([]byte, 1024*8)
 			for {
 				conn.Read(buff)
 				// query without value type mark
@@ -55,6 +55,8 @@ func main() {
 				if err != nil {
 					log.Fatal("redis command error:", err)
 				}
+
+				fmt.Printf("[%v]", (*cmd).Args())
 
 				switch (*cmd).Name() {
 				case "CONFIG":

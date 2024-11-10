@@ -15,16 +15,15 @@ type Instance struct {
 func NewRedisInstance() *Instance {
 	return &Instance{
 		store: map[string]Value{},
+		Config: &Config{
+			dir:        "",
+			dbfilename: "",
+		},
 	}
 }
 
 func NewRedisInstanceWithArgs(args []string) *Instance {
 	ri := NewRedisInstance()
-	ri.Config = &Config{
-		dir:        "",
-		dbfilename: "",
-	}
-
 	if len(args) > 1 {
 		for i := 1; i < len(args); i++ {
 			a := args[i]
@@ -54,13 +53,15 @@ func NewRedisInstanceWithArgs(args []string) *Instance {
 	dbpath := fmt.Sprintf("%s/%s", ri.Config.dir, ri.Config.dbfilename)
 
 	db := NewRedisDB(dbpath)
-
 	if !db.IsFileExists(ri.Config.dbfilename) {
-		os.Mkdir(ri.Config.dir, os.ModeDir)
+		_ = os.Mkdir(ri.Config.dir, os.ModeDir)
 	}
 
 	if !db.IsFileExists(dbpath) {
-		db.Create()
+		err := db.Create()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	err := db.Connect()
@@ -84,9 +85,8 @@ func (r *Instance) Get(key string) Value {
 }
 
 func (r *Instance) Set(key string, value string) {
-	var e time.Time
 	r.store[key] = Value{
-		Value: value, Expired: e,
+		Value: value,
 	}
 }
 
@@ -101,16 +101,17 @@ func (r *Instance) Keys(token string) []string {
 	return res
 }
 
-func (r *Instance) Store() *map[string]Value {
+func (r *Instance) GetStore() *map[string]Value {
 	return &r.store
 }
 
 func (r *Instance) SetExpiredAt(key string, expired uint64) {
-	tm := time.UnixMilli(int64(expired)).UTC()
+	tm := GetDateFromTimeStamp(expired)
 	val, ok := r.store[key]
 	if ok {
 		val.SetExpired(tm)
 	}
+
 	r.store[key] = val
 }
 

@@ -34,7 +34,16 @@ func ToArgs(q string) []string {
 	for i := 0; i < len(s); i++ {
 		if string(s[i]) == "$" {
 			ni := i + 1
-			nj := i + 2
+			nj := ni
+
+			for {
+				ch := string(s[nj])
+				if ch == "\r" {
+					break
+				} else {
+					nj += 1
+				}
+			}
 
 			sl, err := strconv.Atoi(s[ni:nj])
 			if sl == 0 || err != nil {

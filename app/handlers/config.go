@@ -8,14 +8,14 @@ import (
 	"net"
 )
 
-func NewConfigHandler(store *core.Instance) *ConfigHandler {
+func NewConfigHandler(instance *core.Instance) *ConfigHandler {
 	return &ConfigHandler{
-		store: store,
+		instance: instance,
 	}
 }
 
 type ConfigHandler struct {
-	store *core.Instance
+	instance *core.Instance
 }
 
 func (h *ConfigHandler) Handler(conn *net.Conn, c command.Command[string]) {
@@ -27,13 +27,13 @@ func (h *ConfigHandler) Handler(conn *net.Conn, c command.Command[string]) {
 	action, key := args[1], args[2]
 
 	if action == "GET" && key == "dir" {
-		resp := []string{key, h.store.Config.GetDir()}
+		resp := []string{key, h.instance.Config.GetDir()}
 		(*conn).Write([]byte(repr.FromStringsArray(resp)))
 		return
 	}
 
 	if action == "GET" && key == "dbfilename" {
-		resp := []string{key, h.store.Config.GetDbFileName()}
+		resp := []string{key, h.instance.Config.GetDbFileName()}
 		(*conn).Write([]byte(repr.FromStringsArray(resp)))
 		return
 	}

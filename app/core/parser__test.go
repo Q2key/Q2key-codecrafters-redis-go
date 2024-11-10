@@ -20,9 +20,20 @@ func TestParseMSecDateTimeStamp(t *testing.T) {
 	t.Log("OK!")
 }
 
+func TestParseMSecDateTimeStamp3(t *testing.T) {
+	buff := []byte{0x00, 0x0c, 0x28, 0x8a, 0xc7, 0x01, 0x00, 0x00}
+	ext := ParseMSecDateTimeStamp(&buff)
+
+	tm1 := time.Unix(int64(ext)/1000, 0).UTC()
+	tm2 := GetDateFromTimeStamp(ext)
+	fmt.Println(tm1, tm2)
+
+	t.Log("OK!")
+}
+
 func TestParseMSecDateTimeStamp2(t *testing.T) {
 
-	tm := time.UnixMicro(1956528000000).UTC()
+	tm := time.Unix(1956528000000/1000, 0).UTC()
 	fmt.Println(tm)
 
 	t.Log("OK!")

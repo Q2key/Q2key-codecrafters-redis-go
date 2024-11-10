@@ -9,14 +9,14 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/repr"
 )
 
-func NewKeysHandler(store *core.Instance) *KeysHandler {
+func NewKeysHandler(instance *core.Instance) *KeysHandler {
 	return &KeysHandler{
-		store: store,
+		instance: instance,
 	}
 }
 
 type KeysHandler struct {
-	store *core.Instance
+	instance *core.Instance
 }
 
 func (h *KeysHandler) Handler(conn *net.Conn, c command.Command[string]) {
@@ -27,7 +27,7 @@ func (h *KeysHandler) Handler(conn *net.Conn, c command.Command[string]) {
 	args := c.Args()
 
 	t := args[1]
-	keys := h.store.Keys(t)
+	keys := h.instance.Keys(t)
 
 	(*conn).Write([]byte(repr.FromStringsArray(keys)))
 }

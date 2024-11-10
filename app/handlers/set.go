@@ -11,12 +11,12 @@ import (
 
 func NewSetHandler(store *core.Instance) *SetHandler {
 	return &SetHandler{
-		store: store,
+		instance: store,
 	}
 }
 
 type SetHandler struct {
-	store *core.Instance
+	instance *core.Instance
 }
 
 func (h *SetHandler) Handler(conn *net.Conn, c command.Command[string]) {
@@ -31,11 +31,11 @@ func (h *SetHandler) Handler(conn *net.Conn, c command.Command[string]) {
 	args := c.Args()
 	key, val := args[1], args[2]
 
-	h.store.Set(key, val)
+	h.instance.Set(key, val)
 
 	if len(args) >= 4 {
 		exp, _ := strconv.Atoi(args[4])
-		h.store.SetExpiredIn(key, uint64(exp))
+		h.instance.SetExpiredIn(key, uint64(exp))
 	}
 
 	(*conn).Write([]byte(repr.FromString("OK")))

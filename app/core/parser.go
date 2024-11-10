@@ -1,6 +1,9 @@
 package core
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+	"time"
+)
 
 /*
 Byte 	Name 			Description
@@ -42,6 +45,10 @@ func ParseValuePair(i int, buff *[]byte) (bool, *string, *string) {
 	val := string(vbf[1 : vl+1])
 
 	return true, &key, &val
+}
+
+func GetDateFromTimeStamp(ts uint64) time.Time {
+	return time.UnixMilli(int64(ts)).UTC()
 }
 
 func ParseMSecDateTimeStamp(buff *[]byte) uint64 {

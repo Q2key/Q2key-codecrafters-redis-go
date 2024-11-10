@@ -8,14 +8,14 @@ import (
 	"net"
 )
 
-func NewPingHandler(store *core.Instance) *PingHandler {
+func NewPingHandler(instance *core.Instance) *PingHandler {
 	return &PingHandler{
-		store: store,
+		instance: instance,
 	}
 }
 
 type PingHandler struct {
-	store *core.Instance
+	instance *core.Instance
 }
 
 func (h *PingHandler) Handler(conn *net.Conn, c command.Command[string]) {
