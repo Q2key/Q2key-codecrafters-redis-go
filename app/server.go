@@ -56,8 +56,6 @@ func main() {
 					log.Fatal("redis command error:", err)
 				}
 
-				fmt.Printf("[%v]", (*cmd).Args())
-
 				switch (*cmd).Name() {
 				case "CONFIG":
 					configHandler.Handler(&conn, *cmd)

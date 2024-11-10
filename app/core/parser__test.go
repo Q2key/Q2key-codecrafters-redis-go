@@ -14,20 +14,15 @@ func TestParseMSecDateTimeStamp(t *testing.T) {
 		t.Fail()
 	}
 
-	tm := time.UnixMilli(int64(ext)).UTC()
-	fmt.Println(tm)
-
 	t.Log("OK!")
 }
 
 func TestParseMSecDateTimeStamp3(t *testing.T) {
 	buff := []byte{0x00, 0x0c, 0x28, 0x8a, 0xc7, 0x01, 0x00, 0x00}
 	ext := ParseMSecDateTimeStamp(&buff)
-
-	tm1 := time.Unix(int64(ext)/1000, 0).UTC()
-	tm2 := GetDateFromTimeStamp(ext)
-	fmt.Println(tm1, tm2)
-
+	if GetDateFromTimeStamp(ext).UTC().Format("2006-01-02 15:04:05") != "2032-01-01 00:00:00" {
+		t.Fail()
+	}
 	t.Log("OK!")
 }
 
@@ -58,6 +53,26 @@ func TestParseValuePair(t *testing.T) {
 
 	if *val != "qux" {
 		t.Fail()
+	}
+
+	t.Log("OK!")
+}
+
+func TestConnectDatabaseShouldBeOk3(t *testing.T) {
+
+	v := byte(0x01)
+
+	b := fmt.Sprintf("%b", v)
+
+	b1, b2 := get(v, 0), get(v, 1)
+	println(b1, b2, b)
+
+	if (v>>4)&1 == 0 {
+		fmt.Println("bit 4 (counting from 0) is set")
+	}
+
+	if (v>>4)&2 == 0 {
+		fmt.Println("bit 4 (counting from 0) is set")
 	}
 
 	t.Log("OK!")

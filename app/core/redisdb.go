@@ -78,8 +78,8 @@ func (r *RedisDB) Connect() error {
 			x := i + 1
 			y := x + 8
 
-			b := buff[x:y]
-			exp := ParseMSecDateTimeStamp(&b)
+			sb := buff[x:y]
+			exp := ParseMSecDateTimeStamp(&sb)
 			ok, key, _ := ParseValuePair(y+1, &buff)
 			if ok {
 				r.Expires[*key] = exp
@@ -91,9 +91,8 @@ func (r *RedisDB) Connect() error {
 		if b == EXPIRETIME {
 			x := i + 1
 			y := x + 4
-			b := buff[x:y]
-
-			exp := ParseSecDateTimeStamp(&b)
+			sb := buff[x:y]
+			exp := ParseSecDateTimeStamp(&sb)
 			ok, key, _ := ParseValuePair(y+1, &buff)
 			if ok {
 				r.Expires[*key] = exp
