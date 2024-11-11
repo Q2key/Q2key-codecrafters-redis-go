@@ -1,9 +1,13 @@
 package contracts
 
+type DataMap = map[string]string
+
+type ExpiresMap = map[string]uint64
+
 type Database interface {
 	IsFileExists(string) bool
 	Connect() error
 	Create() error
-	Data() map[string]string
-	Expires() map[string]uint64
+	GetData() DataMap
+	GetExpires() ExpiresMap
 }

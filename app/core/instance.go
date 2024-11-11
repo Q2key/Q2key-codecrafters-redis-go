@@ -69,9 +69,9 @@ func NewRedisInstanceWithArgs(args []string) *Instance {
 		log.Fatal(err)
 	}
 
-	for k, v := range db.Data() {
+	for k, v := range db.GetData() {
 		ri.Set(k, v)
-		exp, ok := db.Expires()[k]
+		exp, ok := db.GetExpires()[k]
 		if ok {
 			ri.SetExpiredAt(k, exp)
 		}

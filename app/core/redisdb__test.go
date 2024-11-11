@@ -43,15 +43,15 @@ func TestConnectDatabaseShouldBeOk2(t *testing.T) {
 		return
 	}
 
-	if db.Data()["foo"] != "bar" {
+	if db.GetData()["foo"] != "bar" {
 		t.Error("foo is not bar")
 	}
 
-	if db.Data()["bas"] != "jazz" {
+	if db.GetData()["bas"] != "jazz" {
 		t.Error("foo is not bar")
 	}
 
-	if db.Data()["nas"] != "lil" {
+	if db.GetData()["nas"] != "lil" {
 		t.Error("foo is not bar")
 	}
 

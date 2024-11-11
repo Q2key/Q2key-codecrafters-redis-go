@@ -118,9 +118,9 @@ func (r *RedisDB) Connect() error {
 	return nil
 }
 
-func (r *RedisDB) Data() map[string]string {
+func (r *RedisDB) GetData() map[string]string {
 	return r.data
 }
-func (r *RedisDB) Expires() map[string]uint64 {
+func (r *RedisDB) GetExpires() map[string]uint64 {
 	return r.expires
 }
