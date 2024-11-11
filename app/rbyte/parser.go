@@ -1,4 +1,4 @@
-package core
+package rbyte
 
 import (
 	"encoding/binary"
@@ -21,6 +21,7 @@ const (
 	EXPIRETIME   = 0xFD
 	SELECTDB     = 0xFE
 	EOF          = 0xFF
+	NULLISH_BYTE = 0b00
 )
 
 func ParseValuePair(i int, buff *[]byte) (bool, *string, *string) {
@@ -59,8 +60,6 @@ func ParseSecDateTimeStamp(buff *[]byte) uint64 {
 	return binary.LittleEndian.Uint64(*buff)
 }
 
-const NULL = 0b00
-
 func CheckByte(b byte) bool {
 	switch b {
 	case AUX:
@@ -73,7 +72,7 @@ func CheckByte(b byte) bool {
 		return false
 	case EXPIRETIMEMS:
 		return false
-	case NULL:
+	case NULLISH_BYTE:
 		return false
 	case EOF:
 		return false

@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -15,19 +14,13 @@ func (r *Value) IsExpired() bool {
 		return false
 	}
 
-	now := time.Now().UTC()
-
-	isExpired := r.Expired.UnixNano() <= now.UnixNano()
-
-	fmt.Printf("\t\r->Expired value: %s\n", r.Value)
-	fmt.Printf("\t\r->Expired time: %v\n", r.Expired)
-	fmt.Printf("\t\r->Now time: %s\n", now)
-	fmt.Printf("\t\r->IsExpired: %v\n", isExpired)
-
-	return isExpired
-
+	return r.Expired.UnixNano() <= time.Now().UTC().UnixNano()
 }
 
 func (r *Value) SetExpired(expired time.Time) {
 	r.Expired = &expired
+}
+
+func (r *Value) GetValue() string {
+	return r.Value
 }

@@ -2,6 +2,8 @@ package core
 
 import (
 	"errors"
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
+	"github.com/codecrafters-io/redis-starter-go/app/rbyte"
 	"os"
 )
 
@@ -9,11 +11,11 @@ type RedisDB struct {
 	Path    string
 	Meta    map[string]string
 	Aux     map[string]string
-	Data    map[string]string
-	Expires map[string]uint64
+	data    map[string]string
+	expires map[string]uint64
 }
 
-func NewRedisDB(path string) *RedisDB {
+func NewRedisDB(path string) contracts.Database {
 	return &RedisDB{
 		Path: path,
 	}
@@ -65,37 +67,37 @@ func (r *RedisDB) Connect() error {
 		return err
 	}
 
-	r.Data = make(map[string]string)
-	r.Expires = make(map[string]uint64)
+	r.data = make(map[string]string)
+	r.expires = make(map[string]uint64)
 
 	j := 0
 	for i, b := range buff {
-		if b == EOF {
+		if b == rbyte.EOF {
 			break
 		}
 
-		if b == EXPIRETIMEMS {
+		if b == rbyte.EXPIRETIMEMS {
 			x := i + 1
 			y := x + 8
 
 			sb := buff[x:y]
-			exp := ParseMSecDateTimeStamp(&sb)
-			ok, key, _ := ParseValuePair(y+1, &buff)
+			exp := rbyte.ParseMSecDateTimeStamp(&sb)
+			ok, key, _ := rbyte.ParseValuePair(y+1, &buff)
 			if ok {
-				r.Expires[*key] = exp
+				r.expires[*key] = exp
 			}
 
 			j = y
 		}
 
-		if b == EXPIRETIME {
+		if b == rbyte.EXPIRETIME {
 			x := i + 1
 			y := x + 4
 			sb := buff[x:y]
-			exp := ParseSecDateTimeStamp(&sb)
-			ok, key, _ := ParseValuePair(y+1, &buff)
+			exp := rbyte.ParseSecDateTimeStamp(&sb)
+			ok, key, _ := rbyte.ParseValuePair(y+1, &buff)
 			if ok {
-				r.Expires[*key] = exp
+				r.expires[*key] = exp
 			}
 
 			j = y
@@ -106,9 +108,9 @@ func (r *RedisDB) Connect() error {
 		}
 
 		if b == 0x00 {
-			ok, key, val := ParseValuePair(i+1, &buff)
+			ok, key, val := rbyte.ParseValuePair(i+1, &buff)
 			if ok {
-				r.Data[*key] = *val
+				r.data[*key] = *val
 			}
 		}
 	}
@@ -116,14 +118,9 @@ func (r *RedisDB) Connect() error {
 	return nil
 }
 
-func (r *RedisDB) ReadFrom() (error, *Instance) {
-	return nil, nil
+func (r *RedisDB) Data() map[string]string {
+	return r.data
 }
-
-func (r *RedisDB) Save(store *Instance) (error, *Instance) {
-	return nil, nil
-}
-
-func (r *RedisDB) Flush(buff []byte, file os.File) error {
-	return nil
+func (r *RedisDB) Expires() map[string]uint64 {
+	return r.expires
 }

@@ -15,7 +15,6 @@ func TestToArgsShouldBeOk1(t *testing.T) {
 }
 
 func TestToArgsShouldBeOk3(t *testing.T) {
-
 	str := "*2\r\n$3\r\nGET\r\n$10\r\nstrawberry\r\n"
 	res := ToArgs(str[1:])
 	if len(res) != 2 || res[0] != "GET" || res[1] != "strawberry" {

@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/command"
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/repr"
 	"log"
@@ -19,7 +19,7 @@ type SetHandler struct {
 	instance *core.Instance
 }
 
-func (h *SetHandler) Handler(conn *net.Conn, c command.Command[string]) {
+func (h *SetHandler) Handler(conn *net.Conn, c contracts.Command[string]) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}

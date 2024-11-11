@@ -3,17 +3,11 @@ package command
 import (
 	"errors"
 	"fmt"
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/repr"
 )
 
-type Command[T string | int] interface {
-	Validate() bool
-	Name() string
-	Args() []T
-	FromArgs(args []T) Command[T]
-}
-
-func ParseCommand(raw string) (error, *Command[string]) {
+func ParseCommand(raw string) (error, *contracts.Command[string]) {
 	inp := repr.ToArgs(raw)
 	switch inp[0] {
 	case "GET":

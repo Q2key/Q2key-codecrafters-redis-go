@@ -1,6 +1,8 @@
 package core
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/app/config"
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"testing"
 	"time"
 )
@@ -12,15 +14,15 @@ func TestGetSetValue(t *testing.T) {
 	s.Set("Key1", "Value1")
 	s.Set("Key2", "Value2")
 
-	if s.Get("Key0").Value != "Value0" {
+	if s.Get("Key0").GetValue() != "Value0" {
 		t.Fail()
 	}
 
-	if s.Get("Key1").Value != "Value1" {
+	if s.Get("Key1").GetValue() != "Value1" {
 		t.Fail()
 	}
 
-	if s.Get("Key2").Value != "Value2" {
+	if s.Get("Key2").GetValue() != "Value2" {
 		t.Fail()
 	}
 
@@ -30,7 +32,7 @@ func TestGetSetValue(t *testing.T) {
 func TestShouldBeExpired2000(t *testing.T) {
 
 	r := Instance{
-		store: map[string]Value{},
+		store: map[string]contracts.Value{},
 	}
 
 	r.Set("key", "value")
@@ -49,7 +51,7 @@ func TestShouldBeExpired2000(t *testing.T) {
 func TestShouldBeExpired100(t *testing.T) {
 
 	r := Instance{
-		store: map[string]Value{},
+		store: map[string]contracts.Value{},
 	}
 
 	r.Set("key", "value")
@@ -68,7 +70,7 @@ func TestShouldBeExpired100(t *testing.T) {
 func TestShouldBeExpired101(t *testing.T) {
 
 	r := Instance{
-		store: map[string]Value{},
+		store: map[string]contracts.Value{},
 	}
 
 	r.Set("key", "value")
@@ -87,7 +89,7 @@ func TestShouldBeExpired101(t *testing.T) {
 func TestShouldNotBeExpired0(t *testing.T) {
 
 	r := Instance{
-		store: map[string]Value{},
+		store: map[string]contracts.Value{},
 	}
 
 	r.Set("key", "value")
@@ -97,7 +99,7 @@ func TestShouldNotBeExpired0(t *testing.T) {
 		t.Fail()
 	}
 
-	if v.Value != "value" {
+	if v.GetValue() != "value" {
 		t.Fail()
 
 	}
@@ -108,7 +110,7 @@ func TestShouldNotBeExpired0(t *testing.T) {
 func TestShouldNotBeExpired4000(t *testing.T) {
 
 	r := Instance{
-		store: map[string]Value{},
+		store: map[string]contracts.Value{},
 	}
 
 	r.Set("key", "value")
@@ -122,7 +124,7 @@ func TestShouldNotBeExpired4000(t *testing.T) {
 
 	}
 
-	if v.Value != "value" {
+	if v.GetValue() != "value" {
 		t.Fail()
 	}
 
@@ -131,19 +133,16 @@ func TestShouldNotBeExpired4000(t *testing.T) {
 
 func TestReturnCorrectConfig(t *testing.T) {
 	s := &Instance{
-		store: make(map[string]Value),
-		Config: &Config{
-			dir:        "temp",
-			dbfilename: "develop",
-		},
+		store:  make(map[string]contracts.Value),
+		Config: config.NewConfig("temp", "develop"),
 	}
 
 	s.Config.SetDbFileName("develop")
-	if s.Config.dbfilename != "develop" {
+	if s.Config.GetDbFileName() != "develop" {
 		t.Fail()
 	}
 
-	if s.Config.dir != "temp" {
+	if s.Config.GetDir() != "temp" {
 		t.Fail()
 	}
 

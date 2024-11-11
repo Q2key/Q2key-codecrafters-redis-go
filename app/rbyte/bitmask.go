@@ -1,4 +1,4 @@
-package core
+package rbyte
 
 type bit byte
 

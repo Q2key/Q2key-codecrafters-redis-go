@@ -2,23 +2,23 @@ package core
 
 import (
 	"fmt"
+	"github.com/codecrafters-io/redis-starter-go/app/config"
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
+	"github.com/codecrafters-io/redis-starter-go/app/rbyte"
 	"log"
 	"os"
 	"time"
 )
 
 type Instance struct {
-	Config *Config
-	store  map[string]Value
+	Config *config.Config
+	store  contracts.Store
 }
 
 func NewRedisInstance() *Instance {
 	return &Instance{
-		store: map[string]Value{},
-		Config: &Config{
-			dir:        "",
-			dbfilename: "",
-		},
+		store:  contracts.Store{},
+		Config: config.NewConfig("", ""),
 	}
 }
 
@@ -42,19 +42,19 @@ func NewRedisInstanceWithArgs(args []string) *Instance {
 		}
 	}
 
-	if ri.Config.dbfilename == "" {
+	if ri.Config.GetDir() == "" {
 		return ri
 	}
 
-	if ri.Config.dir == "" {
+	if ri.Config.GetDir() == "" {
 		return ri
 	}
 
-	dbpath := fmt.Sprintf("%s/%s", ri.Config.dir, ri.Config.dbfilename)
+	dbpath := fmt.Sprintf("%s/%s", ri.Config.GetDir(), ri.Config.GetDbFileName())
 
 	db := NewRedisDB(dbpath)
-	if !db.IsFileExists(ri.Config.dbfilename) {
-		_ = os.Mkdir(ri.Config.dir, os.ModeDir)
+	if !db.IsFileExists(ri.Config.GetDbFileName()) {
+		_ = os.Mkdir(ri.Config.GetDir(), os.ModeDir)
 	}
 
 	if !db.IsFileExists(dbpath) {
@@ -69,9 +69,9 @@ func NewRedisInstanceWithArgs(args []string) *Instance {
 		log.Fatal(err)
 	}
 
-	for k, v := range db.Data {
+	for k, v := range db.Data() {
 		ri.Set(k, v)
-		exp, ok := db.Expires[k]
+		exp, ok := db.Expires()[k]
 		if ok {
 			ri.SetExpiredAt(k, exp)
 		}
@@ -80,12 +80,12 @@ func NewRedisInstanceWithArgs(args []string) *Instance {
 	return ri
 }
 
-func (r *Instance) Get(key string) Value {
+func (r *Instance) Get(key string) contracts.Value {
 	return r.store[key]
 }
 
 func (r *Instance) Set(key string, value string) {
-	r.store[key] = Value{
+	r.store[key] = &Value{
 		Value: value,
 	}
 }
@@ -101,12 +101,12 @@ func (r *Instance) Keys(token string) []string {
 	return res
 }
 
-func (r *Instance) GetStore() *map[string]Value {
+func (r *Instance) GetStore() *map[string]contracts.Value {
 	return &r.store
 }
 
 func (r *Instance) SetExpiredAt(key string, expired uint64) {
-	tm := GetDateFromTimeStamp(expired)
+	tm := rbyte.GetDateFromTimeStamp(expired)
 	val, ok := r.store[key]
 	if ok {
 		val.SetExpired(tm)
@@ -122,4 +122,8 @@ func (r *Instance) SetExpiredIn(key string, expiredIn uint64) {
 		val.SetExpired(exp)
 	}
 	r.store[key] = val
+}
+
+func (r *Instance) GetConfig() contracts.Config {
+	return r.Config
 }

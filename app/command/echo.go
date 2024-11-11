@@ -1,10 +1,12 @@
 package command
 
+import "github.com/codecrafters-io/redis-starter-go/app/contracts"
+
 type Echo struct {
 	args []string
 }
 
-func (r *Echo) FromArgs(args []string) Command[string] {
+func (r *Echo) FromArgs(args []string) contracts.Command[string] {
 	return &Echo{
 		args: args,
 	}

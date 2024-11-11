@@ -1,10 +1,12 @@
 package command
 
+import "github.com/codecrafters-io/redis-starter-go/app/contracts"
+
 type Ping struct {
 	args []string
 }
 
-func (r *Ping) FromArgs(args []string) Command[string] {
+func (r *Ping) FromArgs(args []string) contracts.Command[string] {
 	return &Ping{
 		args: args,
 	}

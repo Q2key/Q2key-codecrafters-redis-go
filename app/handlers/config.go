@@ -1,24 +1,23 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/command"
-	"github.com/codecrafters-io/redis-starter-go/app/core"
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/repr"
 	"log"
 	"net"
 )
 
-func NewConfigHandler(instance *core.Instance) *ConfigHandler {
+func NewConfigHandler(instance contracts.Instance) *ConfigHandler {
 	return &ConfigHandler{
-		instance: instance,
+		instance: &instance,
 	}
 }
 
 type ConfigHandler struct {
-	instance *core.Instance
+	instance *contracts.Instance
 }
 
-func (h *ConfigHandler) Handler(conn *net.Conn, c command.Command[string]) {
+func (h *ConfigHandler) Handler(conn *net.Conn, c contracts.Command[string]) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
@@ -27,13 +26,13 @@ func (h *ConfigHandler) Handler(conn *net.Conn, c command.Command[string]) {
 	action, key := args[1], args[2]
 
 	if action == "GET" && key == "dir" {
-		resp := []string{key, h.instance.Config.GetDir()}
+		resp := []string{key, (*h.instance).GetConfig().GetDir()}
 		(*conn).Write([]byte(repr.FromStringsArray(resp)))
 		return
 	}
 
 	if action == "GET" && key == "dbfilename" {
-		resp := []string{key, h.instance.Config.GetDbFileName()}
+		resp := []string{key, (*h.instance).GetConfig().GetDbFileName()}
 		(*conn).Write([]byte(repr.FromStringsArray(resp)))
 		return
 	}

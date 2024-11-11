@@ -4,53 +4,36 @@ import (
 	"strconv"
 )
 
-const (
-	NA = iota
-	Error
-	String
-	BulkStrings
-	Number
-	Array
-)
+type ReprToken string
 
-func ParseType(q string) int {
-	fb := q[0:1]
-	// error
-	switch fb {
-	case "*":
-		return Array
-	case ":":
-		return Number
-	case "$":
-		return BulkStrings
-	default:
-		return NA
-	}
-}
+const (
+	StringToken ReprToken = "$"
+	ArrayToken  ReprToken = "*"
+)
 
 func ToArgs(q string) []string {
 	s := q[1:]
 	sli := make([]string, 0)
 	for i := 0; i < len(s); i++ {
-		if string(s[i]) == "$" {
-			ni := i + 1
-			nj := ni
+		if ReprToken(s[i]) == StringToken {
+			j := i + 1
+			k := j
 
 			for {
-				ch := string(s[nj])
+				ch := string(s[k])
 				if ch == "\r" {
 					break
 				} else {
-					nj += 1
+					k += 1
 				}
 			}
 
-			sl, err := strconv.Atoi(s[ni:nj])
+			sl, err := strconv.Atoi(s[j:k])
 			if sl == 0 || err != nil {
 				break
 			}
 
-			st := nj + 2
+			st := k + 2
 			fi := st + sl
 
 			if fi > len(s) {
