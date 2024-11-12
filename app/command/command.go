@@ -28,6 +28,9 @@ func ParseCommand(raw string) (error, *contracts.Command[string]) {
 	case "KEYS":
 		cmd := new(Keys).FromArgs(inp)
 		return nil, &cmd
+	case "INFO":
+		cmd := new(Info).FromArgs(inp)
+		return nil, &cmd
 	default:
 		output := fmt.Sprintf("Unknown command: %s", inp[0])
 		return errors.New(output), nil

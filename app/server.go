@@ -37,6 +37,7 @@ func main() {
 	pingHandler := handlers.NewPingHandler(s)
 	echoHandler := handlers.NewEchoHandler(s)
 	keysHandler := handlers.NewKeysHandler(s)
+	infoHandler := handlers.NewInfoHandler(s)
 
 	for {
 		conn, err := ln.Accept()
@@ -68,6 +69,8 @@ func main() {
 					pingHandler.Handler(&conn, *cmd)
 				case "KEYS":
 					keysHandler.Handler(&conn, *cmd)
+				case "INFO":
+					infoHandler.Handler(&conn, *cmd)
 				}
 			}
 		}()
