@@ -60,6 +60,20 @@ func ParseSecDateTimeStamp(buff *[]byte) uint64 {
 	return binary.LittleEndian.Uint64(*buff)
 }
 
+func ParseLength() {
+
+	//high := buff[x]
+	//low := buff[x+1]
+	//result := uint16(high)<<8 | uint16(low)
+	//lastFourteenBits := result & 0b0011111111111111
+
+	//high := buff[x]
+	//low := buff[x+1]
+	//result := uint16(high)<<8 | uint16(low)
+	//lastFourteenBits := result & 0b0011111111111111
+
+}
+
 func CheckByte(b byte) bool {
 	switch b {
 	case AUX:

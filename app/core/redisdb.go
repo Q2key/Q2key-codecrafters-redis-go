@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"fmt"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/rbyte"
 	"os"
@@ -44,6 +45,8 @@ func (r *RedisDB) IsFileExists(path string) bool {
 	return true
 }
 
+// Connect https://app.codecrafters.io/courses/redis/stages/jz6
+// Connect https://rdb.fnordig.de/file_format.html
 func (r *RedisDB) Connect() error {
 	if !r.IsFileExists(r.Path) {
 		return errors.New("file not exists")
@@ -74,6 +77,33 @@ func (r *RedisDB) Connect() error {
 	for i, b := range buff {
 		if b == rbyte.EOF {
 			break
+		}
+
+		if b == rbyte.RESIZEDB {
+			x := i + 1
+
+			bs := (buff[x] >> 6) & 0b00000011
+			tb := fmt.Sprintf("%02b", bs)
+			// The next 6 bits represent the length
+			if tb == "00" {
+				j += x + 8
+			}
+
+			// Read one additional byte. The combined 14 bits represent the length
+			if tb == "01" {
+				j += 8 * 2
+			}
+
+			// Discard the remaining 6 bits. The next 4 bytes from the stream represent the length
+			if tb == "10" {
+				j += 8 * 4
+			}
+
+			// The next object is encoded in a special format. The remaining 6 bits indicate the format.
+			// May be used to store numbers or Strings, see String Encoding
+			if tb == "11" {
+				j += 8 * 2
+			}
 		}
 
 		if b == rbyte.EXPIRETIMEMS {
