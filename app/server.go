@@ -17,20 +17,19 @@ var (
 )
 
 func main() {
-	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
+	s := core.NewRedisInstanceWithArgs(os.Args)
 
-	// Uncomment this block to pass the first stage
+	s.GetConfig().GetPort()
+	port := s.GetConfig().GetPort()
 
-	ln, err := net.Listen("tcp", "0.0.0.0:6379")
+	ln, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%s", port))
 	if err != nil {
-		fmt.Println("Failed to bind to port 6379")
+		fmt.Printf("\r\nFailed to bind to port %s", port)
 		os.Exit(1)
 	}
 
 	//defer ln.Close()
-
-	s := core.NewRedisInstanceWithArgs(os.Args)
 
 	configHandler := handlers.NewConfigHandler(s)
 	getHandler := handlers.NewGetHandler(s)

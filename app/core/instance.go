@@ -39,6 +39,10 @@ func NewRedisInstanceWithArgs(args []string) *Instance {
 			if a == "--dbfilename" {
 				ri.Config.SetDbFileName(v)
 			}
+
+			if a == "--port" {
+				ri.Config.SetPort(v)
+			}
 		}
 	}
 
