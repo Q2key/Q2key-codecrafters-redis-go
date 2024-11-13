@@ -86,23 +86,24 @@ func (r *RedisDB) Connect() error {
 			tb := fmt.Sprintf("%02b", bs)
 			// The next 6 bits represent the length
 			if tb == "00" {
-				j += x + 8
+				j = x + 1
 			}
 
 			// Read one additional byte. The combined 14 bits represent the length
 			if tb == "01" {
-				j += 8 * 2
+				j = x + 2
 			}
 
 			// Discard the remaining 6 bits. The next 4 bytes from the stream represent the length
 			if tb == "10" {
-				j += 8 * 4
+				j = x + 4
+				fmt.Println(tb)
 			}
 
 			// The next object is encoded in a special format. The remaining 6 bits indicate the format.
 			// May be used to store numbers or Strings, see String Encoding
 			if tb == "11" {
-				j += 8 * 2
+				j = x + 2
 			}
 		}
 
@@ -144,6 +145,8 @@ func (r *RedisDB) Connect() error {
 			}
 		}
 	}
+
+	fmt.Sprintf("%v", r.data)
 
 	return nil
 }

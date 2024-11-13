@@ -17,6 +17,11 @@ func ErrorString() string {
 	return "$-1\r\n"
 }
 
+func BulkString(input string) string {
+	l := len(input)
+	return fmt.Sprintf("$%d\r\n%s\r\n", l, input)
+}
+
 func FromString(input string) string {
 	return fmt.Sprintf("+%s\r\n", input)
 }

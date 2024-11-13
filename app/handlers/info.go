@@ -23,5 +23,5 @@ func (h *InfoHandler) Handler(conn *net.Conn, c contracts.Command[string]) {
 		log.Fatal()
 	}
 
-	(*conn).Write([]byte(repr.FromString("OK")))
+	(*conn).Write([]byte(repr.BulkString("role:master")))
 }
