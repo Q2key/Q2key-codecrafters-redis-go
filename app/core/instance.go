@@ -12,7 +12,7 @@ import (
 )
 
 type Instance struct {
-	Config *config.Config
+	Config contracts.Config
 	store  contracts.Store
 }
 
