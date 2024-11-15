@@ -7,4 +7,5 @@ type Config interface {
 	GetDir() string
 	GetDbFileName() string
 	GetPort() string
+	GetReplica() *Replica
 }

@@ -8,7 +8,11 @@ import (
 )
 
 func ParseCommand(raw string) (error, *contracts.Command[string]) {
-	inp := repr.ToArgs(raw)
+	err, inp := repr.ToArgs(raw)
+	if err != nil {
+		return err, nil
+	}
+
 	switch inp[0] {
 	case "GET":
 		cmd := new(Get).FromArgs(inp)

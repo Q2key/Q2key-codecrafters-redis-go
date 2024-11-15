@@ -23,5 +23,11 @@ func (h *InfoHandler) Handler(conn *net.Conn, c contracts.Command[string]) {
 		log.Fatal()
 	}
 
-	(*conn).Write([]byte(repr.BulkString("role:master")))
+	r := h.instance.Config.GetReplica()
+	role := "role:master"
+	if r != nil {
+		role = "role:slave"
+	}
+
+	(*conn).Write([]byte(repr.BulkString(role)))
 }

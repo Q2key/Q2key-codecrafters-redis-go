@@ -25,11 +25,8 @@ func main() {
 
 	ln, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%s", port))
 	if err != nil {
-		fmt.Printf("\r\nFailed to bind to port %s", port)
-		os.Exit(1)
+		log.Fatalf("\r\nFailed to bind to port %s", port)
 	}
-
-	//defer ln.Close()
 
 	configHandler := handlers.NewConfigHandler(s)
 	getHandler := handlers.NewGetHandler(s)
@@ -42,7 +39,7 @@ func main() {
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			fmt.Println("Failed to accept connection")
+			handlers.HandleError(&conn, err)
 			continue
 		}
 
@@ -53,7 +50,8 @@ func main() {
 				// query without value type mark
 				err, cmd := command.ParseCommand(string(buff))
 				if err != nil {
-					log.Fatal("redis command error:", err)
+					handlers.HandleError(&conn, err)
+					continue
 				}
 
 				switch (*cmd).Name() {

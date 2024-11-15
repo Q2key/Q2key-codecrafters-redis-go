@@ -1,6 +1,7 @@
 package repr
 
 import (
+	"errors"
 	"strconv"
 )
 
@@ -11,10 +12,20 @@ const (
 	ArrayToken  ReprToken = "*"
 )
 
-func ToArgs(q string) []string {
+func ToArgs(q string) (error, []string) {
+
+	if len(q) == 0 {
+		return errors.New("empty string"), []string{}
+	}
+
+	if q[0] != '*' {
+		return errors.New("invalid argument"), []string{}
+	}
+
 	s := q[1:]
+	n := len(s)
 	sli := make([]string, 0)
-	for i := 0; i < len(s); i++ {
+	for i := 0; i < n; i++ {
 		if ReprToken(s[i]) == StringToken {
 			j := i + 1
 			k := j
@@ -44,5 +55,5 @@ func ToArgs(q string) []string {
 		}
 	}
 
-	return sli
+	return nil, sli
 }

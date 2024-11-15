@@ -7,6 +7,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/rbyte"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -42,6 +43,18 @@ func NewRedisInstanceWithArgs(args []string) *Instance {
 
 			if a == "--port" {
 				ri.Config.SetPort(v)
+			}
+
+			//todo think about validation
+			if a == "--replicaof" && len(a) > 3 {
+				v := args[i+1]
+				parts := strings.Split(v, " ")
+				fmt.Println("Replica host: ", parts[0])
+				fmt.Println("Replica port: ", parts[1])
+				ri.Config.SetReplica(&contracts.Replica{
+					OriginHost: parts[0],
+					OriginPort: parts[1],
+				})
 			}
 		}
 	}
