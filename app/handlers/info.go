@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"log"
+	"net"
+
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/repr"
-	"log"
-	"net"
 )
 
 func NewInfoHandler(store *core.Instance) *InfoHandler {
@@ -24,10 +25,18 @@ func (h *InfoHandler) Handler(conn *net.Conn, c contracts.Command[string]) {
 	}
 
 	r := h.instance.Config.GetReplica()
-	role := "role:master"
+	res := "role:master"
 	if r != nil {
-		role = "role:slave"
+		res = "role:slave"
 	}
 
-	(*conn).Write([]byte(repr.BulkString(role)))
+	args := c.Args()
+	for _, v := range args {
+		if v == "replication" {
+			res += ":master_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
+			res += ":master_repl_offset:0"
+		}
+	}
+
+	(*conn).Write([]byte(repr.BulkString(res)))
 }
