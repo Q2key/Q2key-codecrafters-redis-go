@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/codecrafters-io/redis-starter-go/app/command"
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/handlers"
+	"github.com/codecrafters-io/redis-starter-go/app/repr"
 	"log"
 	"net"
 	"os"
@@ -16,25 +18,21 @@ var (
 	_ = os.Exit
 )
 
-func main() {
-	fmt.Println("Logs from your program will appear here!")
-	s := core.NewRedisInstanceWithArgs(os.Args)
-
-	s.GetConfig().GetPort()
-	port := s.GetConfig().GetPort()
+func RunInstance(ins contracts.Instance) {
+	port := ins.GetConfig().GetPort()
 
 	ln, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%s", port))
 	if err != nil {
 		log.Fatalf("\r\nFailed to bind to port %s", port)
 	}
 
-	configHandler := handlers.NewConfigHandler(s)
-	getHandler := handlers.NewGetHandler(s)
-	setHandler := handlers.NewSetHandler(s)
-	pingHandler := handlers.NewPingHandler(s)
-	echoHandler := handlers.NewEchoHandler(s)
-	keysHandler := handlers.NewKeysHandler(s)
-	infoHandler := handlers.NewInfoHandler(s)
+	configHandler := handlers.NewConfigHandler(ins)
+	getHandler := handlers.NewGetHandler(ins)
+	setHandler := handlers.NewSetHandler(ins)
+	pingHandler := handlers.NewPingHandler(ins)
+	echoHandler := handlers.NewEchoHandler(ins)
+	keysHandler := handlers.NewKeysHandler(ins)
+	infoHandler := handlers.NewInfoHandler(ins)
 
 	for {
 		conn, err := ln.Accept()
@@ -47,7 +45,6 @@ func main() {
 			buff := make([]byte, 1024*8)
 			for {
 				conn.Read(buff)
-				// query without value type mark
 				err, cmd := command.ParseCommand(string(buff))
 				if err != nil {
 					handlers.HandleError(&conn, err)
@@ -56,21 +53,30 @@ func main() {
 
 				switch (*cmd).Name() {
 				case "CONFIG":
-					configHandler.Handler(&conn, *cmd)
+					configHandler.Handle(&conn, *cmd)
 				case "GET":
-					getHandler.Handler(&conn, *cmd)
+					getHandler.Handle(&conn, *cmd)
 				case "SET":
-					setHandler.Handler(&conn, *cmd)
+					setHandler.Handle(&conn, *cmd)
 				case "ECHO":
-					echoHandler.Handler(&conn, *cmd)
+					echoHandler.Handle(&conn, *cmd)
 				case "PING":
-					pingHandler.Handler(&conn, *cmd)
+					pingHandler.Handle(&conn, *cmd)
 				case "KEYS":
-					keysHandler.Handler(&conn, *cmd)
+					keysHandler.Handle(&conn, *cmd)
 				case "INFO":
-					infoHandler.Handler(&conn, *cmd)
+					infoHandler.Handle(&conn, *cmd)
 				}
 			}
 		}()
 	}
+}
+
+func main() {
+	fmt.Println("Logs from your program will appear here!")
+
+	cfg := repr.ConfigFromArgs(os.Args)
+	ri := core.NewRedisInstance(cfg)
+
+	RunInstance(ri)
 }

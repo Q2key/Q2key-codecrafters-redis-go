@@ -2,12 +2,10 @@ package core
 
 import (
 	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/rbyte"
 	"log"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -16,65 +14,30 @@ type Instance struct {
 	store  contracts.Store
 }
 
-func NewRedisInstance() *Instance {
-	return &Instance{
+func NewRedisInstance(config contracts.Config) *Instance {
+	ins := &Instance{
 		store:  contracts.Store{},
-		Config: config.NewConfig("", ""),
+		Config: config,
 	}
+
+	ins.TryConnectDb()
+
+	return ins
 }
 
-func NewRedisInstanceWithArgs(args []string) *Instance {
-	ri := NewRedisInstance()
-	if len(args) > 1 {
-		for i := 1; i < len(args); i++ {
-			a := args[i]
-			if i+1 == len(args) {
-				break
-			}
-
-			v := args[i+1]
-			if a == "--dir" {
-				ri.Config.SetDir(v)
-			}
-
-			if a == "--dbfilename" {
-				ri.Config.SetDbFileName(v)
-			}
-
-			if a == "--port" {
-				ri.Config.SetPort(v)
-			}
-
-			//todo think about validation
-			if a == "--replicaof" && len(a) > 3 {
-				v := args[i+1]
-				parts := strings.Split(v, " ")
-				fmt.Println("Replica host: ", parts[0])
-				fmt.Println("Replica port: ", parts[1])
-				ri.Config.SetReplica(&contracts.Replica{
-					OriginHost: parts[0],
-					OriginPort: parts[1],
-				})
-			}
-		}
+func (r *Instance) TryConnectDb() {
+	if r.Config.GetDbFileName() == "" || r.Config.GetDir() == "" {
+		return
 	}
 
-	if ri.Config.GetDir() == "" {
-		return ri
+	path := fmt.Sprintf("%s/%s", r.Config.GetDir(), r.Config.GetDbFileName())
+
+	db := NewRedisDB(path)
+	if !db.IsFileExists(r.Config.GetDbFileName()) {
+		_ = os.Mkdir(r.Config.GetDir(), os.ModeDir)
 	}
 
-	if ri.Config.GetDir() == "" {
-		return ri
-	}
-
-	dbpath := fmt.Sprintf("%s/%s", ri.Config.GetDir(), ri.Config.GetDbFileName())
-
-	db := NewRedisDB(dbpath)
-	if !db.IsFileExists(ri.Config.GetDbFileName()) {
-		_ = os.Mkdir(ri.Config.GetDir(), os.ModeDir)
-	}
-
-	if !db.IsFileExists(dbpath) {
+	if !db.IsFileExists(path) {
 		err := db.Create()
 		if err != nil {
 			log.Fatal(err)
@@ -87,14 +50,12 @@ func NewRedisInstanceWithArgs(args []string) *Instance {
 	}
 
 	for k, v := range db.GetData() {
-		ri.Set(k, v)
+		r.Set(k, v)
 		exp, ok := db.GetExpires()[k]
 		if ok {
-			ri.SetExpiredAt(k, exp)
+			r.SetExpiredAt(k, exp)
 		}
 	}
-
-	return ri
 }
 
 func (r *Instance) Get(key string) contracts.Value {
@@ -107,7 +68,7 @@ func (r *Instance) Set(key string, value string) {
 	}
 }
 
-func (r *Instance) Keys(token string) []string {
+func (r *Instance) GetKeys(token string) []string {
 	res := make([]string, 0)
 	switch token {
 	case "*":

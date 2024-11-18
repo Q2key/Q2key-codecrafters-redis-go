@@ -2,7 +2,10 @@ package repr
 
 import (
 	"errors"
+	"github.com/codecrafters-io/redis-starter-go/app/config"
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"strconv"
+	"strings"
 )
 
 type ReprToken string
@@ -11,6 +14,44 @@ const (
 	StringToken ReprToken = "$"
 	ArrayToken  ReprToken = "*"
 )
+
+func ConfigFromArgs(args []string) contracts.Config {
+	cfg := config.NewConfig("", "")
+
+	if len(args) > 1 {
+		for i := 1; i < len(args); i++ {
+			a := args[i]
+			if i+1 == len(args) {
+				break
+			}
+
+			v := args[i+1]
+			if a == "--dir" {
+				cfg.SetDir(v)
+			}
+
+			if a == "--dbfilename" {
+				cfg.SetDbFileName(v)
+			}
+
+			if a == "--port" {
+				cfg.SetPort(v)
+			}
+
+			//todo think about validation
+			if a == "--replicaof" && len(a) > 3 {
+				v := args[i+1]
+				parts := strings.Split(v, " ")
+				cfg.SetReplica(&contracts.Replica{
+					OriginHost: parts[0],
+					OriginPort: parts[1],
+				})
+			}
+		}
+	}
+
+	return cfg
+}
 
 func ToArgs(q string) (error, []string) {
 

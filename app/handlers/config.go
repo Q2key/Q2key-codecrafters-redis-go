@@ -17,7 +17,7 @@ type ConfigHandler struct {
 	instance *contracts.Instance
 }
 
-func (h *ConfigHandler) Handler(conn *net.Conn, c contracts.Command[string]) {
+func (h *ConfigHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}

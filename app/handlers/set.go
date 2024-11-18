@@ -2,24 +2,23 @@ package handlers
 
 import (
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
-	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/repr"
 	"log"
 	"net"
 	"strconv"
 )
 
-func NewSetHandler(store *core.Instance) *SetHandler {
+func NewSetHandler(instance contracts.Instance) *SetHandler {
 	return &SetHandler{
-		instance: store,
+		instance: instance,
 	}
 }
 
 type SetHandler struct {
-	instance *core.Instance
+	instance contracts.Instance
 }
 
-func (h *SetHandler) Handler(conn *net.Conn, c contracts.Command[string]) {
+func (h *SetHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}

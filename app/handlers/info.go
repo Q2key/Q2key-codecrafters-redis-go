@@ -5,26 +5,25 @@ import (
 	"net"
 
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
-	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/repr"
 )
 
-func NewInfoHandler(store *core.Instance) *InfoHandler {
+func NewInfoHandler(instance contracts.Instance) *InfoHandler {
 	return &InfoHandler{
-		instance: store,
+		instance: instance,
 	}
 }
 
 type InfoHandler struct {
-	instance *core.Instance
+	instance contracts.Instance
 }
 
-func (h *InfoHandler) Handler(conn *net.Conn, c contracts.Command[string]) {
+func (h *InfoHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
 
-	r := h.instance.Config.GetReplica()
+	r := h.instance.GetConfig().GetReplica()
 	res := "role:master"
 	if r != nil {
 		res = "role:slave"
