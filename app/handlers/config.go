@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
-	"github.com/codecrafters-io/redis-starter-go/app/mappers"
+	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"log"
 	"net"
 )
@@ -27,15 +27,15 @@ func (h *ConfigHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
 
 	if action == "GET" && key == "dir" {
 		resp := []string{key, (*h.instance).GetConfig().GetDir()}
-		(*conn).Write([]byte(mappers.FromStringsArray(resp)))
+		(*conn).Write([]byte(core.FromStringsArray(resp)))
 		return
 	}
 
 	if action == "GET" && key == "dbfilename" {
 		resp := []string{key, (*h.instance).GetConfig().GetDbFileName()}
-		(*conn).Write([]byte(mappers.FromStringsArray(resp)))
+		(*conn).Write([]byte(core.FromStringsArray(resp)))
 		return
 	}
 
-	(*conn).Write([]byte(mappers.ErrorString()))
+	(*conn).Write([]byte(core.ErrorString()))
 }

@@ -1,11 +1,11 @@
 package handlers
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"log"
 	"net"
 
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
-	"github.com/codecrafters-io/redis-starter-go/app/mappers"
 )
 
 func NewInfoHandler(instance contracts.Instance) *InfoHandler {
@@ -37,5 +37,5 @@ func (h *InfoHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
 		}
 	}
 
-	(*conn).Write([]byte(mappers.BulkString(res)))
+	(*conn).Write([]byte(core.BulkString(res)))
 }

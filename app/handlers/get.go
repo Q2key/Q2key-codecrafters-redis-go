@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
-	"github.com/codecrafters-io/redis-starter-go/app/mappers"
+	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"log"
 	"net"
 )
@@ -26,8 +26,8 @@ func (h *GetHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
 	val := (h.instance).Get(key)
 
 	if val.IsExpired() {
-		(*conn).Write([]byte(mappers.ErrorString()))
+		(*conn).Write([]byte(core.ErrorString()))
 	} else {
-		(*conn).Write([]byte(mappers.FromString(val.GetValue())))
+		(*conn).Write([]byte(core.FromString(val.GetValue())))
 	}
 }

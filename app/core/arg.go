@@ -1,9 +1,8 @@
-package mappers
+package core
 
 import (
 	"errors"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
-	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"strconv"
 	"strings"
 )
@@ -16,7 +15,7 @@ const (
 )
 
 func ConfigFromArgs(args []string) contracts.Config {
-	cfg := core.NewConfig("", "")
+	cfg := NewConfig("", "")
 
 	if len(args) > 1 {
 		for i := 1; i < len(args); i++ {
@@ -42,10 +41,17 @@ func ConfigFromArgs(args []string) contracts.Config {
 			if a == "--replicaof" && len(a) > 3 {
 				v := args[i+1]
 				parts := strings.Split(v, " ")
-				cfg.SetReplica(&contracts.Replica{
+
+				replica := &contracts.Replica{
 					OriginHost: parts[0],
 					OriginPort: parts[1],
-				})
+				}
+
+				conn := ConnectToRedisInstance(replica.OriginHost, replica.OriginPort)
+				SendRedisMessage(conn, "*1\r\n$4\r\nPING\r\n")
+				if conn != nil {
+					cfg.SetReplica(replica)
+				}
 			}
 		}
 	}

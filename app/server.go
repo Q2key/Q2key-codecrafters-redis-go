@@ -6,7 +6,6 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/handlers"
-	"github.com/codecrafters-io/redis-starter-go/app/mappers"
 	"log"
 	"net"
 	"os"
@@ -77,7 +76,7 @@ func RunInstance(ins contracts.Instance) {
 func main() {
 	fmt.Println("Logs from your program will appear here!")
 
-	cfg := mappers.ConfigFromArgs(os.Args)
+	cfg := core.ConfigFromArgs(os.Args)
 	ri := core.NewRedisInstance(cfg)
 
 	RunInstance(ri)
