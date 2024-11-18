@@ -1,7 +1,6 @@
 package core
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"testing"
 	"time"
@@ -134,7 +133,7 @@ func TestShouldNotBeExpired4000(t *testing.T) {
 func TestReturnCorrectConfig(t *testing.T) {
 	s := &Instance{
 		store:  make(map[string]contracts.Value),
-		Config: config.NewConfig("temp", "develop"),
+		Config: NewConfig("temp", "develop"),
 	}
 
 	s.Config.SetDbFileName("develop")

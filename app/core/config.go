@@ -1,4 +1,4 @@
-package config
+package core
 
 import "github.com/codecrafters-io/redis-starter-go/app/contracts"
 

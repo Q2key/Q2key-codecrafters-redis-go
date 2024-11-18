@@ -1,9 +1,9 @@
-package repr
+package mappers
 
 import (
 	"errors"
-	"github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
+	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"strconv"
 	"strings"
 )
@@ -16,7 +16,7 @@ const (
 )
 
 func ConfigFromArgs(args []string) contracts.Config {
-	cfg := config.NewConfig("", "")
+	cfg := core.NewConfig("", "")
 
 	if len(args) > 1 {
 		for i := 1; i < len(args); i++ {

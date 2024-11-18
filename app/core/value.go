@@ -4,12 +4,12 @@ import (
 	"time"
 )
 
-type Value struct {
+type InstanceValue struct {
 	Value   string
 	Expired *time.Time
 }
 
-func (r *Value) IsExpired() bool {
+func (r *InstanceValue) IsExpired() bool {
 	if r.Expired == nil {
 		return false
 	}
@@ -17,10 +17,10 @@ func (r *Value) IsExpired() bool {
 	return r.Expired.UnixNano() <= time.Now().UTC().UnixNano()
 }
 
-func (r *Value) SetExpired(expired time.Time) {
+func (r *InstanceValue) SetExpired(expired time.Time) {
 	r.Expired = &expired
 }
 
-func (r *Value) GetValue() string {
+func (r *InstanceValue) GetValue() string {
 	return r.Value
 }

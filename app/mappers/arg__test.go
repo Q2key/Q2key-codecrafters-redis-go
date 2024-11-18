@@ -1,4 +1,4 @@
-package repr
+package mappers
 
 import (
 	"testing"

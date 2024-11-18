@@ -63,7 +63,7 @@ func (r *Instance) Get(key string) contracts.Value {
 }
 
 func (r *Instance) Set(key string, value string) {
-	r.store[key] = &Value{
+	r.store[key] = &InstanceValue{
 		Value: value,
 	}
 }

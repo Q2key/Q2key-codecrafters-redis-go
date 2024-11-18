@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/command"
+	"github.com/codecrafters-io/redis-starter-go/app/commands"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/handlers"
-	"github.com/codecrafters-io/redis-starter-go/app/repr"
+	"github.com/codecrafters-io/redis-starter-go/app/mappers"
 	"log"
 	"net"
 	"os"
@@ -41,11 +41,13 @@ func RunInstance(ins contracts.Instance) {
 			continue
 		}
 
+		//todo: implement handle connection
+
 		go func() {
 			buff := make([]byte, 1024*8)
 			for {
 				conn.Read(buff)
-				err, cmd := command.ParseCommand(string(buff))
+				err, cmd := commands.ParseCommand(string(buff))
 				if err != nil {
 					handlers.HandleError(&conn, err)
 					continue
@@ -75,7 +77,7 @@ func RunInstance(ins contracts.Instance) {
 func main() {
 	fmt.Println("Logs from your program will appear here!")
 
-	cfg := repr.ConfigFromArgs(os.Args)
+	cfg := mappers.ConfigFromArgs(os.Args)
 	ri := core.NewRedisInstance(cfg)
 
 	RunInstance(ri)

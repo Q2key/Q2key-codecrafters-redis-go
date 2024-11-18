@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/repr"
+	"github.com/codecrafters-io/redis-starter-go/app/mappers"
 	"net"
 )
 
 func HandleError(conn *net.Conn, error error) {
-	(*conn).Write([]byte(repr.ErrorStringWithMessage(error)))
+	(*conn).Write([]byte(mappers.ErrorStringWithMessage(error)))
 }

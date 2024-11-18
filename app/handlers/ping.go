@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
-	"github.com/codecrafters-io/redis-starter-go/app/repr"
+	"github.com/codecrafters-io/redis-starter-go/app/mappers"
 	"log"
 	"net"
 )
@@ -22,5 +22,5 @@ func (h *PingHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
 		log.Fatal()
 	}
 
-	(*conn).Write([]byte(repr.FromString("PONG")))
+	(*conn).Write([]byte(mappers.FromString("PONG")))
 }
