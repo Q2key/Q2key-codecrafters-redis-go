@@ -7,7 +7,8 @@ import (
 )
 
 func TestGetSetValue(t *testing.T) {
-	s := NewRedisInstance()
+	cfg := NewConfig("", "")
+	s := NewRedisInstance(cfg)
 
 	s.Set("Key0", "Value0")
 	s.Set("Key1", "Value1")
