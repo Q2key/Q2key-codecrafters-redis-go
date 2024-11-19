@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/codecrafters-io/redis-starter-go/app/adapters"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"log"
@@ -22,6 +23,7 @@ func (h *PsyncHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
 		log.Fatal()
 	}
 
-	resp := adapters.FromString("FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n")
+	mess := fmt.Sprintf("FULLRESYNC %s 0", h.instance.GetReplicaId())
+	resp := adapters.FromString(mess)
 	(*conn).Write([]byte(resp))
 }

@@ -10,14 +10,16 @@ import (
 )
 
 type Instance struct {
-	Config contracts.Config
-	store  contracts.Store
+	ReplicaId string
+	Config    contracts.Config
+	store     contracts.Store
 }
 
 func NewRedisInstance(config contracts.Config) *Instance {
 	ins := &Instance{
-		store:  contracts.Store{},
-		Config: config,
+		ReplicaId: "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",
+		store:     contracts.Store{},
+		Config:    config,
 	}
 
 	ins.TryConnectDb()
@@ -60,6 +62,10 @@ func (r *Instance) TryConnectDb() {
 
 func (r *Instance) Get(key string) contracts.Value {
 	return r.store[key]
+}
+
+func (r *Instance) GetReplicaId() string {
+	return r.ReplicaId
 }
 
 func (r *Instance) Set(key string, value string) {
