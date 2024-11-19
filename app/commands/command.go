@@ -38,6 +38,9 @@ func ParseCommand(raw string) (error, *contracts.Command[string]) {
 	case "REPLCONF":
 		cmd := new(ReplConf).FromArgs(inp)
 		return nil, &cmd
+	case "PSYNC":
+		cmd := new(Psync).FromArgs(inp)
+		return nil, &cmd
 	default:
 		output := fmt.Sprintf("Unknown command: %s", inp[0])
 		return errors.New(output), nil
