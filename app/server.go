@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/codecrafters-io/redis-starter-go/app/adapters"
 	"github.com/codecrafters-io/redis-starter-go/app/commands"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
@@ -76,7 +77,7 @@ func RunInstance(ins contracts.Instance) {
 func main() {
 	fmt.Println("Logs from your program will appear here!")
 
-	cfg := core.ConfigFromArgs(os.Args)
+	cfg := adapters.ConfigFromArgs(os.Args)
 	ri := core.NewRedisInstance(cfg)
 
 	RunInstance(ri)

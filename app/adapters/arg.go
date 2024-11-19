@@ -1,8 +1,12 @@
-package core
+package adapters
 
 import (
 	"errors"
+	"fmt"
+	"github.com/codecrafters-io/redis-starter-go/app/client"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
+	"github.com/codecrafters-io/redis-starter-go/app/core"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -14,8 +18,14 @@ const (
 	ArrayToken  ReprToken = "*"
 )
 
+func GetArgsMap(args []string) map[string]string {
+	argmap := make(map[string]string)
+
+	return argmap
+}
+
 func ConfigFromArgs(args []string) contracts.Config {
-	cfg := NewConfig("", "")
+	cfg := core.NewConfig("", "")
 
 	if len(args) > 1 {
 		for i := 1; i < len(args); i++ {
@@ -37,21 +47,37 @@ func ConfigFromArgs(args []string) contracts.Config {
 				cfg.SetPort(v)
 			}
 
-			//todo think about validation
 			if a == "--replicaof" && len(a) > 3 {
-				v := args[i+1]
-				parts := strings.Split(v, " ")
-
+				parts := strings.Split(args[i+1], " ")
 				replica := &contracts.Replica{
 					OriginHost: parts[0],
 					OriginPort: parts[1],
 				}
 
-				conn := ConnectToRedisInstance(replica.OriginHost, replica.OriginPort)
-				SendRedisMessage(conn, "*1\r\n$4\r\nPING\r\n")
-				if conn != nil {
-					cfg.SetReplica(replica)
+				tcp := client.NewTcpClient(replica.OriginHost, replica.OriginPort)
+				err := tcp.Connect()
+				if err != nil {
+					log.Fatal(err)
 				}
+
+				buff, err := tcp.SendBytes("*1\r\n$4\r\nPING\r\n")
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				if buff != nil {
+					fmt.Printf("RECEIVED FROM MASTER: %s", string(*buff))
+
+					req := FromStringsArray([]string{"REPLCONF", "listening-port", cfg.GetPort()})
+					_, _ = tcp.SendBytes(req)
+
+					req = FromStringsArray([]string{"REPLCONF", "capa", "psync2"})
+					_, _ = tcp.SendBytes(req)
+
+					tcp.Disconnect()
+				}
+
+				cfg.SetReplica(replica)
 			}
 		}
 	}

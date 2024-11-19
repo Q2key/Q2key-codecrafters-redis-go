@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/core"
+	"github.com/codecrafters-io/redis-starter-go/app/adapters"
 	"log"
 	"net"
 
@@ -37,5 +37,5 @@ func (h *InfoHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
 		}
 	}
 
-	(*conn).Write([]byte(core.BulkString(res)))
+	(*conn).Write([]byte(adapters.BulkString(res)))
 }
