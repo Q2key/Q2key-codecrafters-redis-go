@@ -33,6 +33,7 @@ func RunInstance(ins contracts.Instance) {
 	echoHandler := handlers.NewEchoHandler(ins)
 	keysHandler := handlers.NewKeysHandler(ins)
 	infoHandler := handlers.NewInfoHandler(ins)
+	replconfHandler := handlers.NewReplConfHandler(ins)
 
 	for {
 		conn, err := ln.Accept()
@@ -68,6 +69,8 @@ func RunInstance(ins contracts.Instance) {
 					keysHandler.Handle(&conn, *cmd)
 				case "INFO":
 					infoHandler.Handle(&conn, *cmd)
+				case "REPLCONF":
+					replconfHandler.Handle(&conn, *cmd)
 				}
 			}
 		}()

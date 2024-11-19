@@ -22,7 +22,10 @@ func NewTcpClient(host string, port string) *TcpClient {
 }
 
 func (r *TcpClient) Disconnect() {
-	r.conn.Close()
+	err := r.conn.Close()
+	if err != nil {
+		return
+	}
 }
 
 func (r *TcpClient) Connect() error {
