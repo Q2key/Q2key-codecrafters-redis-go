@@ -2,7 +2,6 @@ package adapters
 
 import (
 	"errors"
-	"fmt"
 	"github.com/codecrafters-io/redis-starter-go/app/client"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
@@ -60,22 +59,21 @@ func ConfigFromArgs(args []string) contracts.Config {
 					log.Fatal(err)
 				}
 
-				buff, err := tcp.SendBytes("*1\r\n$4\r\nPING\r\n")
-				if err != nil {
-					log.Fatal(err)
-				}
+				//step1
+				_, _ = tcp.SendBytes("*1\r\n$4\r\nPING\r\n")
 
-				if buff != nil {
-					fmt.Printf("RECEIVED FROM MASTER: %s", string(*buff))
+				//step2
+				req := FromStringsArray([]string{"REPLCONF", "listening-port", cfg.GetPort()})
+				_, _ = tcp.SendBytes(req)
 
-					req := FromStringsArray([]string{"REPLCONF", "listening-port", cfg.GetPort()})
-					_, _ = tcp.SendBytes(req)
+				req = FromStringsArray([]string{"REPLCONF", "capa", "psync2"})
+				_, _ = tcp.SendBytes(req)
 
-					req = FromStringsArray([]string{"REPLCONF", "capa", "psync2"})
-					_, _ = tcp.SendBytes(req)
+				//step3
+				req = FromStringsArray([]string{"PSYNC", "?", "-1"})
+				_, _ = tcp.SendBytes(req)
 
-					tcp.Disconnect()
-				}
+				tcp.Disconnect()
 
 				cfg.SetReplica(replica)
 			}
