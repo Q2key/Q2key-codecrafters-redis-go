@@ -17,67 +17,62 @@ const (
 	ArrayToken  ReprToken = "*"
 )
 
-func GetArgsMap(args []string) map[string]string {
-	argmap := make(map[string]string)
+func GetArgsMap(args []string) map[string][]string {
+	smap := map[string][]string{}
+	for i := 0; i < len(args); i++ {
+		if args[i][0] == '-' {
+			smap[args[i]] = strings.Split(args[i+1], " ")
+		}
+	}
 
-	return argmap
+	return smap
 }
 
 func ConfigFromArgs(args []string) contracts.Config {
-	cfg := core.NewConfig("", "")
+	cfg := core.NewConfig()
 
-	if len(args) > 1 {
-		for i := 1; i < len(args); i++ {
-			a := args[i]
-			if i+1 == len(args) {
-				break
-			}
+	argmap := GetArgsMap(args)
 
-			v := args[i+1]
-			if a == "--dir" {
-				cfg.SetDir(v)
-			}
+	val, ok := argmap["--dir"]
+	if ok && len(val) > 0 {
+		cfg.SetDir(val[0])
+	}
 
-			if a == "--dbfilename" {
-				cfg.SetDbFileName(v)
-			}
+	val, ok = argmap["--port"]
+	if ok && len(val) > 0 {
+		cfg.SetDir(val[0])
+	}
 
-			if a == "--port" {
-				cfg.SetPort(v)
-			}
-
-			if a == "--replicaof" && len(a) > 3 {
-				parts := strings.Split(args[i+1], " ")
-				replica := &contracts.Replica{
-					OriginHost: parts[0],
-					OriginPort: parts[1],
-				}
-
-				tcp := client.NewTcpClient(replica.OriginHost, replica.OriginPort)
-				err := tcp.Connect()
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				//step1
-				_, _ = tcp.SendBytes("*1\r\n$4\r\nPING\r\n")
-
-				//step2
-				req := FromStringsArray([]string{"REPLCONF", "listening-port", cfg.GetPort()})
-				_, _ = tcp.SendBytes(req)
-
-				req = FromStringsArray([]string{"REPLCONF", "capa", "psync2"})
-				_, _ = tcp.SendBytes(req)
-
-				//step3
-				req = FromStringsArray([]string{"PSYNC", "?", "-1"})
-				_, _ = tcp.SendBytes(req)
-
-				tcp.Disconnect()
-
-				cfg.SetReplica(replica)
-			}
+	val, ok = argmap["--replicaof"]
+	if ok && len(val) == 2 {
+		replica := &contracts.Replica{
+			OriginHost: val[0],
+			OriginPort: val[1],
 		}
+
+		tcp := client.NewTcpClient(replica.OriginHost, replica.OriginPort)
+		err := tcp.Connect()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		//step1
+		_, _ = tcp.SendBytes("*1\r\n$4\r\nPING\r\n")
+
+		//step2
+		req := FromStringsArray([]string{"REPLCONF", "listening-port", cfg.GetPort()})
+		_, _ = tcp.SendBytes(req)
+
+		req = FromStringsArray([]string{"REPLCONF", "capa", "psync2"})
+		_, _ = tcp.SendBytes(req)
+
+		//step3
+		req = FromStringsArray([]string{"PSYNC", "?", "-1"})
+		_, _ = tcp.SendBytes(req)
+
+		tcp.Disconnect()
+
+		cfg.SetReplica(replica)
 	}
 
 	return cfg

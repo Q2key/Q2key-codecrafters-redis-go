@@ -15,9 +15,11 @@ type Instance struct {
 	store     contracts.Store
 }
 
+const FakeReplicaId = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
+
 func NewRedisInstance(config contracts.Config) *Instance {
 	ins := &Instance{
-		ReplicaId: "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",
+		ReplicaId: FakeReplicaId,
 		store:     contracts.Store{},
 		Config:    config,
 	}

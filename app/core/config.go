@@ -11,10 +11,10 @@ type Config struct {
 
 const DefaultPort = "6379"
 
-func NewConfig(dir, dbfilename string) *Config {
+func NewConfig() *Config {
 	return &Config{
-		dir:        dir,
-		dbfilename: dbfilename,
+		dir:        "",
+		dbfilename: "",
 		port:       DefaultPort,
 	}
 }

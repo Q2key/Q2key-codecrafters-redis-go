@@ -7,7 +7,7 @@ import (
 )
 
 func TestGetSetValue(t *testing.T) {
-	cfg := NewConfig("", "")
+	cfg := NewConfig()
 	s := NewRedisInstance(cfg)
 
 	s.Set("Key0", "Value0")
@@ -134,10 +134,12 @@ func TestShouldNotBeExpired4000(t *testing.T) {
 func TestReturnCorrectConfig(t *testing.T) {
 	s := &Instance{
 		store:  make(map[string]contracts.Value),
-		Config: NewConfig("temp", "develop"),
+		Config: NewConfig(),
 	}
 
 	s.Config.SetDbFileName("develop")
+	s.Config.SetDir("temp")
+
 	if s.Config.GetDbFileName() != "develop" {
 		t.Fail()
 	}
