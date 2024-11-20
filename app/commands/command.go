@@ -3,12 +3,12 @@ package commands
 import (
 	"errors"
 	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/adapters"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
+	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
 
 func ParseCommand(raw string) (error, *contracts.Command[string]) {
-	err, inp := adapters.ToArgs(raw)
+	err, inp := core.ToArgs(raw)
 	if err != nil {
 		return err, nil
 	}

@@ -1,4 +1,4 @@
-package rbyte
+package core
 
 import (
 	"encoding/binary"

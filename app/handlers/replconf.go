@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/adapters"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
+	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"log"
 	"net"
 )
@@ -22,5 +22,5 @@ func (h *ReplConfHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
 		log.Fatal()
 	}
 
-	(*conn).Write([]byte(adapters.FromString("OK")))
+	(*conn).Write([]byte(core.FromString("OK")))
 }

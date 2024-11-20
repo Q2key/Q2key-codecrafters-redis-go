@@ -9,4 +9,5 @@ type Config interface {
 	GetDbFileName() string
 	GetPort() string
 	GetReplica() *Replica
+	FromArguments([]string) *Config
 }

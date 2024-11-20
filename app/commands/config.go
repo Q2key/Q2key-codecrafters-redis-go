@@ -1,6 +1,8 @@
 package commands
 
-import "github.com/codecrafters-io/redis-starter-go/app/contracts"
+import (
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
+)
 
 type Config struct {
 	args []string

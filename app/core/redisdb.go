@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
-	"github.com/codecrafters-io/redis-starter-go/app/rbyte"
 	"os"
 )
 
@@ -75,11 +74,11 @@ func (r *RedisDB) Connect() error {
 
 	j := 0
 	for i, b := range buff {
-		if b == rbyte.EOF {
+		if b == EOF {
 			break
 		}
 
-		if b == rbyte.RESIZEDB {
+		if b == RESIZEDB {
 			x := i + 1
 
 			bs := (buff[x] >> 6) & 0b00000011
@@ -107,13 +106,13 @@ func (r *RedisDB) Connect() error {
 			}
 		}
 
-		if b == rbyte.EXPIRETIMEMS {
+		if b == EXPIRETIMEMS {
 			x := i + 1
 			y := x + 8
 
 			sb := buff[x:y]
-			exp := rbyte.ParseMSecDateTimeStamp(&sb)
-			ok, key, _ := rbyte.ParseValuePair(y+1, &buff)
+			exp := ParseMSecDateTimeStamp(&sb)
+			ok, key, _ := ParseValuePair(y+1, &buff)
 			if ok {
 				r.expires[*key] = exp
 			}
@@ -121,12 +120,12 @@ func (r *RedisDB) Connect() error {
 			j = y
 		}
 
-		if b == rbyte.EXPIRETIME {
+		if b == EXPIRETIME {
 			x := i + 1
 			y := x + 4
 			sb := buff[x:y]
-			exp := rbyte.ParseSecDateTimeStamp(&sb)
-			ok, key, _ := rbyte.ParseValuePair(y+1, &buff)
+			exp := ParseSecDateTimeStamp(&sb)
+			ok, key, _ := ParseValuePair(y+1, &buff)
 			if ok {
 				r.expires[*key] = exp
 			}
@@ -139,7 +138,7 @@ func (r *RedisDB) Connect() error {
 		}
 
 		if b == 0x00 {
-			ok, key, val := rbyte.ParseValuePair(i+1, &buff)
+			ok, key, val := ParseValuePair(i+1, &buff)
 			if ok {
 				r.data[*key] = *val
 			}

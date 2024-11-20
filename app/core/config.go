@@ -1,6 +1,11 @@
 package core
 
-import "github.com/codecrafters-io/redis-starter-go/app/contracts"
+import (
+	"github.com/codecrafters-io/redis-starter-go/app/client"
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
+	"log"
+	"strings"
+)
 
 type Config struct {
 	dir        string
@@ -42,3 +47,78 @@ func (r *Config) GetDbFileName() string { return r.dbfilename }
 func (r *Config) GetPort() string { return r.port }
 
 func (r *Config) GetReplica() *contracts.Replica { return r.replica }
+
+type Argument string
+
+const (
+	Directory Argument = "--dir"
+	Port      Argument = "--port"
+	ReplicaOf Argument = "--replicaof"
+)
+
+// FromArguments todo change dep
+func (r *Config) FromArguments(args []string) *contracts.Config {
+	cfg := createConfigFromArgs(args)
+	return &cfg
+}
+
+func getArgumentMap(args []string) map[Argument][]string {
+	n, m := len(args), map[Argument][]string{}
+	for i := 0; i < n; i++ {
+		j := i + 1
+		if args[i][0] == '-' && j < n {
+			m[Argument(args[i])] = strings.Split(args[j], " ")
+		}
+	}
+
+	return m
+}
+
+func createConfigFromArgs(args []string) contracts.Config {
+	c := NewConfig()
+	m := getArgumentMap(args)
+
+	val, ok := m[Directory]
+	if ok && len(val) > 0 {
+		c.SetDir(val[0])
+	}
+
+	val, ok = m[Port]
+	if ok && len(val) > 0 {
+		c.SetDir(val[0])
+	}
+
+	val, ok = m[ReplicaOf]
+	if ok && len(val) == 2 {
+		host, port := val[0], val[1]
+
+		tcp := client.NewTcpClient(host, port)
+
+		err := tcp.Connect()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		//Handshake 1
+		tcp.SendBytes("*1\r\n$4\r\nPING\r\n")
+
+		//Handshake 2
+		req := FromStringsArray([]string{"REPLCONF", "listening-port", c.GetPort()})
+		tcp.SendBytes(req)
+		req = FromStringsArray([]string{"REPLCONF", "capa", "psync2"})
+		tcp.SendBytes(req)
+
+		//Handshake 3
+		req = FromStringsArray([]string{"PSYNC", "?", "-1"})
+		tcp.SendBytes(req)
+
+		tcp.Disconnect()
+
+		c.SetReplica(&contracts.Replica{
+			OriginHost: host,
+			OriginPort: port,
+		})
+	}
+
+	return c
+}

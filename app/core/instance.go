@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
-	"github.com/codecrafters-io/redis-starter-go/app/rbyte"
 	"log"
 	"os"
 	"time"
@@ -92,7 +91,7 @@ func (r *Instance) GetStore() *map[string]contracts.Value {
 }
 
 func (r *Instance) SetExpiredAt(key string, expired uint64) {
-	tm := rbyte.GetDateFromTimeStamp(expired)
+	tm := GetDateFromTimeStamp(expired)
 	val, ok := r.store[key]
 	if ok {
 		val.SetExpired(tm)
