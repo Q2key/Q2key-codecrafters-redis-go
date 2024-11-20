@@ -17,10 +17,10 @@ type PingHandler struct {
 	instance contracts.Instance
 }
 
-func (h *PingHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
+func (h *PingHandler) Handle(conn *net.Conn, c contracts.Command) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
 
-	(*conn).Write([]byte(core.FromString("PONG")))
+	(*conn).Write([]byte(core.FromStringToRedisCommonString("PONG")))
 }

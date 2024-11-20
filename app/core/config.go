@@ -103,13 +103,13 @@ func createConfigFromArgs(args []string) contracts.Config {
 		tcp.SendBytes("*1\r\n$4\r\nPING\r\n")
 
 		//Handshake 2
-		req := FromStringsArray([]string{"REPLCONF", "listening-port", c.GetPort()})
+		req := FromStringArrayToRedisStringArray([]string{"REPLCONF", "listening-port", c.GetPort()})
 		tcp.SendBytes(req)
-		req = FromStringsArray([]string{"REPLCONF", "capa", "psync2"})
+		req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "capa", "psync2"})
 		tcp.SendBytes(req)
 
 		//Handshake 3
-		req = FromStringsArray([]string{"PSYNC", "?", "-1"})
+		req = FromStringArrayToRedisStringArray([]string{"PSYNC", "?", "-1"})
 		tcp.SendBytes(req)
 
 		tcp.Disconnect()

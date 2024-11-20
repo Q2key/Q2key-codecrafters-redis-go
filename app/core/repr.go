@@ -13,7 +13,7 @@ const (
 	ArrayToken  ReprToken = "*"
 )
 
-func FromStringsArray(input []string) string {
+func FromStringArrayToRedisStringArray(input []string) string {
 	n := len(input)
 	r := fmt.Sprintf("*%d", n)
 	for i := 0; i < n; i++ {
@@ -24,24 +24,24 @@ func FromStringsArray(input []string) string {
 	return r
 }
 
-func ErrorString() string {
-	return "$-1\r\n"
-}
-
-func ErrorStringWithMessage(error error) string {
-	return fmt.Sprintf("$-1%s\r\n", error.Error())
-}
-
-func BulkString(input string) string {
+func FromStringToRedisBulkString(input string) string {
 	l := len(input)
 	return fmt.Sprintf("$%d\r\n%s\r\n", l, input)
 }
 
-func FromString(input string) string {
+func FromStringToRedisCommonString(input string) string {
 	return fmt.Sprintf("+%s\r\n", input)
 }
 
-func ToArgs(q string) (error, []string) {
+func ToRedisErrorString() string {
+	return "$-1\r\n"
+}
+
+func ToRedisErrorStringWithMessage(error error) string {
+	return fmt.Sprintf("$-1%s\r\n", error.Error())
+}
+
+func FromRedisStringToStringArray(q string) (error, []string) {
 	if len(q) == 0 {
 		return errors.New("empty string"), []string{}
 	}

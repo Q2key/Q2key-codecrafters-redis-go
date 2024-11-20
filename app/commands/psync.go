@@ -6,7 +6,7 @@ type Psync struct {
 	args []string
 }
 
-func (r *Psync) FromArgs(args []string) contracts.Command[string] {
+func (r *Psync) FromArgs(args []string) contracts.Command {
 	return &Psync{
 		args: args,
 	}

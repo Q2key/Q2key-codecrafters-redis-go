@@ -6,7 +6,7 @@ type ReplConf struct {
 	args []string
 }
 
-func (r *ReplConf) FromArgs(args []string) contracts.Command[string] {
+func (r *ReplConf) FromArgs(args []string) contracts.Command {
 	return &ReplConf{
 		args: args,
 	}

@@ -6,7 +6,7 @@ type Info struct {
 	args []string
 }
 
-func (r *Info) FromArgs(args []string) contracts.Command[string] {
+func (r *Info) FromArgs(args []string) contracts.Command {
 	return &Info{
 		args: args,
 	}

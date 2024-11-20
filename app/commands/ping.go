@@ -6,7 +6,7 @@ type Ping struct {
 	args []string
 }
 
-func (r *Ping) FromArgs(args []string) contracts.Command[string] {
+func (r *Ping) FromArgs(args []string) contracts.Command {
 	return &Ping{
 		args: args,
 	}

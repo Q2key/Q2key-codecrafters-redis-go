@@ -6,5 +6,5 @@ import (
 )
 
 func HandleError(conn *net.Conn, error error) {
-	(*conn).Write([]byte(core.ErrorStringWithMessage(error)))
+	(*conn).Write([]byte(core.ToRedisErrorStringWithMessage(error)))
 }

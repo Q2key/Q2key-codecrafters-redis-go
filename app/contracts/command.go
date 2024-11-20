@@ -1,8 +1,8 @@
 package contracts
 
-type Command[T string | int] interface {
+type Command interface {
 	Validate() bool
 	Name() string
-	Args() []T
-	FromArgs(args []T) Command[T]
+	Args() []string
+	FromArgs(args []string) Command
 }

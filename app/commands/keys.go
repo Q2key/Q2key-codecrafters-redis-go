@@ -6,7 +6,7 @@ type Keys struct {
 	args []string
 }
 
-func (r *Keys) FromArgs(args []string) contracts.Command[string] {
+func (r *Keys) FromArgs(args []string) contracts.Command {
 	return &Keys{
 		args: args,
 	}

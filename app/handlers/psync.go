@@ -18,12 +18,12 @@ type PsyncHandler struct {
 	instance contracts.Instance
 }
 
-func (h *PsyncHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
+func (h *PsyncHandler) Handle(conn *net.Conn, c contracts.Command) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
 
 	mess := fmt.Sprintf("FULLRESYNC %s 0", h.instance.GetReplicaId())
-	resp := core.FromString(mess)
+	resp := core.FromStringToRedisCommonString(mess)
 	(*conn).Write([]byte(resp))
 }

@@ -7,8 +7,8 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
 
-func ParseCommand(raw string) (error, *contracts.Command[string]) {
-	err, inp := core.ToArgs(raw)
+func ParseCommand(redisString string) (error, *contracts.Command) {
+	err, inp := core.FromRedisStringToStringArray(redisString)
 	if err != nil {
 		return err, nil
 	}

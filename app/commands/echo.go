@@ -6,7 +6,7 @@ type Echo struct {
 	args []string
 }
 
-func (r *Echo) FromArgs(args []string) contracts.Command[string] {
+func (r *Echo) FromArgs(args []string) contracts.Command {
 	return &Echo{
 		args: args,
 	}

@@ -18,7 +18,7 @@ type InfoHandler struct {
 	instance contracts.Instance
 }
 
-func (h *InfoHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
+func (h *InfoHandler) Handle(conn *net.Conn, c contracts.Command) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
@@ -37,5 +37,5 @@ func (h *InfoHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
 		}
 	}
 
-	(*conn).Write([]byte(core.BulkString(res)))
+	(*conn).Write([]byte(core.FromStringToRedisBulkString(res)))
 }

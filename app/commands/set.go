@@ -6,7 +6,7 @@ type Set struct {
 	args []string
 }
 
-func (r *Set) FromArgs(args []string) contracts.Command[string] {
+func (r *Set) FromArgs(args []string) contracts.Command {
 	return &Set{
 		args: args,
 	}

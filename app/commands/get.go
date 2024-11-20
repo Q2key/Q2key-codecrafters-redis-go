@@ -6,7 +6,7 @@ type Get struct {
 	args []string
 }
 
-func (r *Get) FromArgs(c []string) contracts.Command[string] {
+func (r *Get) FromArgs(c []string) contracts.Command {
 	return &Get{
 		args: c,
 	}

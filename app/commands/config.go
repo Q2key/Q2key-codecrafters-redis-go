@@ -8,7 +8,7 @@ type Config struct {
 	args []string
 }
 
-func (r *Config) FromArgs(args []string) contracts.Command[string] {
+func (r *Config) FromArgs(args []string) contracts.Command {
 	return &Config{args: args}
 }
 

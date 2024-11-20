@@ -17,7 +17,7 @@ type GetHandler struct {
 	instance contracts.Instance
 }
 
-func (h *GetHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
+func (h *GetHandler) Handle(conn *net.Conn, c contracts.Command) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
@@ -26,8 +26,8 @@ func (h *GetHandler) Handle(conn *net.Conn, c contracts.Command[string]) {
 	val := (h.instance).Get(key)
 
 	if val.IsExpired() {
-		(*conn).Write([]byte(core.ErrorString()))
+		(*conn).Write([]byte(core.ToRedisErrorString()))
 	} else {
-		(*conn).Write([]byte(core.FromString(val.GetValue())))
+		(*conn).Write([]byte(core.FromStringToRedisCommonString(val.GetValue())))
 	}
 }
