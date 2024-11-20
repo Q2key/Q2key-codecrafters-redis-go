@@ -36,43 +36,37 @@ func RunInstance(ins contracts.Instance) {
 	psyncHandler := handlers.NewPsyncHandler(ins)
 
 	for {
-		conn, err := ln.Accept()
-		if err != nil {
-			handlers.HandleError(&conn, err)
-			continue
-		}
-
+		conn, _ := ln.Accept()
 		//todo: implement handle connection
-
 		go func() {
 			buff := make([]byte, 1024*8)
 			for {
 				conn.Read(buff)
 				err, cmd := commands.ParseCommand(string(buff))
 				if err != nil {
-					handlers.HandleError(&conn, err)
+					handlers.HandleError(conn, err)
 					continue
 				}
 
-				switch (*cmd).Name() {
+				switch (cmd).Name() {
 				case "CONFIG":
-					configHandler.Handle(&conn, *cmd)
+					configHandler.Handle(conn, cmd)
 				case "GET":
-					getHandler.Handle(&conn, *cmd)
+					getHandler.Handle(conn, cmd)
 				case "SET":
-					setHandler.Handle(&conn, *cmd)
+					setHandler.Handle(conn, cmd)
 				case "ECHO":
-					echoHandler.Handle(&conn, *cmd)
+					echoHandler.Handle(conn, cmd)
 				case "PING":
-					pingHandler.Handle(&conn, *cmd)
+					pingHandler.Handle(conn, cmd)
 				case "KEYS":
-					keysHandler.Handle(&conn, *cmd)
+					keysHandler.Handle(conn, cmd)
 				case "INFO":
-					infoHandler.Handle(&conn, *cmd)
+					infoHandler.Handle(conn, cmd)
 				case "REPLCONF":
-					replconfHandler.Handle(&conn, *cmd)
+					replconfHandler.Handle(conn, cmd)
 				case "PSYNC":
-					psyncHandler.Handle(&conn, *cmd)
+					psyncHandler.Handle(conn, cmd)
 				}
 			}
 		}()

@@ -17,7 +17,7 @@ type ConfigHandler struct {
 	instance *contracts.Instance
 }
 
-func (h *ConfigHandler) Handle(conn *net.Conn, c contracts.Command) {
+func (h *ConfigHandler) Handle(conn net.Conn, c contracts.Command) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
@@ -27,15 +27,15 @@ func (h *ConfigHandler) Handle(conn *net.Conn, c contracts.Command) {
 
 	if action == "GET" && key == "dir" {
 		resp := []string{key, (*h.instance).GetConfig().GetDir()}
-		(*conn).Write([]byte(core.FromStringArrayToRedisStringArray(resp)))
+		conn.Write([]byte(core.FromStringArrayToRedisStringArray(resp)))
 		return
 	}
 
 	if action == "GET" && key == "dbfilename" {
 		resp := []string{key, (*h.instance).GetConfig().GetDbFileName()}
-		(*conn).Write([]byte(core.FromStringArrayToRedisStringArray(resp)))
+		conn.Write([]byte(core.FromStringArrayToRedisStringArray(resp)))
 		return
 	}
 
-	(*conn).Write([]byte(core.ToRedisErrorString()))
+	conn.Write([]byte(core.ToRedisErrorString()))
 }

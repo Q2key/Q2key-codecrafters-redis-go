@@ -18,7 +18,7 @@ type SetHandler struct {
 	instance contracts.Instance
 }
 
-func (h *SetHandler) Handle(conn *net.Conn, c contracts.Command) {
+func (h *SetHandler) Handle(conn net.Conn, c contracts.Command) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
@@ -37,5 +37,5 @@ func (h *SetHandler) Handle(conn *net.Conn, c contracts.Command) {
 		h.instance.SetExpiredIn(key, uint64(exp))
 	}
 
-	(*conn).Write([]byte(core.FromStringToRedisCommonString("OK")))
+	conn.Write([]byte(core.FromStringToRedisCommonString("OK")))
 }

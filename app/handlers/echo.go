@@ -17,10 +17,10 @@ type EchoHandler struct {
 	instance contracts.Instance
 }
 
-func (h *EchoHandler) Handle(conn *net.Conn, c contracts.Command) {
+func (h *EchoHandler) Handle(conn net.Conn, c contracts.Command) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
 
-	(*conn).Write([]byte(core.FromStringToRedisCommonString(c.Args()[1])))
+	conn.Write([]byte(core.FromStringToRedisCommonString(c.Args()[1])))
 }

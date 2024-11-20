@@ -17,10 +17,10 @@ type ReplConfHandler struct {
 	instance contracts.Instance
 }
 
-func (h *ReplConfHandler) Handle(conn *net.Conn, c contracts.Command) {
+func (h *ReplConfHandler) Handle(conn net.Conn, c contracts.Command) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
 
-	(*conn).Write([]byte(core.FromStringToRedisCommonString("OK")))
+	conn.Write([]byte(core.FromStringToRedisCommonString("OK")))
 }

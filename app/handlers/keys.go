@@ -17,7 +17,7 @@ type KeysHandler struct {
 	instance contracts.Instance
 }
 
-func (h *KeysHandler) Handle(conn *net.Conn, c contracts.Command) {
+func (h *KeysHandler) Handle(conn net.Conn, c contracts.Command) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
@@ -27,5 +27,5 @@ func (h *KeysHandler) Handle(conn *net.Conn, c contracts.Command) {
 	t := args[1]
 	keys := h.instance.GetKeys(t)
 
-	(*conn).Write([]byte(core.FromStringArrayToRedisStringArray(keys)))
+	conn.Write([]byte(core.FromStringArrayToRedisStringArray(keys)))
 }

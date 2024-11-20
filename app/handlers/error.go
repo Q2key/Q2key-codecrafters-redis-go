@@ -5,6 +5,6 @@ import (
 	"net"
 )
 
-func HandleError(conn *net.Conn, error error) {
-	(*conn).Write([]byte(core.ToRedisErrorStringWithMessage(error)))
+func HandleError(conn net.Conn, error error) {
+	conn.Write([]byte(core.ToRedisErrorStringWithMessage(error)))
 }
