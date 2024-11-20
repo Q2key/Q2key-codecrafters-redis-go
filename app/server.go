@@ -83,7 +83,7 @@ func RunInstance(ins contracts.Instance) {
 func main() {
 	fmt.Println("Logs from your program will appear here!")
 
-	cfg := adapters.ConfigFromArgs(os.Args)
+	cfg := adapters.CreateConfigFromArgs(os.Args)
 	ri := core.NewRedisInstance(cfg)
 
 	RunInstance(ri)

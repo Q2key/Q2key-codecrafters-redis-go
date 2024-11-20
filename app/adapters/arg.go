@@ -17,87 +17,96 @@ const (
 	ArrayToken  ReprToken = "*"
 )
 
-func GetArgsMap(args []string) map[string][]string {
-	smap := map[string][]string{}
-	for i := 0; i < len(args); i++ {
-		if args[i][0] == '-' {
-			smap[args[i]] = strings.Split(args[i+1], " ")
+type Argument string
+
+const (
+	Directory Argument = "--dir"
+	Port      Argument = "--port"
+	ReplicaOf Argument = "--replicaof"
+)
+
+func GetArgsMap(args []string) map[Argument][]string {
+	n, m := len(args), map[Argument][]string{}
+	for i := 0; i < n; i++ {
+		j := i + 1
+		if args[i][0] == '-' && j < n {
+			m[Argument(args[i])] = strings.Split(args[j], " ")
 		}
 	}
 
-	return smap
+	return m
 }
 
-func ConfigFromArgs(args []string) contracts.Config {
-	cfg := core.NewConfig()
+func CreateConfigFromArgs(args []string) contracts.Config {
+	c := core.NewConfig()
+	m := GetArgsMap(args)
 
-	argmap := GetArgsMap(args)
-
-	val, ok := argmap["--dir"]
+	val, ok := m[Directory]
 	if ok && len(val) > 0 {
-		cfg.SetDir(val[0])
+		c.SetDir(val[0])
 	}
 
-	val, ok = argmap["--port"]
+	val, ok = m[Port]
 	if ok && len(val) > 0 {
-		cfg.SetDir(val[0])
+		c.SetDir(val[0])
 	}
 
-	val, ok = argmap["--replicaof"]
+	val, ok = m[ReplicaOf]
 	if ok && len(val) == 2 {
-		replica := &contracts.Replica{
-			OriginHost: val[0],
-			OriginPort: val[1],
-		}
+		host, port := val[0], val[1]
 
-		tcp := client.NewTcpClient(replica.OriginHost, replica.OriginPort)
+		tcp := client.NewTcpClient(host, port)
+
 		err := tcp.Connect()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		//step1
-		_, _ = tcp.SendBytes("*1\r\n$4\r\nPING\r\n")
+		//Handshake 1
+		tcp.SendBytes("*1\r\n$4\r\nPING\r\n")
 
-		//step2
-		req := FromStringsArray([]string{"REPLCONF", "listening-port", cfg.GetPort()})
-		_, _ = tcp.SendBytes(req)
-
+		//Handshake 2
+		req := FromStringsArray([]string{"REPLCONF", "listening-port", c.GetPort()})
+		tcp.SendBytes(req)
 		req = FromStringsArray([]string{"REPLCONF", "capa", "psync2"})
-		_, _ = tcp.SendBytes(req)
+		tcp.SendBytes(req)
 
-		//step3
+		//Handshake 3
 		req = FromStringsArray([]string{"PSYNC", "?", "-1"})
-		_, _ = tcp.SendBytes(req)
+		tcp.SendBytes(req)
 
 		tcp.Disconnect()
 
-		cfg.SetReplica(replica)
+		c.SetReplica(&contracts.Replica{
+			OriginHost: host,
+			OriginPort: port,
+		})
 	}
 
-	return cfg
+	return c
 }
 
+// todo need to rename | refactor
 func ToArgs(q string) (error, []string) {
-
 	if len(q) == 0 {
 		return errors.New("empty string"), []string{}
 	}
 
+	//todo seems we have an error here :(
 	if q[0] != '*' {
 		return errors.New("invalid argument"), []string{}
 	}
 
-	s := q[1:]
-	n := len(s)
+	sq := q[1:]
+	n := len(sq)
 	sli := make([]string, 0)
 	for i := 0; i < n; i++ {
-		if ReprToken(s[i]) == StringToken {
+		if ReprToken(sq[i]) == StringToken {
 			j := i + 1
 			k := j
 
 			for {
-				ch := string(s[k])
+				ch := string(sq[k])
 				if ch == "\r" {
 					break
 				} else {
@@ -105,7 +114,7 @@ func ToArgs(q string) (error, []string) {
 				}
 			}
 
-			sl, err := strconv.Atoi(s[j:k])
+			sl, err := strconv.Atoi(sq[j:k])
 			if sl == 0 || err != nil {
 				break
 			}
@@ -113,11 +122,11 @@ func ToArgs(q string) (error, []string) {
 			st := k + 2
 			fi := st + sl
 
-			if fi > len(s) {
+			if fi > len(sq) {
 				break
 			}
 
-			sli = append(sli, s[st:fi])
+			sli = append(sli, sq[st:fi])
 		}
 	}
 
