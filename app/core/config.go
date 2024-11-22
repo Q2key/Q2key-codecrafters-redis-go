@@ -74,6 +74,30 @@ func getArgumentMap(args []string) map[Argument][]string {
 	return m
 }
 
+func initHandShake(c contracts.Config) {
+	tcp := client.NewTcpClient(c.GetReplica().OriginPort, c.GetReplica().OriginHost)
+
+	err := tcp.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//Handshake 1
+	tcp.SendBytes("*1\r\n$4\r\nPING\r\n")
+
+	//Handshake 2
+	req := FromStringArrayToRedisStringArray([]string{"REPLCONF", "listening-port", c.GetPort()})
+	tcp.SendBytes(req)
+	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "capa", "psync2"})
+	tcp.SendBytes(req)
+
+	//Handshake 3
+	req = FromStringArrayToRedisStringArray([]string{"PSYNC", "?", "-1"})
+	tcp.SendBytes(req)
+
+	tcp.Disconnect()
+}
+
 func createConfigFromArgs(args []string) contracts.Config {
 	c := NewConfig()
 	m := getArgumentMap(args)
@@ -89,35 +113,12 @@ func createConfigFromArgs(args []string) contracts.Config {
 	}
 
 	val, ok = m[ReplicaOf]
-	if ok && len(val) == 2 {
-		host, port := val[0], val[1]
+	if ok && len(val) >= 2 {
+		c.SetReplica(contracts.NewReplica(val[0], val[1]))
+	}
 
-		tcp := client.NewTcpClient(host, port)
-
-		err := tcp.Connect()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		//Handshake 1
-		tcp.SendBytes("*1\r\n$4\r\nPING\r\n")
-
-		//Handshake 2
-		req := FromStringArrayToRedisStringArray([]string{"REPLCONF", "listening-port", c.GetPort()})
-		tcp.SendBytes(req)
-		req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "capa", "psync2"})
-		tcp.SendBytes(req)
-
-		//Handshake 3
-		req = FromStringArrayToRedisStringArray([]string{"PSYNC", "?", "-1"})
-		tcp.SendBytes(req)
-
-		tcp.Disconnect()
-
-		c.SetReplica(&contracts.Replica{
-			OriginHost: host,
-			OriginPort: port,
-		})
+	if c.replica != nil {
+		initHandShake(c)
 	}
 
 	return c
