@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"log"
@@ -22,6 +23,7 @@ func (h *GetHandler) Handle(conn net.Conn, c contracts.Command) {
 		log.Fatal()
 	}
 
+	fmt.Printf("\r\n1")
 	key := c.Args()[1]
 	val := (h.instance).Get(key)
 

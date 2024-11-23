@@ -51,9 +51,10 @@ func (r *Config) GetReplica() *contracts.Replica { return r.replica }
 type Argument string
 
 const (
-	Directory Argument = "--dir"
-	Port      Argument = "--port"
-	ReplicaOf Argument = "--replicaof"
+	Directory  Argument = "--dir"
+	DbFilename Argument = "--dbfilename"
+	Port       Argument = "--port"
+	ReplicaOf  Argument = "--replicaof"
 )
 
 // FromArguments todo change dep
@@ -75,7 +76,7 @@ func getArgumentMap(args []string) map[Argument][]string {
 }
 
 func initHandShake(c contracts.Config) {
-	tcp := client.NewTcpClient(c.GetReplica().OriginPort, c.GetReplica().OriginHost)
+	tcp := client.NewTcpClient(c.GetReplica().OriginHost, c.GetReplica().OriginPort)
 
 	err := tcp.Connect()
 	if err != nil {
@@ -83,7 +84,10 @@ func initHandShake(c contracts.Config) {
 	}
 
 	//Handshake 1
-	tcp.SendBytes("*1\r\n$4\r\nPING\r\n")
+	bytes, err := tcp.SendBytes("*1\r\n$4\r\nPING\r\n")
+	if string(*bytes) != "+PONG\r\n" {
+		return
+	}
 
 	//Handshake 2
 	req := FromStringArrayToRedisStringArray([]string{"REPLCONF", "listening-port", c.GetPort()})
@@ -109,7 +113,12 @@ func createConfigFromArgs(args []string) contracts.Config {
 
 	val, ok = m[Port]
 	if ok && len(val) > 0 {
-		c.SetDir(val[0])
+		c.SetPort(val[0])
+	}
+
+	val, ok = m[DbFilename]
+	if ok && len(val) > 0 {
+		c.SetDbFileName(val[0])
 	}
 
 	val, ok = m[ReplicaOf]

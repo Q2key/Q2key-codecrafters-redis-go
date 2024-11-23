@@ -52,6 +52,7 @@ func RunInstance(ins contracts.Instance) {
 				case "CONFIG":
 					configHandler.Handle(conn, cmd)
 				case "GET":
+					fmt.Println(cmd.Name())
 					getHandler.Handle(conn, cmd)
 				case "SET":
 					setHandler.Handle(conn, cmd)
