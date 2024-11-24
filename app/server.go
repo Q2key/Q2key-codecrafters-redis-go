@@ -40,19 +40,27 @@ func RunInstance(ins contracts.Instance) {
 		//todo: implement handle connection
 		go func() {
 			buff := make([]byte, 1024*8)
+			defer conn.Close()
 			for {
-				conn.Read(buff)
+				read, err := conn.Read(buff)
+				if read == 0 {
+					continue
+				}
+
+				if err != nil {
+					return
+				}
+
 				err, cmd := commands.ParseCommand(string(buff))
 				if err != nil {
 					handlers.HandleError(conn, err)
 					continue
 				}
 
-				switch (cmd).Name() {
+				switch cmd.Name() {
 				case "CONFIG":
 					configHandler.Handle(conn, cmd)
 				case "GET":
-					fmt.Println(cmd.Name())
 					getHandler.Handle(conn, cmd)
 				case "SET":
 					setHandler.Handle(conn, cmd)
@@ -76,9 +84,7 @@ func RunInstance(ins contracts.Instance) {
 
 func main() {
 	fmt.Println("Starting server...")
-
-	cfg := core.NewConfig().FromArguments(os.Args)
-	ri := core.NewRedisInstance(*cfg)
-
-	RunInstance(ri)
+	config := core.NewConfig().FromArguments(os.Args)
+	redis := core.NewRedisInstance(*config)
+	RunInstance(redis)
 }

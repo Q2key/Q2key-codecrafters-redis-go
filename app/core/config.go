@@ -91,13 +91,22 @@ func initHandShake(c contracts.Config) {
 
 	//Handshake 2
 	req := FromStringArrayToRedisStringArray([]string{"REPLCONF", "listening-port", c.GetPort()})
-	tcp.SendBytes(req)
-	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "capa", "psync2"})
-	tcp.SendBytes(req)
+	sentBytes, err := tcp.SendBytes(req)
+	if err != nil || len(*sentBytes) == 0 {
+		return
+	}
 
+	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "capa", "psync2"})
+	sentBytes, err = tcp.SendBytes(req)
+	if err != nil || len(*sentBytes) == 0 {
+		return
+	}
 	//Handshake 3
 	req = FromStringArrayToRedisStringArray([]string{"PSYNC", "?", "-1"})
-	tcp.SendBytes(req)
+	sentBytes, err = tcp.SendBytes(req)
+	if err != nil || len(*sentBytes) == 0 {
+		return
+	}
 
 	tcp.Disconnect()
 }
