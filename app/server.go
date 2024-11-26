@@ -40,18 +40,15 @@ func RunInstance(ins contracts.Instance) {
 		//todo: implement handle connection
 		go func() {
 			buff := make([]byte, 1024*8)
-			defer conn.Close()
+			//defer conn.Close()
 			for {
-				read, err := conn.Read(buff)
-				if read == 0 {
-					continue
-				}
-
+				_, err := conn.Read(buff)
 				if err != nil {
 					return
 				}
 
 				err, cmd := commands.ParseCommand(string(buff))
+
 				if err != nil {
 					handlers.HandleError(conn, err)
 					continue
@@ -76,6 +73,11 @@ func RunInstance(ins contracts.Instance) {
 					replconfHandler.Handle(conn, cmd)
 				case "PSYNC":
 					psyncHandler.Handle(conn, cmd)
+				}
+
+				if cmd.IsWrite() {
+					repData := core.FromStringArrayToRedisStringArray(cmd.Args())
+					ins.Replicate([]byte(repData))
 				}
 			}
 		}()

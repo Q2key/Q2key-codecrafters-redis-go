@@ -23,3 +23,7 @@ func (r *Ping) Name() string {
 func (r *Ping) Args() []string {
 	return r.args
 }
+
+func (r *Ping) IsWrite() bool {
+	return false
+}

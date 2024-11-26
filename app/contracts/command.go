@@ -5,4 +5,5 @@ type Command interface {
 	Name() string
 	Args() []string
 	FromArgs(args []string) Command
+	IsWrite() bool
 }

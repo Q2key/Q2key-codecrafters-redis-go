@@ -28,6 +28,10 @@ func (r *TcpClient) Disconnect() {
 	}
 }
 
+func (r *TcpClient) UseConnection(conn net.Conn) {
+	r.conn = conn
+}
+
 func (r *TcpClient) Connect() error {
 	conn, err := net.Dial("tcp", r.addr)
 	if err != nil {
@@ -39,10 +43,14 @@ func (r *TcpClient) Connect() error {
 	return nil
 }
 
-func (r *TcpClient) SendBytes(message string) (*[]byte, error) {
+func (r *TcpClient) Conn() *net.Conn {
+	return &r.conn
+}
+
+func (r *TcpClient) SendBytes(bytes []byte) (*[]byte, error) {
 	//defer r.conn.Close()
 
-	_, err := r.conn.Write([]byte(message))
+	_, err := r.conn.Write(bytes)
 	if err != nil {
 		return nil, err
 	}

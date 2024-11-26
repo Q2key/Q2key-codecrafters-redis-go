@@ -33,5 +33,7 @@ func (h *PsyncHandler) Handle(conn net.Conn, c contracts.Command) {
 
 	conn.Write([]byte(resp))
 	conn.Write([]byte("$88\r\n"))
-	conn.Write([]byte(rdbBuff))
+	conn.Write(rdbBuff)
+
+	h.instance.SetReplicaConn(conn)
 }

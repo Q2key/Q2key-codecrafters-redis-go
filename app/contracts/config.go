@@ -10,4 +10,5 @@ type Config interface {
 	GetPort() string
 	GetReplica() *Replica
 	FromArguments([]string) *Config
+	IsMaster() bool
 }

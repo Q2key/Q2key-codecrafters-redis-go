@@ -23,3 +23,7 @@ func (r *Psync) Name() string {
 func (r *Psync) Args() []string {
 	return r.args
 }
+
+func (r *Psync) IsWrite() bool {
+	return false
+}

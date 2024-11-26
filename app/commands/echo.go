@@ -23,3 +23,7 @@ func (r *Echo) Name() string {
 func (r *Echo) Args() []string {
 	return r.args
 }
+
+func (r *Echo) IsWrite() bool {
+	return false
+}

@@ -23,3 +23,7 @@ func (r *ReplConf) Name() string {
 func (r *ReplConf) Args() []string {
 	return r.args
 }
+
+func (r *ReplConf) IsWrite() bool {
+	return false
+}

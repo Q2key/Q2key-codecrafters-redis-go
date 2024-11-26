@@ -23,3 +23,7 @@ func (r *Get) Name() string {
 func (r *Get) Args() []string {
 	return r.args
 }
+
+func (r *Get) IsWrite() bool {
+	return false
+}

@@ -23,3 +23,7 @@ func (r *Keys) Name() string {
 func (r *Keys) Args() []string {
 	return r.args
 }
+
+func (r *Keys) IsWrite() bool {
+	return false
+}

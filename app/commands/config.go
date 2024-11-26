@@ -23,3 +23,7 @@ func (r *Config) Name() string {
 func (r *Config) Args() []string {
 	return r.args
 }
+
+func (r *Config) IsWrite() bool {
+	return false
+}

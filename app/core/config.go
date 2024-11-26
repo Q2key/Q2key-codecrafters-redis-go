@@ -1,9 +1,8 @@
 package core
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/client"
+	"fmt"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
-	"log"
 	"strings"
 )
 
@@ -12,6 +11,7 @@ type Config struct {
 	dbfilename string
 	port       string
 	replica    *contracts.Replica
+	isMaster   bool
 }
 
 const DefaultPort = "6379"
@@ -75,43 +75,8 @@ func getArgumentMap(args []string) map[Argument][]string {
 	return m
 }
 
-func initHandShake(c contracts.Config) {
-	tcp := client.NewTcpClient(c.GetReplica().OriginHost, c.GetReplica().OriginPort)
-
-	err := tcp.Connect()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	//Handshake 1
-	bytes, err := tcp.SendBytes("*1\r\n$4\r\nPING\r\n")
-	if string(*bytes) != "+PONG\r\n" {
-		return
-	}
-
-	//Handshake 2
-	req := FromStringArrayToRedisStringArray([]string{"REPLCONF", "listening-port", c.GetPort()})
-	sentBytes, err := tcp.SendBytes(req)
-	if err != nil || len(*sentBytes) == 0 {
-		return
-	}
-
-	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "capa", "psync2"})
-	sentBytes, err = tcp.SendBytes(req)
-	if err != nil || len(*sentBytes) == 0 {
-		return
-	}
-	//Handshake 3
-	req = FromStringArrayToRedisStringArray([]string{"PSYNC", "?", "-1"})
-	sentBytes, err = tcp.SendBytes(req)
-	if err != nil || len(*sentBytes) == 0 {
-		return
-	}
-
-	tcp.Disconnect()
-}
-
 func createConfigFromArgs(args []string) contracts.Config {
+	fmt.Println(args)
 	c := NewConfig()
 	m := getArgumentMap(args)
 
@@ -135,9 +100,9 @@ func createConfigFromArgs(args []string) contracts.Config {
 		c.SetReplica(contracts.NewReplica(val[0], val[1]))
 	}
 
-	if c.replica != nil {
-		initHandShake(c)
-	}
-
 	return c
+}
+
+func (r *Config) IsMaster() bool {
+	return r.replica == nil
 }

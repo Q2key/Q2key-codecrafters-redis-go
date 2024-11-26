@@ -2,16 +2,20 @@ package core
 
 import (
 	"fmt"
+	"github.com/codecrafters-io/redis-starter-go/app/client"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"log"
+	"net"
 	"os"
 	"time"
 )
 
 type Instance struct {
-	ReplicaId string
-	Config    contracts.Config
-	store     contracts.Store
+	ReplicaId     string
+	Config        contracts.Config
+	store         contracts.Store
+	remoteAddress string
+	conn          net.Conn
 }
 
 const FakeReplicaId = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
@@ -23,12 +27,60 @@ func NewRedisInstance(config contracts.Config) *Instance {
 		Config:    config,
 	}
 
-	ins.TryConnectDb()
+	ins.TryReadDb()
+	if !config.IsMaster() {
+		ins.HandShakeMaster()
+	}
 
 	return ins
 }
 
-func (r *Instance) TryConnectDb() {
+func (r *Instance) HandShakeMaster() {
+	rep := r.Config.GetReplica()
+	if rep == nil {
+		return
+	}
+
+	fmt.Println("Replica is on: " + rep.OriginPort)
+	host, port := rep.OriginHost, rep.OriginPort
+	tcp := client.NewTcpClient(host, port)
+
+	err := tcp.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//Handshake 1
+	bytes, err := tcp.SendBytes([]byte("*1\r\n$4\r\nPING\r\n"))
+
+	if string(*bytes) != "+PONG\r\n" {
+		return
+	}
+
+	//Handshake 2
+	req := FromStringArrayToRedisStringArray([]string{"REPLCONF", "listening-port", r.Config.GetPort()})
+
+	sentBytes, err := tcp.SendBytes([]byte(req))
+	if err != nil || len(*sentBytes) == 0 {
+		//return
+	}
+
+	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "capa", "psync2"})
+	sentBytes, err = tcp.SendBytes([]byte(req))
+	if err != nil || len(*sentBytes) == 0 {
+		//return
+	}
+	//Handshake 3
+	req = FromStringArrayToRedisStringArray([]string{"PSYNC", "?", "-1"})
+	sentBytes, err = tcp.SendBytes([]byte(req))
+	if err != nil || len(*sentBytes) == 0 {
+		//return
+	}
+
+	//tcp.Disconnect()
+}
+
+func (r *Instance) TryReadDb() {
 	if r.Config.GetDbFileName() == "" || r.Config.GetDir() == "" {
 		return
 	}
@@ -111,4 +163,30 @@ func (r *Instance) SetExpiredIn(key string, expiredIn uint64) {
 
 func (r *Instance) GetConfig() contracts.Config {
 	return r.Config
+}
+
+func (r *Instance) Replicate(buff []byte) {
+	if r.Config.GetReplica() == nil {
+		fmt.Println("This is master")
+	}
+
+	if r.conn != nil {
+		r.conn.Write(buff)
+	}
+}
+
+func (r *Instance) SetRemoteAddr(addr string) {
+	r.remoteAddress = addr
+}
+
+func (r *Instance) GetRemoteAddr() string {
+	return r.remoteAddress
+}
+
+func (r *Instance) GetReplicaConn() *net.Conn {
+	return &r.conn
+}
+
+func (r *Instance) SetReplicaConn(conn net.Conn) {
+	r.conn = conn
 }

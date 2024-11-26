@@ -23,3 +23,7 @@ func (r *Info) Name() string {
 func (r *Info) Args() []string {
 	return r.args
 }
+
+func (r *Info) IsWrite() bool {
+	return false
+}

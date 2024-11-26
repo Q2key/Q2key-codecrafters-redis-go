@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"log"
@@ -21,6 +22,8 @@ func (h *ReplConfHandler) Handle(conn net.Conn, c contracts.Command) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
+
+	fmt.Println(conn.RemoteAddr())
 
 	conn.Write([]byte(core.FromStringToRedisCommonString("OK")))
 }
