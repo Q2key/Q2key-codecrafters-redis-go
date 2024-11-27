@@ -16,15 +16,17 @@ type Instance struct {
 	store         contracts.Store
 	remoteAddress string
 	conn          net.Conn
+	repConnPool   map[string]*net.Conn
 }
 
 const FakeReplicaId = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
 
 func NewRedisInstance(config contracts.Config) *Instance {
 	ins := &Instance{
-		ReplicaId: FakeReplicaId,
-		store:     contracts.Store{},
-		Config:    config,
+		ReplicaId:   FakeReplicaId,
+		store:       contracts.Store{},
+		Config:      config,
+		repConnPool: map[string]*net.Conn{},
 	}
 
 	ins.TryReadDb()
@@ -166,27 +168,13 @@ func (r *Instance) GetConfig() contracts.Config {
 }
 
 func (r *Instance) Replicate(buff []byte) {
-	if r.Config.GetReplica() == nil {
-		fmt.Println("This is master")
-	}
-
-	if r.conn != nil {
-		r.conn.Write(buff)
+	for _, c := range r.repConnPool {
+		if c != nil {
+			(*c).Write(buff)
+		}
 	}
 }
 
-func (r *Instance) SetRemoteAddr(addr string) {
-	r.remoteAddress = addr
-}
-
-func (r *Instance) GetRemoteAddr() string {
-	return r.remoteAddress
-}
-
-func (r *Instance) GetReplicaConn() *net.Conn {
-	return &r.conn
-}
-
-func (r *Instance) SetReplicaConn(conn net.Conn) {
-	r.conn = conn
+func (r *Instance) RegisterReplicaConn(conn net.Conn) {
+	r.repConnPool[conn.RemoteAddr().String()] = &conn
 }

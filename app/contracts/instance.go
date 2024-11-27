@@ -11,9 +11,6 @@ type Instance interface {
 	GetStore() *map[string]Value
 	SetExpiredAt(string, uint64)
 	SetExpiredIn(string, uint64)
-	SetRemoteAddr(string)
-	GetRemoteAddr() string
-	SetReplicaConn(conn net.Conn)
-	GetReplicaConn() *net.Conn
+	RegisterReplicaConn(conn net.Conn)
 	Replicate([]byte)
 }
