@@ -2,21 +2,21 @@ package core
 
 import (
 	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/client"
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"log"
 	"net"
 	"os"
 	"time"
+
+	"github.com/codecrafters-io/redis-starter-go/app/client"
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 )
 
 type Instance struct {
-	ReplicaId     string
-	Config        contracts.Config
-	store         contracts.Store
-	remoteAddress string
-	conn          net.Conn
-	repConnPool   map[string]*net.Conn
+	ReplicaId   string
+	Config      contracts.Config
+	Store       contracts.Store
+	RepConnPool map[string]*net.Conn
+	MasterConn  *net.Conn
 }
 
 const FakeReplicaId = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
@@ -24,9 +24,9 @@ const FakeReplicaId = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
 func NewRedisInstance(config contracts.Config) *Instance {
 	ins := &Instance{
 		ReplicaId:   FakeReplicaId,
-		store:       contracts.Store{},
+		Store:       contracts.Store{},
 		Config:      config,
-		repConnPool: map[string]*net.Conn{},
+		RepConnPool: map[string]*net.Conn{},
 	}
 
 	ins.TryReadDb()
@@ -38,6 +38,10 @@ func NewRedisInstance(config contracts.Config) *Instance {
 }
 
 func (r *Instance) HandShakeMaster() {
+	if r.GetConfig().IsMaster() {
+		return
+	}
+
 	rep := r.Config.GetReplica()
 	if rep == nil {
 		return
@@ -49,37 +53,47 @@ func (r *Instance) HandShakeMaster() {
 
 	err := tcp.Connect()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
 	}
 
-	//Handshake 1
-	bytes, err := tcp.SendBytes([]byte("*1\r\n$4\r\nPING\r\n"))
-
-	if string(*bytes) != "+PONG\r\n" {
+	// Handshake 1
+	buff := send("*1\r\n$4\r\nPING\r\n", tcp)
+	if string(*buff) != "+PONG\r\n" {
 		return
 	}
 
-	//Handshake 2
+	// Handshake 2
 	req := FromStringArrayToRedisStringArray([]string{"REPLCONF", "listening-port", r.Config.GetPort()})
-
-	sentBytes, err := tcp.SendBytes([]byte(req))
-	if err != nil || len(*sentBytes) == 0 {
-		//return
-	}
+	send(req, tcp)
 
 	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "capa", "psync2"})
-	sentBytes, err = tcp.SendBytes([]byte(req))
-	if err != nil || len(*sentBytes) == 0 {
-		//return
-	}
-	//Handshake 3
+	send(req, tcp)
+
+	// Handshake 3
 	req = FromStringArrayToRedisStringArray([]string{"PSYNC", "?", "-1"})
-	sentBytes, err = tcp.SendBytes([]byte(req))
-	if err != nil || len(*sentBytes) == 0 {
-		//return
+	buff = send(req, tcp)
+
+	for _, b := range *buff {
+		if b == 0xFF {
+			/* hello */
+		}
 	}
 
-	//tcp.Disconnect()
+	r.RegisterMasterConn(*tcp.Conn())
+}
+
+func send(req string, client *client.TcpClient) *[]byte {
+	fmt.Printf("replica->master: %s", req)
+	buff, err := (*client).SendBytes([]byte(req))
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if buff != nil {
+		fmt.Printf("master->replica: %s", buff)
+	}
+
+	return buff
 }
 
 func (r *Instance) TryReadDb() {
@@ -116,7 +130,7 @@ func (r *Instance) TryReadDb() {
 }
 
 func (r *Instance) Get(key string) contracts.Value {
-	return r.store[key]
+	return r.Store[key]
 }
 
 func (r *Instance) GetReplicaId() string {
@@ -124,7 +138,7 @@ func (r *Instance) GetReplicaId() string {
 }
 
 func (r *Instance) Set(key string, value string) {
-	r.store[key] = &InstanceValue{
+	r.Store[key] = &InstanceValue{
 		Value: value,
 	}
 }
@@ -133,7 +147,7 @@ func (r *Instance) GetKeys(token string) []string {
 	res := make([]string, 0)
 	switch token {
 	case "*":
-		for k := range r.store {
+		for k := range r.Store {
 			res = append(res, k)
 		}
 	}
@@ -141,26 +155,26 @@ func (r *Instance) GetKeys(token string) []string {
 }
 
 func (r *Instance) GetStore() *map[string]contracts.Value {
-	return &r.store
+	return &r.Store
 }
 
 func (r *Instance) SetExpiredAt(key string, expired uint64) {
 	tm := GetDateFromTimeStamp(expired)
-	val, ok := r.store[key]
+	val, ok := r.Store[key]
 	if ok {
 		val.SetExpired(tm)
 	}
 
-	r.store[key] = val
+	r.Store[key] = val
 }
 
 func (r *Instance) SetExpiredIn(key string, expiredIn uint64) {
 	exp := time.Now().UTC().Add(time.Duration(expiredIn) * time.Millisecond)
-	val, ok := r.store[key]
+	val, ok := r.Store[key]
 	if ok {
 		val.SetExpired(exp)
 	}
-	r.store[key] = val
+	r.Store[key] = val
 }
 
 func (r *Instance) GetConfig() contracts.Config {
@@ -168,7 +182,7 @@ func (r *Instance) GetConfig() contracts.Config {
 }
 
 func (r *Instance) Replicate(buff []byte) {
-	for _, c := range r.repConnPool {
+	for _, c := range r.RepConnPool {
 		if c != nil {
 			(*c).Write(buff)
 		}
@@ -176,5 +190,24 @@ func (r *Instance) Replicate(buff []byte) {
 }
 
 func (r *Instance) RegisterReplicaConn(conn net.Conn) {
-	r.repConnPool[conn.RemoteAddr().String()] = &conn
+	key := fmt.Sprintf("%p", conn)
+	fmt.Println("!!" + key)
+	r.RepConnPool[fmt.Sprintf("%p", conn)] = &conn
+}
+
+func (r *Instance) RegisterMasterConn(conn net.Conn) {
+	r.MasterConn = &conn
+}
+
+func (r *Instance) Propagate(buff []byte) {
+	if r.MasterConn != nil {
+		_, err := (*r.MasterConn).Write(buff)
+		if err != nil {
+			fmt.Print(err)
+		}
+	}
+}
+
+func (r *Instance) GetMasterConn() *net.Conn {
+	return r.MasterConn
 }

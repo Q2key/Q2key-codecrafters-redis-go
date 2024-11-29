@@ -7,10 +7,13 @@ type Instance interface {
 	GetConfig() Config
 	GetKeys(string) []string
 	GetReplicaId() string
+	GetMasterConn() *net.Conn
 	Set(key string, value string)
 	GetStore() *map[string]Value
 	SetExpiredAt(string, uint64)
 	SetExpiredIn(string, uint64)
 	RegisterReplicaConn(conn net.Conn)
+	RegisterMasterConn(conn net.Conn)
+	Propagate([]byte)
 	Replicate([]byte)
 }

@@ -1,20 +1,17 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"log"
+	"net"
+	"os"
+	"sync"
+
 	"github.com/codecrafters-io/redis-starter-go/app/commands"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/handlers"
-	"log"
-	"net"
-	"os"
-)
-
-// Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
-var (
-	_ = net.Listen
-	_ = os.Exit
 )
 
 func RunInstance(ins contracts.Instance) {
@@ -37,17 +34,19 @@ func RunInstance(ins contracts.Instance) {
 
 	for {
 		conn, _ := ln.Accept()
-		//todo: implement handle connection
+		var wg sync.WaitGroup
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			buff := make([]byte, 1024*8)
-			//defer conn.Close()
 			for {
-				_, err := conn.Read(buff)
+				n, err := conn.Read(buff)
 				if err != nil {
 					return
 				}
 
-				err, cmd := commands.ParseCommand(string(buff))
+				sli := buff[:n]
+				err, cmd := commands.ParseCommand(string(sli))
 
 				if err != nil {
 					handlers.HandleError(conn, err)
@@ -75,12 +74,42 @@ func RunInstance(ins contracts.Instance) {
 					psyncHandler.Handle(conn, cmd)
 				}
 
-				if cmd.IsWrite() {
+				if ins.GetMasterConn() != nil && !ins.GetConfig().IsMaster() {
+					b := bufio.NewReader(*ins.GetMasterConn())
+					br := make([]byte, 1024)
+					n, _ := b.Read(br)
+
+					err, cmd := commands.ParseCommand(string(br[:n]))
+					if err != nil {
+						continue
+					}
+
+					args := cmd.Args()
+
+					for i := 0; i < len(args); i++ {
+						if args[i] == "SET" {
+							wg.Add(1)
+						}
+					}
+
+					for i, c := range args {
+						if c == "SET" {
+							ins.Set(args[i+1], args[i+2])
+							wg.Done()
+						}
+					}
+
+					fmt.Println(cmd.Args())
+
+				}
+
+				if cmd.IsWrite() && ins.GetConfig().IsMaster() {
 					repData := core.FromStringArrayToRedisStringArray(cmd.Args())
 					ins.Replicate([]byte(repData))
 				}
 			}
 		}()
+		wg.Wait()
 	}
 }
 

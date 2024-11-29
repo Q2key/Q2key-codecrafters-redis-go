@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
-	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"log"
 	"net"
+
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
+	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
 
 func NewReplConfHandler(instance contracts.Instance) *ReplConfHandler {
@@ -23,7 +23,7 @@ func (h *ReplConfHandler) Handle(conn net.Conn, c contracts.Command) {
 		log.Fatal()
 	}
 
-	fmt.Println(conn.RemoteAddr())
+	//	fmt.Println(conn.RemoteAddr())
 
 	conn.Write([]byte(core.FromStringToRedisCommonString("OK")))
 }

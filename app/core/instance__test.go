@@ -1,9 +1,10 @@
 package core
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"testing"
 	"time"
+
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 )
 
 func TestGetSetValue(t *testing.T) {
@@ -30,9 +31,8 @@ func TestGetSetValue(t *testing.T) {
 }
 
 func TestShouldBeExpired2000(t *testing.T) {
-
 	r := Instance{
-		store: map[string]contracts.Value{},
+		Store: map[string]contracts.Value{},
 	}
 
 	r.Set("key", "value")
@@ -49,9 +49,8 @@ func TestShouldBeExpired2000(t *testing.T) {
 }
 
 func TestShouldBeExpired100(t *testing.T) {
-
 	r := Instance{
-		store: map[string]contracts.Value{},
+		Store: map[string]contracts.Value{},
 	}
 
 	r.Set("key", "value")
@@ -68,9 +67,8 @@ func TestShouldBeExpired100(t *testing.T) {
 }
 
 func TestShouldBeExpired101(t *testing.T) {
-
 	r := Instance{
-		store: map[string]contracts.Value{},
+		Store: map[string]contracts.Value{},
 	}
 
 	r.Set("key", "value")
@@ -87,9 +85,8 @@ func TestShouldBeExpired101(t *testing.T) {
 }
 
 func TestShouldNotBeExpired0(t *testing.T) {
-
 	r := Instance{
-		store: map[string]contracts.Value{},
+		Store: map[string]contracts.Value{},
 	}
 
 	r.Set("key", "value")
@@ -101,16 +98,14 @@ func TestShouldNotBeExpired0(t *testing.T) {
 
 	if v.GetValue() != "value" {
 		t.Fail()
-
 	}
 
 	t.Log("OK!")
 }
 
 func TestShouldNotBeExpired4000(t *testing.T) {
-
 	r := Instance{
-		store: map[string]contracts.Value{},
+		Store: map[string]contracts.Value{},
 	}
 
 	r.Set("key", "value")
@@ -121,7 +116,6 @@ func TestShouldNotBeExpired4000(t *testing.T) {
 
 	if v.IsExpired() {
 		t.Fail()
-
 	}
 
 	if v.GetValue() != "value" {
@@ -133,7 +127,7 @@ func TestShouldNotBeExpired4000(t *testing.T) {
 
 func TestReturnCorrectConfig(t *testing.T) {
 	s := &Instance{
-		store:  make(map[string]contracts.Value),
+		Store:  make(map[string]contracts.Value),
 		Config: NewConfig(),
 	}
 

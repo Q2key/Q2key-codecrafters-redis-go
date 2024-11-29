@@ -1,13 +1,14 @@
 package core
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"testing"
+
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 )
 
 func TestSetExpiring0(t *testing.T) {
 	r := Instance{
-		store: map[string]contracts.Value{},
+		Store: map[string]contracts.Value{},
 	}
 
 	r.Set("key", "value")

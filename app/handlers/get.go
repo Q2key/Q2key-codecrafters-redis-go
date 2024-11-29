@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
-	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"log"
 	"net"
+
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
+	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
 
 func NewGetHandler(instance contracts.Instance) *GetHandler {
@@ -23,11 +23,10 @@ func (h *GetHandler) Handle(conn net.Conn, c contracts.Command) {
 		log.Fatal()
 	}
 
-	fmt.Printf("\r\n1")
 	key := c.Args()[1]
-	val := (h.instance).Get(key)
+	val := h.instance.Get(key)
 
-	if val.IsExpired() {
+	if val == nil || val.IsExpired() {
 		conn.Write([]byte(core.ToRedisErrorString()))
 	} else {
 		conn.Write([]byte(core.FromStringToRedisCommonString(val.GetValue())))

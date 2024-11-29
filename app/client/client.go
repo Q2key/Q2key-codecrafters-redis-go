@@ -1,8 +1,7 @@
 package client
 
 import (
-	"bufio"
-	"fmt"
+	"log"
 	"net"
 )
 
@@ -48,20 +47,17 @@ func (r *TcpClient) Conn() *net.Conn {
 }
 
 func (r *TcpClient) SendBytes(bytes []byte) (*[]byte, error) {
-	//defer r.conn.Close()
-
 	_, err := r.conn.Write(bytes)
 	if err != nil {
 		return nil, err
 	}
 
-	read := bufio.NewReader(r.conn)
-	resp, err := read.ReadBytes('\n')
-
+	buf := make([]byte, 1024*10)
+	n, err := r.conn.Read(buf)
 	if err != nil {
-		fmt.Println("Error reading resp:", err)
-
+		log.Fatal(err)
 	}
 
-	return &resp, nil
+	res := buf[:n]
+	return &res, nil
 }
