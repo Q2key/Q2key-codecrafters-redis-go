@@ -3,10 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
-	"sync"
 
 	"github.com/codecrafters-io/redis-starter-go/app/commands"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
@@ -34,15 +34,42 @@ func RunInstance(ins contracts.Instance) {
 
 	for {
 		conn, _ := ln.Accept()
-		var wg sync.WaitGroup
-		wg.Add(1)
+		buff := make([]byte, 1024)
+
 		go func() {
-			defer wg.Done()
-			buff := make([]byte, 1024*8)
+			if ins.GetConfig().IsMaster() == false && (ins) != nil && (*ins.GetMasterConn()) != nil {
+				for {
+					res := make([]byte, 512)
+					rdr := bufio.NewReader(*ins.GetMasterConn())
+					n, _ := rdr.Read(res)
+
+					str := string(res[:n])
+					repc := ""
+
+					for i, ch := range str {
+						if string(ch) == "*" {
+							repc = str[i:]
+							break
+						}
+					}
+
+					_, arr := core.FromRedisStringToStringArray(repc)
+					for i, v := range arr {
+						if v == "SET" && i+2 <= len(arr) {
+							ins.Set(arr[i+1], arr[i+2])
+						}
+					}
+				}
+			}
+		}()
+
+		go func() {
 			for {
 				n, err := conn.Read(buff)
-				if err != nil {
-					return
+
+				if err == io.EOF {
+					fmt.Println("Connection closed by client.")
+					break
 				}
 
 				sli := buff[:n]
@@ -74,42 +101,12 @@ func RunInstance(ins contracts.Instance) {
 					psyncHandler.Handle(conn, cmd)
 				}
 
-				if ins.GetMasterConn() != nil && !ins.GetConfig().IsMaster() {
-					b := bufio.NewReader(*ins.GetMasterConn())
-					br := make([]byte, 1024)
-					n, _ := b.Read(br)
-
-					err, cmd := commands.ParseCommand(string(br[:n]))
-					if err != nil {
-						continue
-					}
-
-					args := cmd.Args()
-
-					for i := 0; i < len(args); i++ {
-						if args[i] == "SET" {
-							wg.Add(1)
-						}
-					}
-
-					for i, c := range args {
-						if c == "SET" {
-							ins.Set(args[i+1], args[i+2])
-							wg.Done()
-						}
-					}
-
-					fmt.Println(cmd.Args())
-
-				}
-
 				if cmd.IsWrite() && ins.GetConfig().IsMaster() {
 					repData := core.FromStringArrayToRedisStringArray(cmd.Args())
 					ins.Replicate([]byte(repData))
 				}
 			}
 		}()
-		wg.Wait()
 	}
 }
 

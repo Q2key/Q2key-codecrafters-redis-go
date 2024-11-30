@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/client"
@@ -17,22 +18,28 @@ type Instance struct {
 	Store       contracts.Store
 	RepConnPool map[string]*net.Conn
 	MasterConn  *net.Conn
+	Ch          chan bool
+	mu          sync.Mutex
 }
 
 const FakeReplicaId = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
 
 func NewRedisInstance(config contracts.Config) *Instance {
+	ch := make(chan bool, 1)
 	ins := &Instance{
 		ReplicaId:   FakeReplicaId,
 		Store:       contracts.Store{},
 		Config:      config,
 		RepConnPool: map[string]*net.Conn{},
+		Ch:          ch,
+		mu:          sync.Mutex{},
+	}
+
+	if !config.IsMaster() {
+		go ins.HandShakeMaster()
 	}
 
 	ins.TryReadDb()
-	if !config.IsMaster() {
-		ins.HandShakeMaster()
-	}
 
 	return ins
 }
@@ -42,12 +49,13 @@ func (r *Instance) HandShakeMaster() {
 		return
 	}
 
+	fmt.Println("Starting handshake")
+
 	rep := r.Config.GetReplica()
 	if rep == nil {
 		return
 	}
 
-	fmt.Println("Replica is on: " + rep.OriginPort)
 	host, port := rep.OriginHost, rep.OriginPort
 	tcp := client.NewTcpClient(host, port)
 
@@ -55,6 +63,8 @@ func (r *Instance) HandShakeMaster() {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
+
+	r.RegisterMasterConn(*tcp.Conn())
 
 	// Handshake 1
 	buff := send("*1\r\n$4\r\nPING\r\n", tcp)
@@ -68,29 +78,15 @@ func (r *Instance) HandShakeMaster() {
 
 	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "capa", "psync2"})
 	send(req, tcp)
-
 	// Handshake 3
 	req = FromStringArrayToRedisStringArray([]string{"PSYNC", "?", "-1"})
-	buff = send(req, tcp)
-
-	for _, b := range *buff {
-		if b == 0xFF {
-			/* hello */
-		}
-	}
-
-	r.RegisterMasterConn(*tcp.Conn())
+	send(req, tcp)
 }
 
 func send(req string, client *client.TcpClient) *[]byte {
-	fmt.Printf("replica->master: %s", req)
 	buff, err := (*client).SendBytes([]byte(req))
 	if err != nil {
 		fmt.Println(err)
-	}
-
-	if buff != nil {
-		fmt.Printf("master->replica: %s", buff)
 	}
 
 	return buff
@@ -130,7 +126,10 @@ func (r *Instance) TryReadDb() {
 }
 
 func (r *Instance) Get(key string) contracts.Value {
-	return r.Store[key]
+	// r.mu.Lock()
+	v := r.Store[key]
+	// r.mu.Unlock()
+	return v
 }
 
 func (r *Instance) GetReplicaId() string {
@@ -138,9 +137,11 @@ func (r *Instance) GetReplicaId() string {
 }
 
 func (r *Instance) Set(key string, value string) {
+	// r.mu.Lock()
 	r.Store[key] = &InstanceValue{
 		Value: value,
 	}
+	// r.mu.Unlock()
 }
 
 func (r *Instance) GetKeys(token string) []string {
@@ -190,8 +191,6 @@ func (r *Instance) Replicate(buff []byte) {
 }
 
 func (r *Instance) RegisterReplicaConn(conn net.Conn) {
-	key := fmt.Sprintf("%p", conn)
-	fmt.Println("!!" + key)
 	r.RepConnPool[fmt.Sprintf("%p", conn)] = &conn
 }
 
@@ -210,4 +209,8 @@ func (r *Instance) Propagate(buff []byte) {
 
 func (r *Instance) GetMasterConn() *net.Conn {
 	return r.MasterConn
+}
+
+func (r *Instance) GetChan() chan bool {
+	return r.Ch
 }
