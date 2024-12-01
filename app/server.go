@@ -66,10 +66,8 @@ func RunInstance(ins contracts.Instance) {
 		go func() {
 			for {
 				n, err := conn.Read(buff)
-
 				if err == io.EOF {
-					fmt.Println("Connection closed by client.")
-					break
+					continue
 				}
 
 				sli := buff[:n]
