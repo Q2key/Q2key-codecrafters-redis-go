@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"os"
@@ -13,6 +12,9 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/handlers"
 )
+
+func hanglePropagation(ins contracts.Instance) {
+}
 
 func RunInstance(ins contracts.Instance) {
 	port := ins.GetConfig().GetPort()
@@ -32,44 +34,25 @@ func RunInstance(ins contracts.Instance) {
 	replconfHandler := handlers.NewReplConfHandler(ins)
 	psyncHandler := handlers.NewPsyncHandler(ins)
 
+	ch := make(chan []byte)
 	for {
 		conn, _ := ln.Accept()
 		buff := make([]byte, 1024)
 
-		go func() {
+		go func(c chan []byte) {
 			if ins.GetConfig().IsMaster() == false && (ins) != nil && (*ins.GetMasterConn()) != nil {
+				res := make([]byte, 512)
 				for {
-					res := make([]byte, 512)
 					rdr := bufio.NewReader(*ins.GetMasterConn())
 					n, _ := rdr.Read(res)
-
-					str := string(res[:n])
-					repc := ""
-
-					for i, ch := range str {
-						if string(ch) == "*" {
-							repc = str[i:]
-							break
-						}
-					}
-
-					_, arr := core.FromRedisStringToStringArray(repc)
-					for i, v := range arr {
-						if v == "SET" && i+2 <= len(arr) {
-							ins.Set(arr[i+1], arr[i+2])
-						}
-					}
+					ch <- res[:n]
 				}
 			}
-		}()
+		}(ch)
 
-		go func() {
+		go func(c chan []byte) {
 			for {
-				n, err := conn.Read(buff)
-				if err == io.EOF {
-					continue
-				}
-
+				n, _ := conn.Read(buff)
 				sli := buff[:n]
 				err, cmd := commands.ParseCommand(string(sli))
 
@@ -103,8 +86,31 @@ func RunInstance(ins contracts.Instance) {
 					repData := core.FromStringArrayToRedisStringArray(cmd.Args())
 					ins.Replicate([]byte(repData))
 				}
+
+				select {
+				case res := <-c:
+
+					str := string(res)
+					repc := ""
+
+					for i, ch := range str {
+						if string(ch) == "*" {
+							repc = str[i:]
+							break
+						}
+					}
+
+					_, arr := core.FromRedisStringToStringArray(repc)
+					for i, v := range arr {
+						if v == "SET" && i+2 <= len(arr) {
+							ins.Set(arr[i+1], arr[i+2])
+						}
+					}
+				default:
+					// do notning
+				}
 			}
-		}()
+		}(ch)
 	}
 }
 

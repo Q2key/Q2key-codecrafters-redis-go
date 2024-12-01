@@ -81,6 +81,8 @@ func (r *Instance) HandShakeMaster() {
 	// Handshake 3
 	req = FromStringArrayToRedisStringArray([]string{"PSYNC", "?", "-1"})
 	send(req, tcp)
+
+	r.GetChan() <- true
 }
 
 func send(req string, client *client.TcpClient) *[]byte {
