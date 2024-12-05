@@ -84,7 +84,8 @@ func (r *Instance) HandShakeMaster() {
 	}
 
 	// Handshake 4
-	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "ACK", string(n - len(bs))})
+	offset := n - len(bs)
+	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "ACK", string(offset)})
 	conn.Write([]byte(req))
 }
 
