@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -13,9 +13,6 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/handlers"
 )
 
-func hanglePropagation(ins contracts.Instance) {
-}
-
 func RunInstance(ins contracts.Instance) {
 	port := ins.GetConfig().GetPort()
 
@@ -24,93 +21,82 @@ func RunInstance(ins contracts.Instance) {
 		log.Fatalf("\r\nFailed to bind to port %s", port)
 	}
 
-	configHandler := handlers.NewConfigHandler(ins)
-	getHandler := handlers.NewGetHandler(ins)
-	setHandler := handlers.NewSetHandler(ins)
-	pingHandler := handlers.NewPingHandler(ins)
-	echoHandler := handlers.NewEchoHandler(ins)
-	keysHandler := handlers.NewKeysHandler(ins)
-	infoHandler := handlers.NewInfoHandler(ins)
-	replconfHandler := handlers.NewReplConfHandler(ins)
-	psyncHandler := handlers.NewPsyncHandler(ins)
+	handlers := map[string]contracts.Handler{
+		"CONFIG":   handlers.NewConfigHandler(ins),
+		"GET":      handlers.NewGetHandler(ins),
+		"SET":      handlers.NewSetHandler(ins),
+		"PING":     handlers.NewPingHandler(ins),
+		"ECHO":     handlers.NewEchoHandler(ins),
+		"KEYS":     handlers.NewKeysHandler(ins),
+		"INFO":     handlers.NewInfoHandler(ins),
+		"REPLCONF": handlers.NewReplConfHandler(ins),
+		"PSYNC":    handlers.NewPsyncHandler(ins),
+	}
 
-	ch := make(chan []byte)
+	masterch := make(chan []byte)
 	for {
-		conn, _ := ln.Accept()
-		buff := make([]byte, 1024)
+		conn, err := ln.Accept()
+		if err != nil {
+			log.Fatal("Something went wrong with tcp connection...")
+		}
 
-		go func(c chan []byte) {
-			if ins.GetConfig().IsMaster() == false && (ins) != nil && (*ins.GetMasterConn()) != nil {
-				res := make([]byte, 512)
-				for {
-					rdr := bufio.NewReader(*ins.GetMasterConn())
-					n, _ := rdr.Read(res)
-					ch <- res[:n]
-				}
+		go handleRedisConnection(conn, ins, handlers, masterch)
+		go readFromMaster(ins.GetMasterConn(), masterch)
+	}
+}
+
+func handleRedisConnection(conn net.Conn, ins contracts.Instance, handlers map[string]contracts.Handler, ch chan []byte) {
+	defer conn.Close()
+	buff := make([]byte, 512)
+	for {
+		n, err := conn.Read(buff)
+		if err != nil {
+			if err == io.EOF {
+				continue
 			}
-		}(ch)
+		}
 
-		go func(c chan []byte) {
-			for {
-				n, _ := conn.Read(buff)
-				sli := buff[:n]
-				err, cmd := commands.ParseCommand(string(sli))
+		err, cmd := commands.ParseCommand(string(buff[:n]))
+		if err != nil {
+			continue
+		}
 
-				if err != nil {
-					handlers.HandleError(conn, err)
-					continue
-				}
+		h, ok := handlers[cmd.Name()]
+		if !ok {
+			break
+		}
 
-				switch cmd.Name() {
-				case "CONFIG":
-					configHandler.Handle(conn, cmd)
-				case "GET":
-					getHandler.Handle(conn, cmd)
-				case "SET":
-					setHandler.Handle(conn, cmd)
-				case "ECHO":
-					echoHandler.Handle(conn, cmd)
-				case "PING":
-					pingHandler.Handle(conn, cmd)
-				case "KEYS":
-					keysHandler.Handle(conn, cmd)
-				case "INFO":
-					infoHandler.Handle(conn, cmd)
-				case "REPLCONF":
-					replconfHandler.Handle(conn, cmd)
-				case "PSYNC":
-					psyncHandler.Handle(conn, cmd)
-				}
+		h.Handle(conn, cmd)
 
-				if cmd.IsWrite() && ins.GetConfig().IsMaster() {
-					repData := core.FromStringArrayToRedisStringArray(cmd.Args())
-					ins.Replicate([]byte(repData))
-				}
-
-				select {
-				case res := <-c:
-
-					str := string(res)
-					repc := ""
-
-					for i, ch := range str {
-						if string(ch) == "*" {
-							repc = str[i:]
-							break
-						}
-					}
-
-					_, arr := core.FromRedisStringToStringArray(repc)
-					for i, v := range arr {
-						if v == "SET" && i+2 <= len(arr) {
-							ins.Set(arr[i+1], arr[i+2])
-						}
-					}
-				default:
-					// do notning
-				}
+		select {
+		case b := <-ch:
+			cmap := core.FromBytesArrayToSetCommandMap(b)
+			for key, ival := range cmap {
+				ins.Set(key, ival.Value)
 			}
-		}(ch)
+		default:
+			if cmd.IsWrite() && ins.GetConfig().IsMaster() {
+				repData := core.FromStringArrayToRedisStringArray(cmd.Args())
+				ins.Replicate([]byte(repData))
+			}
+		}
+	}
+}
+
+func readFromMaster(conn *net.Conn, ch chan []byte) {
+	if conn == nil {
+		return
+	}
+
+	defer (*conn).Close()
+	out := make([]byte, 512)
+	for {
+		i, err := (*conn).Read(out)
+		if err == io.EOF {
+			break
+		}
+
+		ch <- out[:i]
 	}
 }
 
@@ -118,5 +104,6 @@ func main() {
 	fmt.Println("Starting server...")
 	config := core.NewConfig().FromArguments(os.Args)
 	redis := core.NewRedisInstance(*config)
+	redis.HandShakeMaster()
 	RunInstance(redis)
 }

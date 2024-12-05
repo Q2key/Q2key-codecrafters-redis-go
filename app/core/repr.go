@@ -46,7 +46,7 @@ func FromRedisStringToStringArray(q string) (error, []string) {
 		return errors.New("empty string"), []string{}
 	}
 
-	//todo seems we have an error here :(
+	// todo seems we have an error here :(
 	if q[0] != '*' {
 		return errors.New("invalid argument"), []string{}
 	}
@@ -85,4 +85,27 @@ func FromRedisStringToStringArray(q string) (error, []string) {
 	}
 
 	return nil, sli
+}
+
+func FromBytesArrayToSetCommandMap(buf []byte) map[string]InstanceValue {
+	res := map[string]InstanceValue{}
+
+	j := 0
+	for i, ch := range buf {
+		if string(ch) == "*" {
+			j = i
+			break
+		}
+	}
+
+	_, arr := FromRedisStringToStringArray(string(buf)[j:])
+	for i, v := range arr {
+		if v == "SET" && i+2 <= len(arr) {
+			res[arr[i+1]] = InstanceValue{
+				Value: arr[i+2],
+			}
+		}
+	}
+
+	return res
 }

@@ -1,9 +1,6 @@
 package client
 
 import (
-	"bufio"
-	"fmt"
-	"log"
 	"net"
 )
 
@@ -11,7 +8,7 @@ type TcpClient struct {
 	host string
 	port string
 	addr string
-	conn net.Conn
+	Conn *net.Conn
 }
 
 func NewTcpClient(host string, port string) *TcpClient {
@@ -23,45 +20,17 @@ func NewTcpClient(host string, port string) *TcpClient {
 }
 
 func (r *TcpClient) Disconnect() {
-	err := r.conn.Close()
+	err := (*r.Conn).Close()
 	if err != nil {
 		return
 	}
 }
 
-func (r *TcpClient) UseConnection(conn net.Conn) {
-	r.conn = conn
-}
-
-func (r *TcpClient) Connect() error {
+func (r *TcpClient) Connect() {
 	conn, err := net.Dial("tcp", r.addr)
-	fmt.Print("Connected to ", r.addr)
 	if err != nil {
-		return err
+		return
 	}
 
-	r.conn = conn
-
-	return nil
-}
-
-func (r *TcpClient) Conn() *net.Conn {
-	return &r.conn
-}
-
-func (r *TcpClient) SendBytes(bytes []byte) (*[]byte, error) {
-	_, err := r.conn.Write(bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	buf := make([]byte, 1024*10)
-	dr := bufio.NewReader(r.conn)
-	n, err := dr.Read(buf)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	res := buf[:n]
-	return &res, nil
+	r.Conn = &conn
 }

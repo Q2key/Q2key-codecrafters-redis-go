@@ -1,14 +1,15 @@
 package core
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
-	"sync"
+	"strings"
 	"time"
 
-	"github.com/codecrafters-io/redis-starter-go/app/client"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 )
 
@@ -18,25 +19,16 @@ type Instance struct {
 	Store       contracts.Store
 	RepConnPool map[string]*net.Conn
 	MasterConn  *net.Conn
-	Ch          chan bool
-	mu          sync.Mutex
 }
 
 const FakeReplicaId = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
 
 func NewRedisInstance(config contracts.Config) *Instance {
-	ch := make(chan bool, 1)
 	ins := &Instance{
 		ReplicaId:   FakeReplicaId,
 		Store:       contracts.Store{},
 		Config:      config,
 		RepConnPool: map[string]*net.Conn{},
-		Ch:          ch,
-		mu:          sync.Mutex{},
-	}
-
-	if !config.IsMaster() {
-		go ins.HandShakeMaster()
 	}
 
 	ins.TryReadDb()
@@ -49,49 +41,67 @@ func (r *Instance) HandShakeMaster() {
 		return
 	}
 
-	fmt.Println("Starting handshake")
-
 	rep := r.Config.GetReplica()
 	if rep == nil {
 		return
 	}
 
 	host, port := rep.OriginHost, rep.OriginPort
-	tcp := client.NewTcpClient(host, port)
-
-	err := tcp.Connect()
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	r.RegisterMasterConn(*tcp.Conn())
-
-	// Handshake 1
-	buff := send("*1\r\n$4\r\nPING\r\n", tcp)
-	if string(*buff) != "+PONG\r\n" {
+	conn, _ := net.Dial("tcp", host+":"+port)
+	r.RegisterMasterConn(conn)
+	if conn == nil {
 		return
 	}
 
-	// Handshake 2
-	req := FromStringArrayToRedisStringArray([]string{"REPLCONF", "listening-port", r.Config.GetPort()})
-	send(req, tcp)
+	// Handshake 1
+	conn.Write([]byte("*1\r\n$4\r\nPING\r\n"))
 
-	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "capa", "psync2"})
-	send(req, tcp)
-	// Handshake 3
-	req = FromStringArrayToRedisStringArray([]string{"PSYNC", "?", "-1"})
-	send(req, tcp)
-
-	r.GetChan() <- true
-}
-
-func send(req string, client *client.TcpClient) *[]byte {
-	buff, err := (*client).SendBytes([]byte(req))
-	if err != nil {
-		fmt.Println(err)
+	buff := make([]byte, 512)
+	n, _ := conn.Read(buff)
+	if string(buff[:n]) != "+PONG\r\n" {
+		fmt.Print("Expected to get PONG from master")
+		return
 	}
 
-	return buff
+	reader := bufio.NewReader(conn)
+
+	// Handshake 2.1
+	req := FromStringArrayToRedisStringArray([]string{"REPLCONF", "listening-port", r.Config.GetPort()})
+	conn.Write([]byte(req))
+	reader.ReadBytes('\n')
+	// Handshake 2.2
+	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "capa", "psync2"})
+	conn.Write([]byte(req))
+	reader.ReadBytes('\n')
+
+	// Handshake 3
+	req = FromStringArrayToRedisStringArray([]string{"PSYNC", "?", "-1"})
+	conn.Write([]byte(req))
+	bs, _ := reader.ReadBytes('\n')
+	if !strings.Contains(string(bs), "FULLRESYNC") {
+		fmt.Print("Something went wrong with fullressync")
+	}
+
+	// Handshake 4
+	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "ACK", "0"})
+	conn.Write([]byte(req))
+}
+
+func (r *Instance) WaitForReplicationData() {
+	conn := (*r.MasterConn)
+	if conn == nil {
+		return
+	}
+
+	buf := make([]byte, 512)
+	for {
+		n, err := conn.Read(buf)
+		if err == io.EOF {
+			break
+		}
+
+		fmt.Print(string(buf[:n]))
+	}
 }
 
 func (r *Instance) TryReadDb() {
@@ -128,9 +138,7 @@ func (r *Instance) TryReadDb() {
 }
 
 func (r *Instance) Get(key string) contracts.Value {
-	// r.mu.Lock()
 	v := r.Store[key]
-	// r.mu.Unlock()
 	return v
 }
 
@@ -139,11 +147,9 @@ func (r *Instance) GetReplicaId() string {
 }
 
 func (r *Instance) Set(key string, value string) {
-	// r.mu.Lock()
 	r.Store[key] = &InstanceValue{
 		Value: value,
 	}
-	// r.mu.Unlock()
 }
 
 func (r *Instance) GetKeys(token string) []string {
@@ -200,19 +206,6 @@ func (r *Instance) RegisterMasterConn(conn net.Conn) {
 	r.MasterConn = &conn
 }
 
-func (r *Instance) Propagate(buff []byte) {
-	if r.MasterConn != nil {
-		_, err := (*r.MasterConn).Write(buff)
-		if err != nil {
-			fmt.Print(err)
-		}
-	}
-}
-
 func (r *Instance) GetMasterConn() *net.Conn {
 	return r.MasterConn
-}
-
-func (r *Instance) GetChan() chan bool {
-	return r.Ch
 }
