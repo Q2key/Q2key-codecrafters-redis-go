@@ -76,14 +76,15 @@ func (r *Instance) HandShakeMaster() {
 
 	// Handshake 3
 	req = FromStringArrayToRedisStringArray([]string{"PSYNC", "?", "-1"})
-	conn.Write([]byte(req))
+	n, _ = conn.Write([]byte(req))
+
 	bs, _ := reader.ReadBytes('\n')
 	if !strings.Contains(string(bs), "FULLRESYNC") {
 		fmt.Print("Something went wrong with fullressync")
 	}
 
 	// Handshake 4
-	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "ACK", string(len(bs))})
+	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "ACK", string(n - len(bs))})
 	conn.Write([]byte(req))
 }
 
