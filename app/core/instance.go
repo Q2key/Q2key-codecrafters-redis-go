@@ -2,12 +2,13 @@ package core
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
@@ -36,7 +37,7 @@ func NewRedisInstance(config contracts.Config) *Instance {
 	return ins
 }
 
-func (r *Instance) HandShakeMaster() {
+func (r *Instance) HandShakeMaster(ch chan []byte) {
 	if r.GetConfig().IsMaster() {
 		return
 	}
@@ -47,8 +48,14 @@ func (r *Instance) HandShakeMaster() {
 	}
 
 	host, port := rep.OriginHost, rep.OriginPort
-	conn, _ := net.Dial("tcp", host+":"+port)
+	conn, err := net.Dial("tcp", host+":"+port)
+	if err != nil {
+		log.Fatal("Handshake connection error")
+	}
+
 	r.RegisterMasterConn(conn)
+	defer conn.Close()
+
 	if conn == nil {
 		return
 	}
@@ -69,6 +76,7 @@ func (r *Instance) HandShakeMaster() {
 	req := FromStringArrayToRedisStringArray([]string{"REPLCONF", "listening-port", r.Config.GetPort()})
 	conn.Write([]byte(req))
 	reader.ReadBytes('\n')
+
 	// Handshake 2.2
 	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "capa", "psync2"})
 	conn.Write([]byte(req))
@@ -76,36 +84,35 @@ func (r *Instance) HandShakeMaster() {
 
 	// Handshake 3
 	req = FromStringArrayToRedisStringArray([]string{"PSYNC", "?", "-1"})
-	n, _ = conn.Write([]byte(req))
-
-	bs, _ := reader.ReadBytes('\n')
-	if !strings.Contains(string(bs), "FULLRESYNC") {
-		fmt.Print("Something went wrong with fullressync")
-	}
+	conn.Write([]byte(req))
+	reader.ReadBytes('\n')
 
 	// Handshake 4
-	offset := n - len(bs)
-	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "ACK", string(offset)})
-	conn.Write([]byte(req))
-}
 
-func (r *Instance) CanculateReplOffset() {
-}
-
-func (r *Instance) WaitForReplicationData() {
-	conn := (*r.MasterConn)
-	if conn == nil {
-		return
-	}
-
+	var res bytes.Buffer
 	buf := make([]byte, 512)
+	shift := len([]byte("$88\r\n")) + 88
+	rshift := len([]byte("*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n"))
+
 	for {
-		n, err := conn.Read(buf)
+		n, err := reader.Read(buf)
+
 		if err == io.EOF {
 			break
 		}
 
-		fmt.Print(string(buf[:n]))
+		res.Write(buf[:n])
+
+		if bytes.Contains(buf[:n], []byte("*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n")) {
+			lx := res.Len() - shift
+			req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "ACK", strconv.Itoa(lx - rshift)})
+			conn.Write([]byte(req))
+		}
+
+		cmap := FromBytesArrayToSetCommandMap(res.Bytes())
+		for key, ival := range cmap {
+			r.Set(key, ival.Value)
+		}
 	}
 }
 
@@ -213,4 +220,24 @@ func (r *Instance) RegisterMasterConn(conn net.Conn) {
 
 func (r *Instance) GetMasterConn() *net.Conn {
 	return r.MasterConn
+}
+
+// todo remove or refactor
+func readFromMaster(conn *net.Conn, ch chan []byte) {
+	if conn == nil {
+		return
+	}
+
+	defer (*conn).Close()
+	out := make([]byte, 512)
+	for {
+		i, err := (*conn).Read(out)
+		if err == io.EOF {
+			break
+		}
+
+		fmt.Print("HELLO")
+
+		ch <- out[:i]
+	}
 }

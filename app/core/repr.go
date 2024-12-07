@@ -100,6 +100,10 @@ func FromBytesArrayToSetCommandMap(buf []byte) map[string]InstanceValue {
 
 	_, arr := FromRedisStringToStringArray(string(buf)[j:])
 	for i, v := range arr {
+		if v == "GET" && i+1 <= len(arr) {
+			res[arr[i+1]] = InstanceValue{Value: ""}
+		}
+
 		if v == "SET" && i+2 <= len(arr) {
 			res[arr[i+1]] = InstanceValue{
 				Value: arr[i+2],

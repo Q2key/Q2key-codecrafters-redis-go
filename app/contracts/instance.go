@@ -15,5 +15,5 @@ type Instance interface {
 	RegisterReplicaConn(conn net.Conn)
 	RegisterMasterConn(conn net.Conn)
 	Replicate([]byte)
-	HandShakeMaster()
+	HandShakeMaster(ch chan []byte)
 }
