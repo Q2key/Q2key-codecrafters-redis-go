@@ -88,11 +88,13 @@ func (r *Instance) HandShakeMaster(ch chan []byte) {
 	reader.ReadBytes('\n')
 
 	// Handshake 4
-
 	var res bytes.Buffer
 	buf := make([]byte, 512)
 	shift := len([]byte("$88\r\n")) + 88
-	rshift := len([]byte("*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n"))
+
+	repq := "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n"
+	repb := []byte(repq)
+	rshift := len(repb)
 
 	for {
 		n, err := reader.Read(buf)
@@ -101,9 +103,11 @@ func (r *Instance) HandShakeMaster(ch chan []byte) {
 			break
 		}
 
-		res.Write(buf[:n])
+		sbuf := buf[:n]
 
-		if bytes.Contains(buf[:n], []byte("*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n")) {
+		res.Write(sbuf)
+
+		if bytes.Contains(sbuf, repb) {
 			lx := res.Len() - shift
 			req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "ACK", strconv.Itoa(lx - rshift)})
 			conn.Write([]byte(req))
