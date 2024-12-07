@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net"
 	"strconv"
 
@@ -25,19 +24,11 @@ func (h *WaitHandler) Handle(conn net.Conn, c contracts.Command) {
 	}
 
 	args := c.Args()
-	amout := args[1]
-	seconds := args[2]
+	_ = args[1]
+	_ = args[2]
 
-	fmt.Println(amout, seconds)
+	rlen := len(h.instance.GetReplicas())
+	slen := strconv.Itoa(rlen)
 
-	am, err := strconv.Atoi(amout)
-	if err != nil {
-		return
-	}
-
-	if am > 0 {
-		conn.Write([]byte(core.FromStringToRedisInteger("7")))
-	} else {
-		conn.Write([]byte(core.FromStringToRedisInteger("0")))
-	}
+	conn.Write([]byte(core.FromStringToRedisInteger(slen)))
 }

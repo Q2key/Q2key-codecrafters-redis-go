@@ -226,6 +226,10 @@ func (r *Instance) GetMasterConn() *net.Conn {
 	return r.MasterConn
 }
 
+func (r *Instance) GetReplicas() map[string]*net.Conn {
+	return r.RepConnPool
+}
+
 // todo remove or refactor
 func readFromMaster(conn *net.Conn, ch chan []byte) {
 	if conn == nil {

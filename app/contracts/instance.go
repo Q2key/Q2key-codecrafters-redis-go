@@ -8,6 +8,7 @@ type Instance interface {
 	GetKeys(string) []string
 	GetReplicaId() string
 	GetMasterConn() *net.Conn
+	GetReplicas() map[string]*net.Conn
 	Set(key string, value string)
 	GetStore() *map[string]Value
 	SetExpiredAt(string, uint64)
