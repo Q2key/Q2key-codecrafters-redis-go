@@ -33,6 +33,10 @@ func FromStringToRedisCommonString(input string) string {
 	return fmt.Sprintf("+%s\r\n", input)
 }
 
+func FromStringToRedisInteger(str string) string {
+	return fmt.Sprintf(":%s\r\n", str)
+}
+
 func ToRedisErrorString() string {
 	return "$-1\r\n"
 }

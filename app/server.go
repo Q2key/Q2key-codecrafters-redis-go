@@ -32,6 +32,7 @@ func RunInstance(ins contracts.Instance) {
 		"INFO":     handlers.NewInfoHandler(ins),
 		"REPLCONF": handlers.NewReplConfHandler(ins),
 		"PSYNC":    handlers.NewPsyncHandler(ins),
+		"WAIT":     handlers.NewWaitHandler(ins),
 	}
 
 	go ins.HandShakeMaster(mch)
@@ -62,8 +63,6 @@ func handleRedisConnection(conn net.Conn, ins contracts.Instance, handlers map[s
 		if err != nil {
 			continue
 		}
-
-		fmt.Println(cmd.Name())
 
 		h, ok := handlers[cmd.Name()]
 		if !ok {

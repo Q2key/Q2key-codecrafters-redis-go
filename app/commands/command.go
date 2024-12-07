@@ -14,8 +14,6 @@ func ParseCommand(redisString string) (error, contracts.Command) {
 		return err, nil
 	}
 
-	fmt.Print(inp)
-
 	switch inp[0] {
 	case "GET":
 		cmd := new(Get).FromArgs(inp)
@@ -43,6 +41,9 @@ func ParseCommand(redisString string) (error, contracts.Command) {
 		return nil, cmd
 	case "PSYNC":
 		cmd := new(Psync).FromArgs(inp)
+		return nil, cmd
+	case "WAIT":
+		cmd := new(Wait).FromArgs(inp)
 		return nil, cmd
 	default:
 		output := fmt.Sprintf("Unknown command: %s", inp[0])
