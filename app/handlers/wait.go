@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net"
+	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
@@ -29,5 +30,14 @@ func (h *WaitHandler) Handle(conn net.Conn, c contracts.Command) {
 
 	fmt.Println(amout, seconds)
 
-	conn.Write([]byte(core.FromStringToRedisInteger("0")))
+	am, err := strconv.Atoi(amout)
+	if err != nil {
+		return
+	}
+
+	if am > 0 {
+		conn.Write([]byte(core.FromStringToRedisInteger("7")))
+	} else {
+		conn.Write([]byte(core.FromStringToRedisInteger("0")))
+	}
 }
