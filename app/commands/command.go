@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 	"fmt"
+
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
@@ -12,6 +13,8 @@ func ParseCommand(redisString string) (error, contracts.Command) {
 	if err != nil {
 		return err, nil
 	}
+
+	fmt.Print(inp)
 
 	switch inp[0] {
 	case "GET":

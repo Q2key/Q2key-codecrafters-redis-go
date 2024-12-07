@@ -63,6 +63,8 @@ func handleRedisConnection(conn net.Conn, ins contracts.Instance, handlers map[s
 			continue
 		}
 
+		fmt.Println(cmd.Name())
+
 		h, ok := handlers[cmd.Name()]
 		if !ok {
 			break
