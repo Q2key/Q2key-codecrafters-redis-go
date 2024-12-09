@@ -218,15 +218,16 @@ func (r *Instance) GetConfig() contracts.Config {
 }
 
 func (r *Instance) Replicate(buff []byte) {
-	for _, c := range r.RepConnPool {
-		if (r.Scheduler) != nil && (*r.Scheduler).WaitTill.UnixNano() <= time.Now().UnixNano() {
-			fmt.Println("IAM HERE")
-			continue
-		}
+	TraceObj(r.Scheduler, "replicate: ", Magenta)
+	if (r.Scheduler) != nil && (*r.Scheduler).WaitTill.UnixNano() >= time.Now().UnixNano() {
+		r.Scheduler.ActiveRepicasCount = r.Scheduler.TotalReplicasCount - r.Scheduler.PendingReplicasCount
+	} else {
+		r.Scheduler.ActiveRepicasCount = r.Scheduler.TotalReplicasCount
+		r.Scheduler.PendingReplicasCount = 0
+	}
 
-		if c != nil {
-			(*c).Write(buff)
-		}
+	for _, c := range r.RepConnPool {
+		(*c).Write(buff)
 	}
 }
 
@@ -253,7 +254,7 @@ func (r *Instance) ScheduleReplicas(suspendReplicas int, waitMS int) {
 	s.WaitTimeoutMS = waitMS
 	s.PendingReplicasCount = suspendReplicas
 	s.ActiveRepicasCount = s.TotalReplicasCount - suspendReplicas
-	s.WaitTill = time.Now().Add(time.Duration(waitMS) * time.Microsecond)
+	s.WaitTill = time.Now().Add(time.Duration(waitMS) * time.Millisecond)
 }
 
 func (r *Instance) GetScheduler() *contracts.Scheduler {

@@ -25,5 +25,5 @@ func (r *Wait) Args() []string {
 }
 
 func (r *Wait) IsWrite() bool {
-	return true
+	return false
 }
