@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net"
 	"strconv"
 
@@ -24,11 +26,33 @@ func (h *WaitHandler) Handle(conn net.Conn, c contracts.Command) {
 	}
 
 	args := c.Args()
-	_ = args[1]
-	_ = args[2]
 
-	rlen := len(h.instance.GetReplicas())
-	slen := strconv.Itoa(rlen)
+	fmt.Println(args)
+	rep, err := strconv.Atoi(args[1])
+	if err != nil {
+		return
+	}
 
-	conn.Write([]byte(core.FromStringToRedisInteger(slen)))
+	cnt, err := strconv.Atoi(args[2])
+	if err != nil {
+		return
+	}
+
+	h.instance.ScheduleReplicas(rep, cnt)
+
+	s := (*h).instance.GetScheduler()
+	if (s) == nil {
+		return
+	}
+
+	strCount := strconv.Itoa((*s).ActiveRepicasCount)
+
+	b, err := json.MarshalIndent((s), "", "  ")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(string(b))
+
+	conn.Write([]byte(core.FromStringToRedisInteger(strCount)))
 }

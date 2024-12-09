@@ -25,8 +25,6 @@ func (h *PsyncHandler) Handle(conn net.Conn, c contracts.Command) {
 		log.Fatal()
 	}
 
-	h.instance.RegisterReplicaConn(conn)
-
 	mess := fmt.Sprintf("FULLRESYNC %s 0", h.instance.GetReplicaId())
 	resp := core.FromStringToRedisCommonString(mess)
 
@@ -37,12 +35,14 @@ func (h *PsyncHandler) Handle(conn net.Conn, c contracts.Command) {
 	chunkB := []byte("$88\r\n")
 	chunkC := rdbBuff
 
-	res := CombineBufferse(chunkA, chunkB, chunkC)
+	res := CombineBuffers(chunkA, chunkB, chunkC)
+
+	h.instance.RegisterReplicaConn(conn)
 
 	conn.Write(res)
 }
 
-func CombineBufferse(buffs ...[]byte) []byte {
+func CombineBuffers(buffs ...[]byte) []byte {
 	buff := make([]byte, 0)
 	for _, b := range buffs {
 		buff = append(buff, b...)

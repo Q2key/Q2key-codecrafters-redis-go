@@ -23,7 +23,5 @@ func (h *ReplConfHandler) Handle(conn net.Conn, c contracts.Command) {
 		log.Fatal()
 	}
 
-	//	fmt.Println(conn.RemoteAddr())
-
 	conn.Write([]byte(core.FromStringToRedisCommonString("OK")))
 }

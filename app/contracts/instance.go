@@ -1,6 +1,17 @@
 package contracts
 
-import "net"
+import (
+	"net"
+	"time"
+)
+
+type Scheduler struct {
+	WaitTill             time.Time `json:"_"`
+	WaitTimeoutMS        int       `json:"activeTimeoutMS"`
+	ActiveRepicasCount   int       `json:"activeRepicasCount"`
+	PendingReplicasCount int       `json:"pendingReplicasCount"`
+	TotalReplicasCount   int       `json:"totalReplicasCount"`
+}
 
 type Instance interface {
 	Get(string) Value
@@ -17,4 +28,6 @@ type Instance interface {
 	RegisterMasterConn(conn net.Conn)
 	Replicate([]byte)
 	HandShakeMaster(ch chan []byte)
+	GetScheduler() *Scheduler
+	ScheduleReplicas(int, int)
 }

@@ -20,6 +20,7 @@ type Instance struct {
 	Store       contracts.Store
 	RepConnPool map[string]*net.Conn
 	MasterConn  *net.Conn
+	Scheduler   *contracts.Scheduler
 }
 
 const FakeReplicaId = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
@@ -30,6 +31,16 @@ func NewRedisInstance(config contracts.Config) *Instance {
 		Store:       contracts.Store{},
 		Config:      config,
 		RepConnPool: map[string]*net.Conn{},
+	}
+
+	if config.IsMaster() {
+		ins.Scheduler = &contracts.Scheduler{
+			WaitTill:             time.Now(),
+			WaitTimeoutMS:        0,
+			ActiveRepicasCount:   0,
+			PendingReplicasCount: 0,
+			TotalReplicasCount:   0,
+		}
 	}
 
 	ins.TryReadDb()
@@ -208,6 +219,11 @@ func (r *Instance) GetConfig() contracts.Config {
 
 func (r *Instance) Replicate(buff []byte) {
 	for _, c := range r.RepConnPool {
+		if (r.Scheduler) != nil && (*r.Scheduler).WaitTill.UnixNano() <= time.Now().UnixNano() {
+			fmt.Println("IAM HERE")
+			continue
+		}
+
 		if c != nil {
 			(*c).Write(buff)
 		}
@@ -215,6 +231,8 @@ func (r *Instance) Replicate(buff []byte) {
 }
 
 func (r *Instance) RegisterReplicaConn(conn net.Conn) {
+	r.Scheduler.TotalReplicasCount += 1
+	r.Scheduler.ActiveRepicasCount += 1
 	r.RepConnPool[fmt.Sprintf("%p", conn)] = &conn
 }
 
@@ -230,22 +248,14 @@ func (r *Instance) GetReplicas() map[string]*net.Conn {
 	return r.RepConnPool
 }
 
-// todo remove or refactor
-func readFromMaster(conn *net.Conn, ch chan []byte) {
-	if conn == nil {
-		return
-	}
+func (r *Instance) ScheduleReplicas(suspendReplicas int, waitMS int) {
+	s := r.GetScheduler()
+	s.WaitTimeoutMS = waitMS
+	s.PendingReplicasCount = suspendReplicas
+	s.ActiveRepicasCount = s.TotalReplicasCount - suspendReplicas
+	s.WaitTill = time.Now().Add(time.Duration(waitMS) * time.Microsecond)
+}
 
-	defer (*conn).Close()
-	out := make([]byte, 512)
-	for {
-		i, err := (*conn).Read(out)
-		if err == io.EOF {
-			break
-		}
-
-		fmt.Print("HELLO")
-
-		ch <- out[:i]
-	}
+func (r *Instance) GetScheduler() *contracts.Scheduler {
+	return r.Scheduler
 }
