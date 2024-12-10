@@ -75,6 +75,7 @@ func handleRedisConnection(conn net.Conn, ins contracts.Instance, handlers map[s
 			repData := core.FromStringArrayToRedisStringArray(cmd.Args())
 			ins.Replicate([]byte(repData))
 		}
+
 	}
 }
 

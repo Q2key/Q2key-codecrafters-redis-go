@@ -35,19 +35,13 @@ func (h *WaitHandler) Handle(conn net.Conn, c contracts.Command) {
 		return
 	}
 
-	h.instance.ScheduleReplicas(rep, cnt)
+	sh := h.instance.GetScheduler()
+	sc := "0"
 
-	var repc int
-
-	shd := (*h).instance.GetScheduler()
-	if shd != nil {
-		repc = (*shd).ActiveRepicasCount
-	} else {
-		repc = len(h.instance.GetReplicas())
+	if sh != nil {
+		sc = strconv.Itoa((*sh).ActiveRepicasCount)
+		(*sh).Suspend(rep, cnt)
 	}
 
-	core.TraceObj(shd, "wait handler: ", core.Gray)
-
-	strCount := strconv.Itoa(repc)
-	conn.Write([]byte(core.FromStringToRedisInteger(strCount)))
+	conn.Write([]byte(core.FromStringToRedisInteger(sc)))
 }

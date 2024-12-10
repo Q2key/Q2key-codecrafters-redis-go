@@ -23,5 +23,10 @@ func (h *ReplConfHandler) Handle(conn net.Conn, c contracts.Command) {
 		log.Fatal()
 	}
 
+	if len(c.Args()) > 2 && c.Args()[1] == "ACK" {
+		s := h.instance.GetScheduler()
+		s.Release()
+	}
+
 	conn.Write([]byte(core.FromStringToRedisCommonString("OK")))
 }

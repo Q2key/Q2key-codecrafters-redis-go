@@ -218,22 +218,16 @@ func (r *Instance) GetConfig() contracts.Config {
 }
 
 func (r *Instance) Replicate(buff []byte) {
-	TraceObj(r.Scheduler, "replicate: ", Magenta)
-	if (r.Scheduler) != nil && (*r.Scheduler).WaitTill.UnixNano() >= time.Now().UnixNano() {
-		r.Scheduler.ActiveRepicasCount = r.Scheduler.TotalReplicasCount - r.Scheduler.PendingReplicasCount
-	} else {
-		r.Scheduler.ActiveRepicasCount = r.Scheduler.TotalReplicasCount
-		r.Scheduler.PendingReplicasCount = 0
-	}
-
 	for _, c := range r.RepConnPool {
+
+		TraceObj(*r.GetScheduler(), "r: ", Yellow)
+		fmt.Println(r.GetScheduler().IsPending())
 		(*c).Write(buff)
 	}
 }
 
 func (r *Instance) RegisterReplicaConn(conn net.Conn) {
-	r.Scheduler.TotalReplicasCount += 1
-	r.Scheduler.ActiveRepicasCount += 1
+	r.Scheduler.AddActiveReplica()
 	r.RepConnPool[fmt.Sprintf("%p", conn)] = &conn
 }
 
@@ -251,10 +245,7 @@ func (r *Instance) GetReplicas() map[string]*net.Conn {
 
 func (r *Instance) ScheduleReplicas(suspendReplicas int, waitMS int) {
 	s := r.GetScheduler()
-	s.WaitTimeoutMS = waitMS
-	s.PendingReplicasCount = suspendReplicas
-	s.ActiveRepicasCount = s.TotalReplicasCount - suspendReplicas
-	s.WaitTill = time.Now().Add(time.Duration(waitMS) * time.Millisecond)
+	s.Suspend(suspendReplicas, waitMS)
 }
 
 func (r *Instance) GetScheduler() *contracts.Scheduler {
