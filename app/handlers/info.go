@@ -1,11 +1,9 @@
 package handlers
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"log"
-	"net"
-
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 )
 
 func NewInfoHandler(instance contracts.Instance) *InfoHandler {
@@ -18,7 +16,7 @@ type InfoHandler struct {
 	instance contracts.Instance
 }
 
-func (h *InfoHandler) Handle(conn net.Conn, c contracts.Command) {
+func (h *InfoHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
@@ -37,5 +35,5 @@ func (h *InfoHandler) Handle(conn net.Conn, c contracts.Command) {
 		}
 	}
 
-	conn.Write([]byte(core.FromStringToRedisBulkString(res)))
+	conn.GetConn().Write([]byte(core.FromStringToRedisBulkString(res)))
 }

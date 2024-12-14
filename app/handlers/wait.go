@@ -1,8 +1,9 @@
 package handlers
 
 import (
-	"net"
+	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
@@ -18,7 +19,7 @@ type WaitHandler struct {
 	instance contracts.Instance
 }
 
-func (h *WaitHandler) Handle(conn net.Conn, c contracts.Command) {
+func (h *WaitHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 	if c == nil || !c.Validate() {
 		return
 	}
@@ -30,18 +31,30 @@ func (h *WaitHandler) Handle(conn net.Conn, c contracts.Command) {
 		return
 	}
 
-	cnt, err := strconv.Atoi(args[2])
+	timeout, err := strconv.Atoi(args[2])
 	if err != nil {
 		return
 	}
 
-	sh := h.instance.GetScheduler()
-	sc := "0"
+	now := time.Now()
+	til := now.Add(time.Duration(timeout) * time.Millisecond)
 
-	if sh != nil {
-		sc = strconv.Itoa((*sh).ActiveRepicasCount)
-		(*sh).Suspend(rep, cnt)
+	for _, r := range h.instance.GetReplicas() {
+		go func() {
+			r.GetConn().Write([]byte("*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n"))
+		}()
 	}
 
-	conn.Write([]byte(core.FromStringToRedisInteger(sc)))
+	done := map[string]bool{}
+	for len(done) < rep {
+		ch := <-(*h.instance.GetAckChan())
+		done[ch.ConnId] = true
+		if now.UnixNano() > til.UnixNano() {
+			fmt.Printf("\r\nreplica acked: %s %d", ch.ConnId, ch.Offset)
+			break
+		}
+	}
+
+	v := strconv.Itoa(len(done))
+	conn.GetConn().Write([]byte(core.FromStringToRedisInteger(v)))
 }

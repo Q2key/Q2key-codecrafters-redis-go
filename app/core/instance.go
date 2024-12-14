@@ -3,43 +3,40 @@ package core
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 )
 
 type Instance struct {
-	ReplicaId   string
 	Config      contracts.Config
 	Store       contracts.Store
-	RepConnPool map[string]*net.Conn
-	MasterConn  *net.Conn
+	RepConnPool map[string]contracts.RedisConn
+	MasterConn  contracts.RedisConn
 	Scheduler   *contracts.Scheduler
+	Chan        *chan contracts.Ack
 }
 
-const FakeReplicaId = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
-
-func NewRedisInstance(config contracts.Config) *Instance {
+func NewInstance(_ context.Context, config contracts.Config) *Instance {
+	ch := make(chan contracts.Ack)
 	ins := &Instance{
-		ReplicaId:   FakeReplicaId,
-		Store:       contracts.Store{},
+		Store:       NewStore(),
 		Config:      config,
-		RepConnPool: map[string]*net.Conn{},
+		RepConnPool: map[string]contracts.RedisConn{},
+		Chan:        &ch,
 	}
 
 	if config.IsMaster() {
+		waitMs := 0
 		ins.Scheduler = &contracts.Scheduler{
-			WaitTill:             time.Now(),
-			WaitTimeoutMS:        0,
-			ActiveRepicasCount:   0,
-			PendingReplicasCount: 0,
-			TotalReplicasCount:   0,
+			WaitTimeoutMS:      &waitMs,
+			TotalReplicasCount: 0,
 		}
 	}
 
@@ -48,11 +45,7 @@ func NewRedisInstance(config contracts.Config) *Instance {
 	return ins
 }
 
-func (r *Instance) HandShakeMaster(ch chan []byte) {
-	if r.GetConfig().IsMaster() {
-		return
-	}
-
+func (r *Instance) InitHandshakeWithMaster() {
 	rep := r.Config.GetReplica()
 	if rep == nil {
 		return
@@ -64,7 +57,8 @@ func (r *Instance) HandShakeMaster(ch chan []byte) {
 		log.Fatal("Handshake connection error")
 	}
 
-	r.RegisterMasterConn(conn)
+	masterConn := NewReplicMasterConn(&conn)
+	r.RegisterMasterConn(&masterConn)
 	defer conn.Close()
 
 	if conn == nil {
@@ -84,17 +78,18 @@ func (r *Instance) HandShakeMaster(ch chan []byte) {
 	reader := bufio.NewReader(conn)
 
 	// Handshake 2.1
-	req := FromStringArrayToRedisStringArray([]string{"REPLCONF", "listening-port", r.Config.GetPort()})
+	req := StringsToRedisStrings([]string{"REPLCONF", "listening-port", r.Config.GetPort()})
 	conn.Write([]byte(req))
 	reader.ReadBytes('\n')
 
 	// Handshake 2.2
-	req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "capa", "psync2"})
+	req = StringsToRedisStrings([]string{"REPLCONF", "capa", "psync2"})
 	conn.Write([]byte(req))
 	reader.ReadBytes('\n')
 
 	// Handshake 3
-	req = FromStringArrayToRedisStringArray([]string{"PSYNC", "?", "-1"})
+	req = StringsToRedisStrings([]string{"PSYNC", "?", "-1"})
+
 	conn.Write([]byte(req))
 	reader.ReadBytes('\n')
 
@@ -117,16 +112,15 @@ func (r *Instance) HandShakeMaster(ch chan []byte) {
 		sbuf := buf[:n]
 
 		res.Write(sbuf)
-
 		if bytes.Contains(sbuf, repb) {
 			lx := res.Len() - shift
-			req = FromStringArrayToRedisStringArray([]string{"REPLCONF", "ACK", strconv.Itoa(lx - rshift)})
+			req = StringsToRedisStrings([]string{"REPLCONF", "ACK", strconv.Itoa(lx - rshift)})
 			conn.Write([]byte(req))
 		}
 
-		cmap := FromBytesArrayToSetCommandMap(res.Bytes())
-		for key, ival := range cmap {
-			r.Set(key, ival.Value)
+		payload := BytesToCommandMap(res.Bytes())
+		for k, v := range payload {
+			r.GetStore().Set(k, v.Value)
 		}
 	}
 }
@@ -156,98 +150,46 @@ func (r *Instance) TryReadDb() {
 	}
 
 	for k, v := range db.GetData() {
-		r.Set(k, v)
+		r.GetStore().Set(k, v)
 		exp, ok := db.GetExpires()[k]
 		if ok {
-			r.SetExpiredAt(k, exp)
+			r.GetStore().SetExpiredAt(k, exp)
 		}
 	}
 }
 
-func (r *Instance) Get(key string) contracts.Value {
-	v := r.Store[key]
-	return v
+func (r *Instance) GetAckChan() *chan contracts.Ack {
+	return r.Chan
 }
 
-func (r *Instance) GetReplicaId() string {
-	return r.ReplicaId
-}
-
-func (r *Instance) Set(key string, value string) {
-	r.Store[key] = &InstanceValue{
-		Value: value,
-	}
-}
-
-func (r *Instance) GetKeys(token string) []string {
-	res := make([]string, 0)
-	switch token {
-	case "*":
-		for k := range r.Store {
-			res = append(res, k)
-		}
-	}
-	return res
-}
-
-func (r *Instance) GetStore() *map[string]contracts.Value {
-	return &r.Store
-}
-
-func (r *Instance) SetExpiredAt(key string, expired uint64) {
-	tm := GetDateFromTimeStamp(expired)
-	val, ok := r.Store[key]
-	if ok {
-		val.SetExpired(tm)
-	}
-
-	r.Store[key] = val
-}
-
-func (r *Instance) SetExpiredIn(key string, expiredIn uint64) {
-	exp := time.Now().UTC().Add(time.Duration(expiredIn) * time.Millisecond)
-	val, ok := r.Store[key]
-	if ok {
-		val.SetExpired(exp)
-	}
-	r.Store[key] = val
+func (r *Instance) GetStore() contracts.Store {
+	return r.Store
 }
 
 func (r *Instance) GetConfig() contracts.Config {
 	return r.Config
 }
 
-func (r *Instance) Replicate(buff []byte) {
+func (r *Instance) SendToReplicas(buff []byte) {
 	for _, c := range r.RepConnPool {
-
-		TraceObj(*r.GetScheduler(), "r: ", Yellow)
-		fmt.Println(r.GetScheduler().IsPending())
-		(*c).Write(buff)
+		// fmt.Println(string(buff))
+		c.GetConn().Write(buff)
 	}
 }
 
-func (r *Instance) RegisterReplicaConn(conn net.Conn) {
-	r.Scheduler.AddActiveReplica()
-	r.RepConnPool[fmt.Sprintf("%p", conn)] = &conn
+func (r *Instance) RegisterReplicaConn(conn *contracts.RedisConn) {
+	r.RepConnPool[(*conn).GetId()] = *conn
+	r.Scheduler.IncreasTotalReplicasCounter()
 }
 
-func (r *Instance) RegisterMasterConn(conn net.Conn) {
-	r.MasterConn = &conn
+func (r *Instance) RegisterMasterConn(conn *contracts.RedisConn) {
+	r.MasterConn = *conn
 }
 
-func (r *Instance) GetMasterConn() *net.Conn {
+func (r *Instance) GetMasterConn() contracts.RedisConn {
 	return r.MasterConn
 }
 
-func (r *Instance) GetReplicas() map[string]*net.Conn {
+func (r *Instance) GetReplicas() map[string]contracts.RedisConn {
 	return r.RepConnPool
-}
-
-func (r *Instance) ScheduleReplicas(suspendReplicas int, waitMS int) {
-	s := r.GetScheduler()
-	s.Suspend(suspendReplicas, waitMS)
-}
-
-func (r *Instance) GetScheduler() *contracts.Scheduler {
-	return r.Scheduler
 }

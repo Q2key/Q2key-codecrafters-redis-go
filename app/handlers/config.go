@@ -4,7 +4,6 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"log"
-	"net"
 )
 
 func NewConfigHandler(instance contracts.Instance) *ConfigHandler {
@@ -17,7 +16,7 @@ type ConfigHandler struct {
 	instance *contracts.Instance
 }
 
-func (h *ConfigHandler) Handle(conn net.Conn, c contracts.Command) {
+func (h *ConfigHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
@@ -27,15 +26,15 @@ func (h *ConfigHandler) Handle(conn net.Conn, c contracts.Command) {
 
 	if action == "GET" && key == "dir" {
 		resp := []string{key, (*h.instance).GetConfig().GetDir()}
-		conn.Write([]byte(core.FromStringArrayToRedisStringArray(resp)))
+		conn.GetConn().Write([]byte(core.StringsToRedisStrings(resp)))
 		return
 	}
 
 	if action == "GET" && key == "dbfilename" {
 		resp := []string{key, (*h.instance).GetConfig().GetDbFileName()}
-		conn.Write([]byte(core.FromStringArrayToRedisStringArray(resp)))
+		conn.GetConn().Write([]byte(core.StringsToRedisStrings(resp)))
 		return
 	}
 
-	conn.Write([]byte(core.ToRedisErrorString()))
+	conn.GetConn().Write([]byte(core.ToRedisErrorString()))
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -13,7 +14,9 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/handlers"
 )
 
-func RunInstance(ins contracts.Instance) {
+// todo rename to RunMaster
+// todo create run Slave or so...
+func RunInstance(ctx context.Context, ins contracts.Instance) {
 	port := ins.GetConfig().GetPort()
 
 	ln, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%s", port))
@@ -21,7 +24,6 @@ func RunInstance(ins contracts.Instance) {
 		log.Fatalf("\r\nFailed to bind to port %s", port)
 	}
 
-	mch := make(chan []byte)
 	handlers := map[string]contracts.Handler{
 		"CONFIG":   handlers.NewConfigHandler(ins),
 		"GET":      handlers.NewGetHandler(ins),
@@ -35,7 +37,7 @@ func RunInstance(ins contracts.Instance) {
 		"WAIT":     handlers.NewWaitHandler(ins),
 	}
 
-	go ins.HandShakeMaster(mch)
+	go ins.InitHandshakeWithMaster()
 
 	for {
 		conn, err := ln.Accept()
@@ -49,39 +51,30 @@ func RunInstance(ins contracts.Instance) {
 
 func handleRedisConnection(conn net.Conn, ins contracts.Instance, handlers map[string]contracts.Handler) {
 	defer conn.Close()
+	buff := make([]byte, 215)
 
-	buff := make([]byte, 512)
+	isMaster := ins.GetConfig().IsMaster()
+
 	for {
 		n, err := conn.Read(buff)
-		if err != nil {
-			if err == io.EOF {
-				continue
-			}
-		}
-
-		err, cmd := commands.ParseCommand(string(buff[:n]))
-		if err != nil {
-			continue
-		}
-
-		h, ok := handlers[cmd.Name()]
-		if !ok {
+		if err == io.EOF {
 			break
 		}
 
-		h.Handle(conn, cmd)
+		_, cmd := commands.ParseCommand(string(buff[:n]))
+		h := handlers[cmd.Name()]
+		h.Handle(core.NewReplicMasterConn(&conn), cmd)
 
-		if cmd.IsWrite() && ins.GetConfig().IsMaster() {
-			repData := core.FromStringArrayToRedisStringArray(cmd.Args())
-			ins.Replicate([]byte(repData))
+		if isMaster && cmd.IsWrite() {
+			ins.SendToReplicas(buff[:n])
 		}
-
 	}
 }
 
 func main() {
 	fmt.Println("Starting server...")
+	ctx := context.Background()
 	config := core.NewConfig().FromArguments(os.Args)
-	redis := core.NewRedisInstance(*config)
-	RunInstance(redis)
+	redis := core.NewInstance(ctx, *config)
+	RunInstance(ctx, redis)
 }

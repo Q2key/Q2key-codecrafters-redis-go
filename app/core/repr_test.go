@@ -23,7 +23,7 @@ func TestFromStringShouldBeOk2(t *testing.T) {
 }
 
 func TestFromStringArrayShouldBeOk1(t *testing.T) {
-	res := FromStringArrayToRedisStringArray([]string{"hello", "world"})
+	res := StringsToRedisStrings([]string{"hello", "world"})
 	exp := "*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n"
 	if res != exp {
 		t.Fail()
@@ -33,7 +33,7 @@ func TestFromStringArrayShouldBeOk1(t *testing.T) {
 }
 
 func TestFromStringArrayShouldBeOk2(t *testing.T) {
-	res := FromStringArrayToRedisStringArray([]string{"hello", "world", "my", "friend"})
+	res := StringsToRedisStrings([]string{"hello", "world", "my", "friend"})
 	exp := "*4\r\n$5\r\nhello\r\n$5\r\nworld\r\n$2\r\nmy\r\n$6\r\nfriend\r\n"
 	if res != exp {
 		t.Fail()
@@ -43,7 +43,7 @@ func TestFromStringArrayShouldBeOk2(t *testing.T) {
 }
 
 func TestFromStringArrayShouldBeOk3(t *testing.T) {
-	res := FromStringArrayToRedisStringArray([]string{""})
+	res := StringsToRedisStrings([]string{""})
 	exp := "*1\r\n$0\r\n\r\n"
 	if res != exp {
 		t.Fail()
@@ -53,7 +53,7 @@ func TestFromStringArrayShouldBeOk3(t *testing.T) {
 }
 
 func TestFromStringArrayShouldBeOk4(t *testing.T) {
-	res := FromStringArrayToRedisStringArray([]string{})
+	res := StringsToRedisStrings([]string{})
 	exp := "*0\r\n"
 	if res != exp {
 		t.Fail()

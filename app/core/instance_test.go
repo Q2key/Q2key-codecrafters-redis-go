@@ -1,29 +1,32 @@
 package core
 
 import (
+	"context"
 	"testing"
 	"time"
-
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 )
 
 func TestGetSetValue(t *testing.T) {
 	cfg := NewConfig()
-	s := NewRedisInstance(cfg)
+	ctx := context.Background()
+	s := NewInstance(ctx, cfg).GetStore()
 
 	s.Set("Key0", "Value0")
 	s.Set("Key1", "Value1")
 	s.Set("Key2", "Value2")
 
-	if s.Get("Key0").GetValue() != "Value0" {
+	v1, _ := s.Get("Key0")
+	if v1.GetValue() != "Value0" {
 		t.Fail()
 	}
 
-	if s.Get("Key1").GetValue() != "Value1" {
+	v2, _ := s.Get("Key1")
+	if v2.GetValue() != "Value1" {
 		t.Fail()
 	}
 
-	if s.Get("Key2").GetValue() != "Value2" {
+	v3, _ := s.Get("Key2")
+	if v3.GetValue() != "Value2" {
 		t.Fail()
 	}
 
@@ -31,16 +34,14 @@ func TestGetSetValue(t *testing.T) {
 }
 
 func TestShouldBeExpired2000(t *testing.T) {
-	r := Instance{
-		Store: map[string]contracts.Value{},
-	}
+	r := NewStore()
 
 	r.Set("key", "value")
 	r.SetExpiredIn("key", 2000)
 
 	time.Sleep(3 * time.Second)
 
-	v := r.Get("key")
+	v, _ := r.Get("key")
 	if !v.IsExpired() {
 		t.Fail()
 	}
@@ -49,16 +50,14 @@ func TestShouldBeExpired2000(t *testing.T) {
 }
 
 func TestShouldBeExpired100(t *testing.T) {
-	r := Instance{
-		Store: map[string]contracts.Value{},
-	}
+	r := NewStore()
 
 	r.Set("key", "value")
 	r.SetExpiredIn("key", 100)
 
 	time.Sleep(101 * time.Millisecond)
 
-	v := r.Get("key")
+	v, _ := r.Get("key")
 	if !v.IsExpired() {
 		t.Fail()
 	}
@@ -67,16 +66,14 @@ func TestShouldBeExpired100(t *testing.T) {
 }
 
 func TestShouldBeExpired101(t *testing.T) {
-	r := Instance{
-		Store: map[string]contracts.Value{},
-	}
+	r := NewStore()
 
 	r.Set("key", "value")
 	r.SetExpiredIn("key", 101)
 
 	time.Sleep(101 * time.Millisecond)
 
-	v := r.Get("key")
+	v, _ := r.Get("key")
 	if !v.IsExpired() {
 		t.Fail()
 	}
@@ -85,12 +82,10 @@ func TestShouldBeExpired101(t *testing.T) {
 }
 
 func TestShouldNotBeExpired0(t *testing.T) {
-	r := Instance{
-		Store: map[string]contracts.Value{},
-	}
+	r := NewStore()
 
 	r.Set("key", "value")
-	v := r.Get("key")
+	v, _ := r.Get("key")
 
 	if v.IsExpired() {
 		t.Fail()
@@ -104,13 +99,10 @@ func TestShouldNotBeExpired0(t *testing.T) {
 }
 
 func TestShouldNotBeExpired4000(t *testing.T) {
-	r := Instance{
-		Store: map[string]contracts.Value{},
-	}
-
+	r := NewStore()
 	r.Set("key", "value")
 	r.SetExpiredIn("key", 4000)
-	v := r.Get("key")
+	v, _ := r.Get("key")
 
 	time.Sleep(3 * time.Second)
 
@@ -127,7 +119,7 @@ func TestShouldNotBeExpired4000(t *testing.T) {
 
 func TestReturnCorrectConfig(t *testing.T) {
 	s := &Instance{
-		Store:  make(map[string]contracts.Value),
+		Store:  NewStore(),
 		Config: NewConfig(),
 	}
 

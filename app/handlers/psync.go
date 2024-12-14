@@ -3,11 +3,9 @@ package handlers
 import (
 	"encoding/hex"
 	"fmt"
-	"log"
-	"net"
-
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
+	"log"
 )
 
 func NewPsyncHandler(instance contracts.Instance) *PsyncHandler {
@@ -20,12 +18,12 @@ type PsyncHandler struct {
 	instance contracts.Instance
 }
 
-func (h *PsyncHandler) Handle(conn net.Conn, c contracts.Command) {
+func (h *PsyncHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
 
-	mess := fmt.Sprintf("FULLRESYNC %s 0", h.instance.GetReplicaId())
+	mess := fmt.Sprintf("FULLRESYNC %s 0", conn.GetId())
 	resp := core.FromStringToRedisCommonString(mess)
 
 	rdb := "524544495330303131fa0972656469732d76657205372e322e30fa0a72656469732d62697473c040fa056374696d65c26d08bc65fa08757365642d6d656dc2b0c41000fa08616f662d62617365c000fff06e3bfec0ff5aa2"
@@ -36,10 +34,7 @@ func (h *PsyncHandler) Handle(conn net.Conn, c contracts.Command) {
 	chunkC := rdbBuff
 
 	res := CombineBuffers(chunkA, chunkB, chunkC)
-
-	h.instance.RegisterReplicaConn(conn)
-
-	conn.Write(res)
+	conn.GetConn().Write(res)
 }
 
 func CombineBuffers(buffs ...[]byte) []byte {

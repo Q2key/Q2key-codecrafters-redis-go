@@ -4,7 +4,6 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"log"
-	"net"
 )
 
 func NewKeysHandler(instance contracts.Instance) *KeysHandler {
@@ -17,7 +16,7 @@ type KeysHandler struct {
 	instance contracts.Instance
 }
 
-func (h *KeysHandler) Handle(conn net.Conn, c contracts.Command) {
+func (h *KeysHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
@@ -25,7 +24,7 @@ func (h *KeysHandler) Handle(conn net.Conn, c contracts.Command) {
 	args := c.Args()
 
 	t := args[1]
-	keys := h.instance.GetKeys(t)
+	keys := h.instance.GetStore().GetKeys(t)
 
-	conn.Write([]byte(core.FromStringArrayToRedisStringArray(keys)))
+	conn.GetConn().Write([]byte(core.StringsToRedisStrings(keys)))
 }

@@ -13,7 +13,7 @@ const (
 	ArrayToken  ReprToken = "*"
 )
 
-func FromStringArrayToRedisStringArray(input []string) string {
+func StringsToRedisStrings(input []string) string {
 	n := len(input)
 	r := fmt.Sprintf("*%d", n)
 	for i := 0; i < n; i++ {
@@ -91,7 +91,7 @@ func FromRedisStringToStringArray(q string) (error, []string) {
 	return nil, sli
 }
 
-func FromBytesArrayToSetCommandMap(buf []byte) map[string]InstanceValue {
+func BytesToCommandMap(buf []byte) map[string]InstanceValue {
 	res := map[string]InstanceValue{}
 
 	j := 0
@@ -104,10 +104,6 @@ func FromBytesArrayToSetCommandMap(buf []byte) map[string]InstanceValue {
 
 	_, arr := FromRedisStringToStringArray(string(buf)[j:])
 	for i, v := range arr {
-		if v == "GET" && i+1 <= len(arr) {
-			res[arr[i+1]] = InstanceValue{Value: ""}
-		}
-
 		if v == "SET" && i+2 <= len(arr) {
 			res[arr[i+1]] = InstanceValue{
 				Value: arr[i+2],
