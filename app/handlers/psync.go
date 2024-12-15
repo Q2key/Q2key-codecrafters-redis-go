@@ -3,9 +3,10 @@ package handlers
 import (
 	"encoding/hex"
 	"fmt"
+	"log"
+
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
-	"log"
 )
 
 func NewPsyncHandler(instance contracts.Instance) *PsyncHandler {
@@ -23,6 +24,8 @@ func (h *PsyncHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 		log.Fatal()
 	}
 
+	h.instance.RegisterReplicaConn(&conn)
+
 	mess := fmt.Sprintf("FULLRESYNC %s 0", conn.GetId())
 	resp := core.FromStringToRedisCommonString(mess)
 
@@ -34,6 +37,7 @@ func (h *PsyncHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 	chunkC := rdbBuff
 
 	res := CombineBuffers(chunkA, chunkB, chunkC)
+
 	conn.GetConn().Write(res)
 }
 

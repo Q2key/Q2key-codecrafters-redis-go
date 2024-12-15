@@ -53,20 +53,23 @@ func handleRedisConnection(conn net.Conn, ins contracts.Instance, handlers map[s
 	defer conn.Close()
 	buff := make([]byte, 215)
 
-	isMaster := ins.GetConfig().IsMaster()
-
+	redisCon := core.NewReplicMasterConn(&conn)
 	for {
 		n, err := conn.Read(buff)
 		if err == io.EOF {
-			break
+			continue
 		}
 
 		_, cmd := commands.ParseCommand(string(buff[:n]))
-		h := handlers[cmd.Name()]
-		h.Handle(core.NewReplicMasterConn(&conn), cmd)
 
-		if isMaster && cmd.IsWrite() {
-			ins.SendToReplicas(buff[:n])
+		h := handlers[cmd.Name()]
+		h.Handle(redisCon, cmd)
+
+		fmt.Println(ins.GetWrittenBytes())
+
+		if ins.GetConfig().IsMaster() && cmd.IsWrite() {
+			rbuf := buff[:n]
+			ins.SendToReplicas(&rbuf)
 		}
 	}
 }

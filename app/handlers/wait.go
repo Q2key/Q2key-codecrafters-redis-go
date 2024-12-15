@@ -36,22 +36,41 @@ func (h *WaitHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 		return
 	}
 
-	now := time.Now()
-	til := now.Add(time.Duration(timeout) * time.Millisecond)
+	done := map[string]bool{}
+	bytesNeeded := h.instance.GetWrittenBytes()
 
 	for _, r := range h.instance.GetReplicas() {
+		// reader := bufio.NewReader(r.GetConn())
+		fmt.Println(r.GetOffset(), bytesNeeded)
+		if r.GetOffset() >= bytesNeeded {
+			done[r.GetId()] = true
+			continue
+		}
+
 		go func() {
+			fmt.Println("sending...", r.GetId(), r.GetOffset())
 			r.GetConn().Write([]byte("*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n"))
 		}()
+
 	}
 
-	done := map[string]bool{}
+	ch := (*h.instance.GetAckChan())
+awaitingLoop:
 	for len(done) < rep {
-		ch := <-(*h.instance.GetAckChan())
-		done[ch.ConnId] = true
-		if now.UnixNano() > til.UnixNano() {
-			fmt.Printf("\r\nreplica acked: %s %d", ch.ConnId, ch.Offset)
-			break
+		select {
+		case c := <-ch:
+			{
+				fmt.Println("ACKED", c.Offset, bytesNeeded)
+
+				if c.Offset >= bytesNeeded {
+					done[c.ConnId] = true
+				}
+			}
+		case t := <-time.After(time.Duration(timeout) * time.Millisecond):
+			{
+				fmt.Println("BREAKING LOOP", t.UTC())
+				break awaitingLoop
+			}
 		}
 	}
 

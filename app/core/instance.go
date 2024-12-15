@@ -17,10 +17,11 @@ import (
 type Instance struct {
 	Config      contracts.Config
 	Store       contracts.Store
-	RepConnPool map[string]contracts.RedisConn
+	RepConnPool *map[string]contracts.RedisConn
 	MasterConn  contracts.RedisConn
 	Scheduler   *contracts.Scheduler
 	Chan        *chan contracts.Ack
+	bytes       int
 }
 
 func NewInstance(_ context.Context, config contracts.Config) *Instance {
@@ -28,7 +29,7 @@ func NewInstance(_ context.Context, config contracts.Config) *Instance {
 	ins := &Instance{
 		Store:       NewStore(),
 		Config:      config,
-		RepConnPool: map[string]contracts.RedisConn{},
+		RepConnPool: &map[string]contracts.RedisConn{},
 		Chan:        &ch,
 	}
 
@@ -170,15 +171,15 @@ func (r *Instance) GetConfig() contracts.Config {
 	return r.Config
 }
 
-func (r *Instance) SendToReplicas(buff []byte) {
-	for _, c := range r.RepConnPool {
-		// fmt.Println(string(buff))
-		c.GetConn().Write(buff)
+func (r *Instance) SendToReplicas(buff *[]byte) {
+	r.bytes += len(*buff)
+	for _, r := range r.GetReplicas() {
+		r.GetConn().Write((*buff))
 	}
 }
 
 func (r *Instance) RegisterReplicaConn(conn *contracts.RedisConn) {
-	r.RepConnPool[(*conn).GetId()] = *conn
+	(*r.RepConnPool)[(*conn).GetId()] = *conn
 	r.Scheduler.IncreasTotalReplicasCounter()
 }
 
@@ -191,5 +192,13 @@ func (r *Instance) GetMasterConn() contracts.RedisConn {
 }
 
 func (r *Instance) GetReplicas() map[string]contracts.RedisConn {
-	return r.RepConnPool
+	return *r.RepConnPool
+}
+
+func (r *Instance) UpdateReplica(id string, offset int) {
+	(*r.RepConnPool)[id].SetOffset(offset)
+}
+
+func (r *Instance) GetWrittenBytes() int {
+	return r.bytes
 }

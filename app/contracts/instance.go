@@ -7,6 +7,7 @@ type Ack struct {
 
 type Instance interface {
 	InitHandshakeWithMaster()
+	GetWrittenBytes() int
 	GetConfig() Config
 	GetMasterConn() RedisConn
 	GetReplicas() map[string]RedisConn
@@ -14,5 +15,6 @@ type Instance interface {
 	GetAckChan() *chan Ack
 	RegisterMasterConn(conn *RedisConn)
 	RegisterReplicaConn(conn *RedisConn)
-	SendToReplicas([]byte)
+	SendToReplicas(*[]byte)
+	UpdateReplica(string, int)
 }

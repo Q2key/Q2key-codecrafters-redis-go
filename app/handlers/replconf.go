@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 
@@ -23,15 +24,17 @@ func (h *ReplConfHandler) Handle(conn contracts.RedisConn, c contracts.Command) 
 		log.Fatal()
 	}
 
-	if len(c.Args()) > 2 && c.Args()[1] == "listening-port" {
-		h.instance.RegisterReplicaConn(&conn)
-	}
+	fmt.Println(c.Args())
 
 	if len(c.Args()) > 2 && c.Args()[1] == "ACK" {
 		cnt := c.Args()[2]
 		num, _ := strconv.Atoi(cnt)
-		*h.instance.GetAckChan() <- contracts.Ack{ConnId: conn.GetId(), Offset: num}
-	}
 
-	conn.GetConn().Write([]byte(core.FromStringToRedisCommonString("OK")))
+		h.instance.UpdateReplica(conn.GetId(), num)
+		*h.instance.GetAckChan() <- contracts.Ack{ConnId: conn.GetId(), Offset: num}
+
+		conn.GetConn().Write([]byte(""))
+	} else {
+		conn.GetConn().Write([]byte(core.FromStringToRedisCommonString("OK")))
+	}
 }
