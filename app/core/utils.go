@@ -1,11 +1,7 @@
 package core
 
 import (
-	"encoding/json"
-	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"math/rand"
-	"time"
 )
 
 var (
@@ -19,15 +15,6 @@ var (
 	Gray    = "\033[37m"
 	White   = "\033[97m"
 )
-
-func TraceObj(obj *contracts.Scheduler, label string, color string) {
-	b, err := json.MarshalIndent((obj), "", "  ")
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Printf("\r\n%s%s:%s%s", color+label, time.Now().Local().UTC(), string(b), Reset)
-}
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 

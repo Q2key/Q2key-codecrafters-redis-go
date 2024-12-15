@@ -17,4 +17,5 @@ type Instance interface {
 	RegisterReplicaConn(conn *RedisConn)
 	SendToReplicas(*[]byte)
 	UpdateReplica(string, int)
+	ResetBytes()
 }

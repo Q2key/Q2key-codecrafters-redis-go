@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"log"
 	"strconv"
 
@@ -23,8 +22,6 @@ func (h *ReplConfHandler) Handle(conn contracts.RedisConn, c contracts.Command) 
 	if c == nil || !c.Validate() {
 		log.Fatal()
 	}
-
-	fmt.Println(c.Args())
 
 	if len(c.Args()) > 2 && c.Args()[1] == "ACK" {
 		cnt := c.Args()[2]

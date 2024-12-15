@@ -24,6 +24,13 @@ func RunInstance(ctx context.Context, ins contracts.Instance) {
 		log.Fatalf("\r\nFailed to bind to port %s", port)
 	}
 
+	/*
+		  var input interface{} = 12
+		str := input.(string) /
+
+			a, b := contracts.Instance.(core.Instance)
+	*/
+
 	handlers := map[string]contracts.Handler{
 		"CONFIG":   handlers.NewConfigHandler(ins),
 		"GET":      handlers.NewGetHandler(ins),
@@ -61,11 +68,8 @@ func handleRedisConnection(conn net.Conn, ins contracts.Instance, handlers map[s
 		}
 
 		_, cmd := commands.ParseCommand(string(buff[:n]))
-
 		h := handlers[cmd.Name()]
 		h.Handle(redisCon, cmd)
-
-		fmt.Println(ins.GetWrittenBytes())
 
 		if ins.GetConfig().IsMaster() && cmd.IsWrite() {
 			rbuf := buff[:n]
@@ -75,7 +79,6 @@ func handleRedisConnection(conn net.Conn, ins contracts.Instance, handlers map[s
 }
 
 func main() {
-	fmt.Println("Starting server...")
 	ctx := context.Background()
 	config := core.NewConfig().FromArguments(os.Args)
 	redis := core.NewInstance(ctx, *config)

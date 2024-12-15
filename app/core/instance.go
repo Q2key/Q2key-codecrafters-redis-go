@@ -19,7 +19,6 @@ type Instance struct {
 	Store       contracts.Store
 	RepConnPool *map[string]contracts.RedisConn
 	MasterConn  contracts.RedisConn
-	Scheduler   *contracts.Scheduler
 	Chan        *chan contracts.Ack
 	bytes       int
 }
@@ -31,14 +30,6 @@ func NewInstance(_ context.Context, config contracts.Config) *Instance {
 		Config:      config,
 		RepConnPool: &map[string]contracts.RedisConn{},
 		Chan:        &ch,
-	}
-
-	if config.IsMaster() {
-		waitMs := 0
-		ins.Scheduler = &contracts.Scheduler{
-			WaitTimeoutMS:      &waitMs,
-			TotalReplicasCount: 0,
-		}
 	}
 
 	ins.TryReadDb()
@@ -72,7 +63,6 @@ func (r *Instance) InitHandshakeWithMaster() {
 	buff := make([]byte, 512)
 	n, _ := conn.Read(buff)
 	if string(buff[:n]) != "+PONG\r\n" {
-		fmt.Print("Expected to get PONG from master")
 		return
 	}
 
@@ -180,7 +170,6 @@ func (r *Instance) SendToReplicas(buff *[]byte) {
 
 func (r *Instance) RegisterReplicaConn(conn *contracts.RedisConn) {
 	(*r.RepConnPool)[(*conn).GetId()] = *conn
-	r.Scheduler.IncreasTotalReplicasCounter()
 }
 
 func (r *Instance) RegisterMasterConn(conn *contracts.RedisConn) {
@@ -201,4 +190,8 @@ func (r *Instance) UpdateReplica(id string, offset int) {
 
 func (r *Instance) GetWrittenBytes() int {
 	return r.bytes
+}
+
+func (r *Instance) ResetBytes() {
+	r.bytes = 0
 }

@@ -1,9 +1,7 @@
 package core
 
 import (
-	"fmt"
 	"testing"
-	"time"
 )
 
 func TestParseMSecDateTimeStamp(t *testing.T) {
@@ -26,16 +24,7 @@ func TestParseMSecDateTimeStamp3(t *testing.T) {
 	t.Log("OK!")
 }
 
-func TestParseMSecDateTimeStamp2(t *testing.T) {
-
-	tm := time.Unix(1956528000000/1000, 0).UTC()
-	fmt.Println(tm)
-
-	t.Log("OK!")
-}
-
 func TestParseValuePair(t *testing.T) {
-
 	buff := []byte{
 		0x00,
 		0x03, 0x62, 0x61, 0x7A,

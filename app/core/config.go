@@ -1,9 +1,9 @@
 package core
 
 import (
-	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"strings"
+
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 )
 
 type Config struct {
@@ -76,7 +76,6 @@ func getArgumentMap(args []string) map[Argument][]string {
 }
 
 func createConfigFromArgs(args []string) contracts.Config {
-	fmt.Println(args)
 	c := NewConfig()
 	m := getArgumentMap(args)
 

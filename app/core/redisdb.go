@@ -3,8 +3,9 @@ package core
 import (
 	"errors"
 	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"os"
+
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 )
 
 type RedisDB struct {
@@ -96,7 +97,6 @@ func (r *RedisDB) Connect() error {
 			// Discard the remaining 6 bits. The next 4 bytes from the stream represent the length
 			if tb == "10" {
 				j = x + 4
-				fmt.Println(tb)
 			}
 
 			// The next object is encoded in a special format. The remaining 6 bits indicate the format.
@@ -153,6 +153,7 @@ func (r *RedisDB) Connect() error {
 func (r *RedisDB) GetData() map[string]string {
 	return r.data
 }
+
 func (r *RedisDB) GetExpires() map[string]uint64 {
 	return r.expires
 }
