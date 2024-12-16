@@ -118,7 +118,7 @@ func TestShouldNotBeExpired4000(t *testing.T) {
 }
 
 func TestReturnCorrectConfig(t *testing.T) {
-	s := &Instance{
+	s := &RedisInstance{
 		Store:  NewStore(),
 		Config: NewConfig(),
 	}

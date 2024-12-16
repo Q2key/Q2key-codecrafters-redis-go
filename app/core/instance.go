@@ -14,7 +14,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 )
 
-type Instance struct {
+type RedisInstance struct {
 	Config      contracts.Config
 	Store       contracts.Store
 	RepConnPool *map[string]contracts.RedisConn
@@ -23,9 +23,9 @@ type Instance struct {
 	bytes       int
 }
 
-func NewInstance(_ context.Context, config contracts.Config) *Instance {
+func NewInstance(_ context.Context, config contracts.Config) *RedisInstance {
 	ch := make(chan contracts.Ack)
-	ins := &Instance{
+	ins := &RedisInstance{
 		Store:       NewStore(),
 		Config:      config,
 		RepConnPool: &map[string]contracts.RedisConn{},
@@ -37,7 +37,7 @@ func NewInstance(_ context.Context, config contracts.Config) *Instance {
 	return ins
 }
 
-func (r *Instance) InitHandshakeWithMaster() {
+func (r *RedisInstance) InitHandshakeWithMaster() {
 	rep := r.Config.GetReplica()
 	if rep == nil {
 		return
@@ -116,7 +116,7 @@ func (r *Instance) InitHandshakeWithMaster() {
 	}
 }
 
-func (r *Instance) TryReadDb() {
+func (r *RedisInstance) TryReadDb() {
 	if r.Config.GetDbFileName() == "" || r.Config.GetDir() == "" {
 		return
 	}
@@ -149,49 +149,49 @@ func (r *Instance) TryReadDb() {
 	}
 }
 
-func (r *Instance) GetAckChan() *chan contracts.Ack {
+func (r *RedisInstance) GetAckChan() *chan contracts.Ack {
 	return r.Chan
 }
 
-func (r *Instance) GetStore() contracts.Store {
+func (r *RedisInstance) GetStore() contracts.Store {
 	return r.Store
 }
 
-func (r *Instance) GetConfig() contracts.Config {
+func (r *RedisInstance) GetConfig() contracts.Config {
 	return r.Config
 }
 
-func (r *Instance) SendToReplicas(buff *[]byte) {
+func (r *RedisInstance) SendToReplicas(buff *[]byte) {
 	r.bytes += len(*buff)
 	for _, r := range r.GetReplicas() {
 		r.Conn().Write((*buff))
 	}
 }
 
-func (r *Instance) RegisterReplicaConn(conn *contracts.RedisConn) {
+func (r *RedisInstance) RegisterReplicaConn(conn *contracts.RedisConn) {
 	(*r.RepConnPool)[(*conn).Id()] = *conn
 }
 
-func (r *Instance) RegisterMasterConn(conn *contracts.RedisConn) {
+func (r *RedisInstance) RegisterMasterConn(conn *contracts.RedisConn) {
 	r.MasterConn = *conn
 }
 
-func (r *Instance) GetMasterConn() contracts.RedisConn {
+func (r *RedisInstance) GetMasterConn() contracts.RedisConn {
 	return r.MasterConn
 }
 
-func (r *Instance) GetReplicas() map[string]contracts.RedisConn {
+func (r *RedisInstance) GetReplicas() map[string]contracts.RedisConn {
 	return *r.RepConnPool
 }
 
-func (r *Instance) UpdateReplica(id string, offset int) {
+func (r *RedisInstance) UpdateReplica(id string, offset int) {
 	(*r.RepConnPool)[id].SetOffset(offset)
 }
 
-func (r *Instance) GetWrittenBytes() int {
+func (r *RedisInstance) GetWrittenBytes() int {
 	return r.bytes
 }
 
-func (r *Instance) ResetBytes() {
+func (r *RedisInstance) ResetBytes() {
 	r.bytes = 0
 }

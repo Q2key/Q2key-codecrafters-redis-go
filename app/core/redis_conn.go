@@ -34,3 +34,11 @@ func NewRedisConn(conn *net.Conn) contracts.RedisConn {
 		offset: 0,
 	}
 }
+
+func NewRedisConcreteConn(conn *net.Conn) *RedisConn {
+	return &RedisConn{
+		conn:   *conn,
+		id:     RandStringBytes(10),
+		offset: 0,
+	}
+}

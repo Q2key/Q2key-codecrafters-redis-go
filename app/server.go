@@ -14,8 +14,6 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/handlers"
 )
 
-// todo rename to RunMaster
-// todo create run Slave or so...
 func RunInstance(ctx context.Context, ins contracts.Instance) {
 	port := ins.GetConfig().GetPort()
 
