@@ -33,6 +33,7 @@ func RunInstance(ctx context.Context, ins contracts.Instance) {
 		"REPLCONF": handlers.NewReplConfHandler(ins),
 		"PSYNC":    handlers.NewPsyncHandler(ins),
 		"WAIT":     handlers.NewWaitHandler(ins),
+		"TYPE":     handlers.NewTypeHandler(ins),
 	}
 
 	go ins.InitHandshakeWithMaster()

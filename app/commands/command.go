@@ -28,7 +28,7 @@ func ParseCommand(redisString string) (error, contracts.Command) {
 		cmd := new(Echo).FromArgs(inp)
 		return nil, cmd
 	case "PING":
-		cmd := new(Ping).FromArgs(inp)
+		cmd := new(Type).FromArgs(inp)
 		return nil, cmd
 	case "KEYS":
 		cmd := new(Keys).FromArgs(inp)
@@ -44,6 +44,9 @@ func ParseCommand(redisString string) (error, contracts.Command) {
 		return nil, cmd
 	case "WAIT":
 		cmd := new(Wait).FromArgs(inp)
+		return nil, cmd
+	case "TYPE":
+		cmd := new(TypeCmd).FromArgs(inp)
 		return nil, cmd
 	default:
 		output := fmt.Sprintf("Unknown command: %s", inp[0])

@@ -164,7 +164,7 @@ func (r *RedisInstance) GetConfig() contracts.Config {
 func (r *RedisInstance) SendToReplicas(buff *[]byte) {
 	r.bytes += len(*buff)
 	for _, r := range r.GetReplicas() {
-		r.Conn().Write((*buff))
+		r.Conn().Write(*buff)
 	}
 }
 

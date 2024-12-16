@@ -2,28 +2,28 @@ package commands
 
 import "github.com/codecrafters-io/redis-starter-go/app/contracts"
 
-type Ping struct {
+type Type struct {
 	args []string
 }
 
-func (r *Ping) FromArgs(args []string) contracts.Command {
-	return &Ping{
+func (r *Type) FromArgs(args []string) contracts.Command {
+	return &Type{
 		args: args,
 	}
 }
 
-func (r *Ping) Validate() bool {
+func (r *Type) Validate() bool {
 	return true
 }
 
-func (r *Ping) Name() string {
+func (r *Type) Name() string {
 	return "PING"
 }
 
-func (r *Ping) Args() []string {
+func (r *Type) Args() []string {
 	return r.args
 }
 
-func (r *Ping) IsWrite() bool {
+func (r *Type) IsWrite() bool {
 	return false
 }

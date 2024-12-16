@@ -16,7 +16,7 @@ type RedisDB struct {
 	expires map[string]uint64
 }
 
-func NewRedisDB(path string) contracts.Database {
+func NewRedisDB(path string) contracts.DBFileConnector {
 	return &RedisDB{
 		Path: path,
 	}
