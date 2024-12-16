@@ -21,5 +21,5 @@ func (h *EchoHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 		log.Fatal()
 	}
 
-	conn.GetConn().Write([]byte(core.FromStringToRedisCommonString(c.Args()[1])))
+	conn.Conn().Write([]byte(core.FromStringToRedisCommonString(c.Args()[1])))
 }

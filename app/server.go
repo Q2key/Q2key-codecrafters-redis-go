@@ -24,13 +24,6 @@ func RunInstance(ctx context.Context, ins contracts.Instance) {
 		log.Fatalf("\r\nFailed to bind to port %s", port)
 	}
 
-	/*
-		  var input interface{} = 12
-		str := input.(string) /
-
-			a, b := contracts.Instance.(core.Instance)
-	*/
-
 	handlers := map[string]contracts.Handler{
 		"CONFIG":   handlers.NewConfigHandler(ins),
 		"GET":      handlers.NewGetHandler(ins),
@@ -60,7 +53,7 @@ func handleRedisConnection(conn net.Conn, ins contracts.Instance, handlers map[s
 	defer conn.Close()
 	buff := make([]byte, 215)
 
-	redisCon := core.NewReplicMasterConn(&conn)
+	redisCon := core.NewRedisConn(&conn)
 	for {
 		n, err := conn.Read(buff)
 		if err == io.EOF {

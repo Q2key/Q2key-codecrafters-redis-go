@@ -26,12 +26,13 @@ func (h *ReplConfHandler) Handle(conn contracts.RedisConn, c contracts.Command) 
 	if len(c.Args()) > 2 && c.Args()[1] == "ACK" {
 		cnt := c.Args()[2]
 		num, _ := strconv.Atoi(cnt)
+		id := conn.Id()
 
-		h.instance.UpdateReplica(conn.GetId(), num)
-		*h.instance.GetAckChan() <- contracts.Ack{ConnId: conn.GetId(), Offset: num}
+		h.instance.UpdateReplica(id, num)
+		*h.instance.GetAckChan() <- contracts.Ack{ConnId: id, Offset: num}
 
-		conn.GetConn().Write([]byte(""))
+		conn.Conn().Write([]byte(""))
 	} else {
-		conn.GetConn().Write([]byte(core.FromStringToRedisCommonString("OK")))
+		conn.Conn().Write([]byte(core.FromStringToRedisCommonString("OK")))
 	}
 }

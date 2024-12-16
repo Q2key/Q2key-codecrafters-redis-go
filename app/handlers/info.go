@@ -35,5 +35,5 @@ func (h *InfoHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 		}
 	}
 
-	conn.GetConn().Write([]byte(core.FromStringToRedisBulkString(res)))
+	conn.Conn().Write([]byte(core.FromStringToRedisBulkString(res)))
 }

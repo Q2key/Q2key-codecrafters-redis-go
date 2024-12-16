@@ -26,5 +26,5 @@ func (h *KeysHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 	t := args[1]
 	keys := h.instance.GetStore().GetKeys(t)
 
-	conn.GetConn().Write([]byte(core.StringsToRedisStrings(keys)))
+	conn.Conn().Write([]byte(core.StringsToRedisStrings(keys)))
 }

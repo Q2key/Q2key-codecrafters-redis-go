@@ -26,15 +26,15 @@ func (h *ConfigHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 
 	if action == "GET" && key == "dir" {
 		resp := []string{key, (*h.instance).GetConfig().GetDir()}
-		conn.GetConn().Write([]byte(core.StringsToRedisStrings(resp)))
+		conn.Conn().Write([]byte(core.StringsToRedisStrings(resp)))
 		return
 	}
 
 	if action == "GET" && key == "dbfilename" {
 		resp := []string{key, (*h.instance).GetConfig().GetDbFileName()}
-		conn.GetConn().Write([]byte(core.StringsToRedisStrings(resp)))
+		conn.Conn().Write([]byte(core.StringsToRedisStrings(resp)))
 		return
 	}
 
-	conn.GetConn().Write([]byte(core.ToRedisErrorString()))
+	conn.Conn().Write([]byte(core.ToRedisErrorString()))
 }

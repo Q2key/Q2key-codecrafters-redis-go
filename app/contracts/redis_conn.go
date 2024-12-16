@@ -3,8 +3,8 @@ package contracts
 import "net"
 
 type RedisConn interface {
-	GetId() string
-	GetConn() net.Conn
-	GetOffset() int
+	Id() string
+	Conn() net.Conn
+	Offset() int
 	SetOffset(offset int)
 }

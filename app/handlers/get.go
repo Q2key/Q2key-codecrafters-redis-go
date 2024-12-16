@@ -24,8 +24,8 @@ func (h *GetHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 	key := c.Args()[1]
 	val, _ := h.instance.GetStore().Get(key)
 	if val == nil || val.IsExpired() {
-		conn.GetConn().Write([]byte(core.ToRedisErrorString()))
+		conn.Conn().Write([]byte(core.ToRedisErrorString()))
 	} else {
-		conn.GetConn().Write([]byte(core.FromStringToRedisCommonString(val.GetValue())))
+		conn.Conn().Write([]byte(core.FromStringToRedisCommonString(val.GetValue())))
 	}
 }

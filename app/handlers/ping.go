@@ -21,5 +21,5 @@ func (h *PingHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 		log.Fatal()
 	}
 
-	conn.GetConn().Write([]byte(core.FromStringToRedisCommonString("PONG")))
+	conn.Conn().Write([]byte(core.FromStringToRedisCommonString("PONG")))
 }

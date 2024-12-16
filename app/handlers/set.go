@@ -36,5 +36,5 @@ func (h *SetHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 		h.instance.GetStore().SetExpiredIn(key, uint64(exp))
 	}
 
-	conn.GetConn().Write([]byte(core.FromStringToRedisCommonString("OK")))
+	conn.Conn().Write([]byte(core.FromStringToRedisCommonString("OK")))
 }

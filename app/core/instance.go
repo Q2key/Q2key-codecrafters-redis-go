@@ -49,7 +49,7 @@ func (r *Instance) InitHandshakeWithMaster() {
 		log.Fatal("Handshake connection error")
 	}
 
-	masterConn := NewReplicMasterConn(&conn)
+	masterConn := NewRedisConn(&conn)
 	r.RegisterMasterConn(&masterConn)
 	defer conn.Close()
 
@@ -164,12 +164,12 @@ func (r *Instance) GetConfig() contracts.Config {
 func (r *Instance) SendToReplicas(buff *[]byte) {
 	r.bytes += len(*buff)
 	for _, r := range r.GetReplicas() {
-		r.GetConn().Write((*buff))
+		r.Conn().Write((*buff))
 	}
 }
 
 func (r *Instance) RegisterReplicaConn(conn *contracts.RedisConn) {
-	(*r.RepConnPool)[(*conn).GetId()] = *conn
+	(*r.RepConnPool)[(*conn).Id()] = *conn
 }
 
 func (r *Instance) RegisterMasterConn(conn *contracts.RedisConn) {
