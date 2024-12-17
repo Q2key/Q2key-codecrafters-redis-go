@@ -35,9 +35,9 @@ func (r *Config) GetReplica() *ReplicationProps { return r.Replica }
 type Argument string
 
 const (
-	Directory  Argument = "--Dir"
-	DbFilename Argument = "--DbFileName"
-	Port       Argument = "--Port"
+	Directory  Argument = "--dir"
+	DbFilename Argument = "--dbfilename"
+	Port       Argument = "--port"
 	ReplicaOf  Argument = "--replicaof"
 )
 

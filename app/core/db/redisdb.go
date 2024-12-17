@@ -3,8 +3,9 @@ package db
 import (
 	"errors"
 	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/core/binary"
 	"os"
+
+	"github.com/codecrafters-io/redis-starter-go/app/core/binary"
 )
 
 type RedisDB struct {
@@ -143,8 +144,6 @@ func (r *RedisDB) Connect() error {
 			}
 		}
 	}
-
-	fmt.Sprintf("%v", r.data)
 
 	return nil
 }

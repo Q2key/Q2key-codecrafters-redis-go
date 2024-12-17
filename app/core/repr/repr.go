@@ -41,26 +41,6 @@ func ToRedisErrorString() string {
 	return "$-1\r\n"
 }
 
-func GetValueType(q string) string {
-	if len(q) == 0 {
-		return "-"
-	}
-
-	if q[0] != '*' {
-		return "-"
-	}
-
-	if ReprToken(q[1]) == StringToken {
-		return "string"
-	}
-
-	if ReprToken(q[2]) == ArrayToken {
-		return "array"
-	}
-
-	return "-"
-}
-
 func FromRedisStringToStringArray(q string) (error, []string) {
 	if len(q) == 0 {
 		return errors.New("empty string"), []string{}
@@ -105,4 +85,66 @@ func FromRedisStringToStringArray(q string) (error, []string) {
 	}
 
 	return nil, sli
+}
+
+func GetValueTypes(q string) map[string]string {
+	out := map[string]string{}
+	if len(q) == 0 {
+		return out
+	}
+
+	// todo seems we have an error here :(
+	if q[0] != '*' {
+		return out
+	}
+
+	sq := q[1:]
+	n := len(sq)
+	sli := make([]string, 0)
+
+	for i := 0; i < n; i++ {
+		isValid := false
+		vTypte := "string"
+
+		if ReprToken(sq[i]) == StringToken {
+			isValid = true
+			vTypte = "string"
+		}
+
+		if !isValid {
+			continue
+		}
+
+		j := i + 1
+		k := j
+
+		for {
+			ch := string(sq[k])
+			if ch == "\r" {
+				break
+			} else {
+				k += 1
+			}
+		}
+
+		sl, err := strconv.Atoi(sq[j:k])
+		if sl == 0 || err != nil {
+			break
+		}
+
+		st := k + 2
+		fi := st + sl
+
+		if fi > len(sq) {
+			break
+		}
+
+		out[sq[st:fi]] = vTypte
+
+		sli = append(sli, sq[st:fi])
+	}
+
+	fmt.Println(out)
+
+	return out
 }

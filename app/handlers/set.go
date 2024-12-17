@@ -22,8 +22,15 @@ type SetHandler struct {
 func (h *SetHandler) Handle(conn rconn.RConn, args []string, raw *[]byte) {
 	key, val := args[1], args[2]
 
-	vtype := repr.GetValueType(string(*raw))
-	fmt.Println(vtype)
+	vtype := repr.GetValueTypes(string(*raw))
+
+	v, ok := vtype[key]
+
+	if !ok {
+		return
+	}
+
+	fmt.Println(v)
 
 	h.instance.Store.Set(key, val)
 

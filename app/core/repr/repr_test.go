@@ -123,3 +123,15 @@ func TestToArgsShouldBeOk2(t *testing.T) {
 
 	t.Log("OK")
 }
+
+func TestParseValueTypeOk1(t *testing.T) {
+	str := "*3\r\n$3\r\nSET\r\n$9\r\npineapple\r\n$4\r\npear\r\n"
+	res := GetValueTypes(str)
+
+	_, ok := res["pineapple"]
+
+	if !ok {
+		t.Error()
+	}
+	t.Log("OK")
+}

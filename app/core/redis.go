@@ -5,15 +5,16 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/core/db"
-	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
-	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
-	"github.com/codecrafters-io/redis-starter-go/app/core/store"
 	"io"
 	"log"
 	"net"
 	"os"
 	"strconv"
+
+	"github.com/codecrafters-io/redis-starter-go/app/core/db"
+	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
+	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
+	"github.com/codecrafters-io/redis-starter-go/app/core/store"
 )
 
 type Redis struct {
@@ -22,16 +23,19 @@ type Redis struct {
 	RepConnPool *map[string]rconn.RConn
 	MasterConn  rconn.RConn
 	AckChan     *chan rconn.Ack
-	bytes       int
+	Bytes       *int
 }
 
 func NewRedis(_ context.Context, config Config) *Redis {
 	ch := make(chan rconn.Ack)
+
+	bytes := 0
 	ins := &Redis{
 		Store:       *store.NewStore(),
 		Config:      config,
 		RepConnPool: &map[string]rconn.RConn{},
 		AckChan:     &ch,
+		Bytes:       &bytes,
 	}
 
 	ins.TryReadDb()
@@ -40,7 +44,7 @@ func NewRedis(_ context.Context, config Config) *Redis {
 }
 
 func (r *Redis) InitHandshakeWithMaster() {
-	rep := r.Config.GetReplica()
+	rep := r.Config.Replica
 	if rep == nil {
 		return
 	}
@@ -48,10 +52,12 @@ func (r *Redis) InitHandshakeWithMaster() {
 	host, port := rep.OriginHost, rep.OriginPort
 	conn, err := net.Dial("tcp", host+":"+port)
 	if err != nil {
+		fmt.Println("ERRORS")
 		log.Fatal("Handshake connection error")
 	}
 
 	masterConn := rconn.NewRConn(&conn)
+
 	r.RegisterMasterConn(masterConn)
 	defer conn.Close()
 
@@ -71,7 +77,7 @@ func (r *Redis) InitHandshakeWithMaster() {
 	reader := bufio.NewReader(conn)
 
 	// Handshake 2.1
-	req := repr.StringsToRedisStrings([]string{"REPLCONF", "listening-Port", r.Config.Port})
+	req := repr.StringsToRedisStrings([]string{"REPLCONF", "listening-port", r.Config.Port})
 	conn.Write([]byte(req))
 	reader.ReadBytes('\n')
 
@@ -95,11 +101,12 @@ func (r *Redis) InitHandshakeWithMaster() {
 	repb := []byte(repq)
 	rshift := len(repb)
 
+	fmt.Println("handshake")
 	for {
 		n, err := reader.Read(buf)
 
 		if err == io.EOF {
-			break
+			continue
 		}
 
 		sbuf := buf[:n]
@@ -152,11 +159,7 @@ func (r *Redis) TryReadDb() {
 }
 
 func (r *Redis) SendToReplicas(buff *[]byte) {
-	r.bytes += len(*buff)
-	if *r.RepConnPool == nil {
-		return
-	}
-
+	*r.Bytes += len(*buff)
 	for _, r := range *r.RepConnPool {
 		r.Conn.Write(*buff)
 	}
@@ -173,10 +176,11 @@ func (r *Redis) RegisterMasterConn(conn *rconn.RConn) {
 func (r *Redis) UpdateReplica(id string, offset int) {
 	rep := (*r.RepConnPool)[id]
 	rep.Offset = offset
+	(*r.RepConnPool)[id] = rep
 }
 
 func (r *Redis) GetWrittenBytes() int {
-	return r.bytes
+	return *r.Bytes
 }
 
 func (r *Redis) bytesToCommandMap(buf []byte) map[string]store.StoreValue {

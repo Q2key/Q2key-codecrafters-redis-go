@@ -25,8 +25,8 @@ func (h *TypeHandler) Handle(conn rconn.RConn, args []string, _ *[]byte) {
 
 	val, ok := h.instance.Store.Get(key)
 	if !ok {
-		return
+		conn.Conn.Write([]byte(repr.FromStringToRedisCommonString("none")))
+	} else {
+		conn.Conn.Write([]byte(repr.FromStringToRedisCommonString(val.ValueType)))
 	}
-
-	conn.Conn.Write([]byte(repr.FromStringToRedisCommonString(val.ValueType)))
 }

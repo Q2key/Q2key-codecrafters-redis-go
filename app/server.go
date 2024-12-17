@@ -64,7 +64,7 @@ func handleRedisConnection(conn net.Conn, ins core.Redis, handlers map[string]ha
 
 		err, args := repr.FromRedisStringToStringArray(string(payload))
 		if err != nil || len(args) == 0 {
-			log.Fatal("error reading from connection")
+			// log.Fatal("error reading from connection")
 		}
 
 		name := args[0]
