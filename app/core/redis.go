@@ -52,7 +52,6 @@ func (r *Redis) InitHandshakeWithMaster() {
 	host, port := rep.OriginHost, rep.OriginPort
 	conn, err := net.Dial("tcp", host+":"+port)
 	if err != nil {
-		fmt.Println("ERRORS")
 		log.Fatal("Handshake connection error")
 	}
 
@@ -101,7 +100,6 @@ func (r *Redis) InitHandshakeWithMaster() {
 	repb := []byte(repq)
 	rshift := len(repb)
 
-	fmt.Println("handshake")
 	for {
 		n, err := reader.Read(buf)
 
