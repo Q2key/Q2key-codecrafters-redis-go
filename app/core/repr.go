@@ -144,7 +144,5 @@ func GetValueTypes(q string) map[string]string {
 		sli = append(sli, sq[st:fi])
 	}
 
-	fmt.Println(out)
-
 	return out
 }
