@@ -1,6 +1,8 @@
-package core
+package repr
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestFromStringShouldBeOk1(t *testing.T) {
 	res := FromStringToRedisCommonString("hello world")

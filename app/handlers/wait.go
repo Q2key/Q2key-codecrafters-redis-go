@@ -1,30 +1,25 @@
 package handlers
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
+	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
 	"strconv"
 	"time"
 
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
 
-func NewWaitHandler(instance contracts.Instance) *WaitHandler {
+func NewWaitHandler(instance core.Redis) *WaitHandler {
 	return &WaitHandler{
 		instance: instance,
 	}
 }
 
 type WaitHandler struct {
-	instance contracts.Instance
+	instance core.Redis
 }
 
-func (h *WaitHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
-	if c == nil || !c.Validate() {
-		return
-	}
-
-	args := c.Args()
-
+func (h *WaitHandler) Handle(conn rconn.RConn, args []string) {
 	rep, err := strconv.Atoi(args[1])
 	if err != nil {
 		return
@@ -38,19 +33,19 @@ func (h *WaitHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
 	done := map[string]bool{}
 	bytesNeeded := h.instance.GetWrittenBytes()
 
-	for _, r := range h.instance.GetReplicas() {
-		if r.Offset() >= bytesNeeded {
-			done[r.Id()] = true
+	for _, r := range *h.instance.RepConnPool {
+		if r.Offset >= bytesNeeded {
+			done[r.Id] = true
 			continue
 		}
 
 		go func() {
-			r.Conn().Write([]byte("*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n"))
+			r.Conn.Write([]byte("*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n"))
 		}()
 
 	}
 
-	ch := (*h.instance.GetAckChan())
+	ch := *h.instance.AckChan
 
 awaitingLoop:
 	for len(done) < rep {
@@ -69,5 +64,5 @@ awaitingLoop:
 	}
 
 	v := strconv.Itoa(len(done))
-	conn.Conn().Write([]byte(core.FromStringToRedisInteger(v)))
+	conn.Conn.Write([]byte(repr.FromStringToRedisInteger(v)))
 }

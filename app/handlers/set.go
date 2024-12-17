@@ -1,40 +1,31 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
-	"log"
+	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
+	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
 	"strconv"
 )
 
-func NewSetHandler(instance contracts.Instance) *SetHandler {
+func NewSetHandler(instance core.Redis) *SetHandler {
 	return &SetHandler{
 		instance: instance,
 	}
 }
 
 type SetHandler struct {
-	instance contracts.Instance
+	instance core.Redis
 }
 
-func (h *SetHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
-	if c == nil || !c.Validate() {
-		log.Fatal()
-	}
-
-	if !c.Validate() {
-		log.Fatal()
-	}
-
-	args := c.Args()
+func (h *SetHandler) Handle(conn rconn.RConn, args []string) {
 	key, val := args[1], args[2]
 
-	h.instance.GetStore().Set(key, val)
+	h.instance.Store.Set(key, val)
 
 	if len(args) >= 4 {
 		exp, _ := strconv.Atoi(args[4])
-		h.instance.GetStore().SetExpiredIn(key, uint64(exp))
+		h.instance.Store.SetExpiredIn(key, uint64(exp))
 	}
 
-	conn.Conn().Write([]byte(core.FromStringToRedisCommonString("OK")))
+	conn.Conn.Write([]byte(repr.FromStringToRedisCommonString("OK")))
 }

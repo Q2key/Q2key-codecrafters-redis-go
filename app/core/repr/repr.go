@@ -1,4 +1,4 @@
-package core
+package repr
 
 import (
 	"errors"
@@ -39,10 +39,6 @@ func FromStringToRedisInteger(str string) string {
 
 func ToRedisErrorString() string {
 	return "$-1\r\n"
-}
-
-func ToRedisErrorStringWithMessage(error error) string {
-	return fmt.Sprintf("$-1%s\r\n", error.Error())
 }
 
 func FromRedisStringToStringArray(q string) (error, []string) {
@@ -89,27 +85,4 @@ func FromRedisStringToStringArray(q string) (error, []string) {
 	}
 
 	return nil, sli
-}
-
-func BytesToCommandMap(buf []byte) map[string]InstanceValue {
-	res := map[string]InstanceValue{}
-
-	j := 0
-	for i, ch := range buf {
-		if string(ch) == "*" {
-			j = i
-			break
-		}
-	}
-
-	_, arr := FromRedisStringToStringArray(string(buf)[j:])
-	for i, v := range arr {
-		if v == "SET" && i+2 <= len(arr) {
-			res[arr[i+1]] = InstanceValue{
-				Value: arr[i+2],
-			}
-		}
-	}
-
-	return res
 }

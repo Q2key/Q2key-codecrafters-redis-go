@@ -3,37 +3,37 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
+	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
+	handlers2 "github.com/codecrafters-io/redis-starter-go/app/handlers"
 	"io"
 	"log"
 	"net"
 	"os"
 
-	"github.com/codecrafters-io/redis-starter-go/app/commands"
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
-	"github.com/codecrafters-io/redis-starter-go/app/handlers"
 )
 
-func RunInstance(ctx context.Context, ins contracts.Instance) {
-	port := ins.GetConfig().GetPort()
+func RunInstance(ctx context.Context, ins core.Redis) {
+	port := ins.Config.Port
 
 	ln, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%s", port))
 	if err != nil {
 		log.Fatalf("\r\nFailed to bind to port %s", port)
 	}
 
-	handlers := map[string]contracts.Handler{
-		"CONFIG":   handlers.NewConfigHandler(ins),
-		"GET":      handlers.NewGetHandler(ins),
-		"SET":      handlers.NewSetHandler(ins),
-		"PING":     handlers.NewPingHandler(ins),
-		"ECHO":     handlers.NewEchoHandler(ins),
-		"KEYS":     handlers.NewKeysHandler(ins),
-		"INFO":     handlers.NewInfoHandler(ins),
-		"REPLCONF": handlers.NewReplConfHandler(ins),
-		"PSYNC":    handlers.NewPsyncHandler(ins),
-		"WAIT":     handlers.NewWaitHandler(ins),
-		"TYPE":     handlers.NewTypeHandler(ins),
+	handlers := map[string]handlers2.Handler{
+		"CONFIG":   handlers2.NewConfigHandler(ins),
+		"GET":      handlers2.NewGetHandler(ins),
+		"SET":      handlers2.NewSetHandler(ins),
+		"PING":     handlers2.NewPingHandler(ins),
+		"ECHO":     handlers2.NewEchoHandler(ins),
+		"KEYS":     handlers2.NewKeysHandler(ins),
+		"INFO":     handlers2.NewInfoHandler(ins),
+		"REPLCONF": handlers2.NewReplConfHandler(ins),
+		"PSYNC":    handlers2.NewPsyncHandler(ins),
+		"WAIT":     handlers2.NewWaitHandler(ins),
+		"TYPE":     handlers2.NewTypeHandler(ins),
 	}
 
 	go ins.InitHandshakeWithMaster()
@@ -48,24 +48,32 @@ func RunInstance(ctx context.Context, ins contracts.Instance) {
 	}
 }
 
-func handleRedisConnection(conn net.Conn, ins contracts.Instance, handlers map[string]contracts.Handler) {
+func handleRedisConnection(conn net.Conn, ins core.Redis, handlers map[string]handlers2.Handler) {
 	defer conn.Close()
 	buff := make([]byte, 215)
 
-	redisCon := core.NewRedisConn(&conn)
+	redisCon := rconn.NewRConn(&conn)
 	for {
 		n, err := conn.Read(buff)
 		if err == io.EOF {
 			continue
 		}
 
-		_, cmd := commands.ParseCommand(string(buff[:n]))
-		h := handlers[cmd.Name()]
-		h.Handle(redisCon, cmd)
+		payload := buff[:n]
 
-		if ins.GetConfig().IsMaster() && cmd.IsWrite() {
-			rbuf := buff[:n]
-			ins.SendToReplicas(&rbuf)
+		err, args := repr.FromRedisStringToStringArray(string(payload))
+		if err != nil || len(args) == 0 {
+			log.Fatal("error reading from connection")
+		}
+
+		name := args[0]
+		isWrite := name == "SET"
+
+		h := handlers[name]
+		h.Handle(*redisCon, args)
+
+		if ins.Config.IsMaster() && isWrite {
+			ins.SendToReplicas(&payload)
 		}
 	}
 }
@@ -73,6 +81,6 @@ func handleRedisConnection(conn net.Conn, ins contracts.Instance, handlers map[s
 func main() {
 	ctx := context.Background()
 	config := core.NewConfig().FromArguments(os.Args)
-	redis := core.NewInstance(ctx, *config)
-	RunInstance(ctx, redis)
+	redis := core.NewRedis(ctx, *config)
+	RunInstance(ctx, *redis)
 }

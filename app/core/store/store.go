@@ -1,25 +1,25 @@
-package core
+package store
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
+	"github.com/codecrafters-io/redis-starter-go/app/core/binary"
 	"time"
 )
 
 type Store struct {
-	kvs map[string]contracts.Value
+	kvs map[string]StoreValue
 }
 
 func NewStore() *Store {
-	return &Store{kvs: make(map[string]contracts.Value)}
+	return &Store{kvs: make(map[string]StoreValue)}
 }
 
-func (r *Store) Get(key string) (contracts.Value, bool) {
+func (r *Store) Get(key string) (StoreValue, bool) {
 	val, ok := r.kvs[key]
 	return val, ok
 }
 
 func (r *Store) Set(key string, value string) {
-	r.kvs[key] = &InstanceValue{
+	r.kvs[key] = StoreValue{
 		Value: value,
 	}
 }
@@ -36,7 +36,7 @@ func (r *Store) GetKeys(key string) []string {
 }
 
 func (r *Store) SetExpiredAt(key string, expiredAt uint64) {
-	tm := GetDateFromTimeStamp(expiredAt)
+	tm := binary.GetDateFromTimeStamp(expiredAt)
 	val, ok := r.kvs[key]
 	if ok {
 		val.SetExpired(tm)

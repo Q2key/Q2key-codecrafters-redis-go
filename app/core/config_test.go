@@ -6,11 +6,11 @@ import (
 )
 
 func TestGetArgsMap(t *testing.T) {
-	args := []string{"./your_program.sh", "--port", "9000", "--replicaof", "localhost 9000"}
+	args := []string{"./your_program.sh", "--Port", "9000", "--replicaof", "localhost 9000"}
 	res := getArgumentMap(args)
 
 	exp := map[Argument][]string{
-		"--port":      []string{"9000"},
+		"--Port":      []string{"9000"},
 		"--replicaof": []string{"localhost", "9000"},
 	}
 
@@ -24,7 +24,7 @@ func TestGetArgsMap(t *testing.T) {
 func TestGetArgsMap2(t *testing.T) {
 	args := []string{
 		"./your_program.sh",
-		"--port",
+		"--Port",
 	}
 
 	res := getArgumentMap(args)

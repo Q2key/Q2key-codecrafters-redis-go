@@ -2,65 +2,47 @@ package core
 
 import (
 	"strings"
-
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 )
 
+type ReplicationProps struct {
+	OriginHost string
+	OriginPort string
+}
+
+func NewReplica(originHost string, originPort string) *ReplicationProps {
+	return &ReplicationProps{originHost, originPort}
+}
+
 type Config struct {
-	dir        string
-	dbfilename string
-	port       string
-	replica    *contracts.Replica
-	isMaster   bool
+	Dir        string
+	DbFileName string
+	Port       string
+	Replica    *ReplicationProps
 }
 
 const DefaultPort = "6379"
 
 func NewConfig() *Config {
 	return &Config{
-		dir:        "",
-		dbfilename: "",
-		port:       DefaultPort,
+		Dir:        "",
+		DbFileName: "",
+		Port:       DefaultPort,
 	}
 }
 
-func (r *Config) SetDir(val string) {
-	r.dir = val
-}
-
-func (r *Config) SetPort(val string) {
-	r.port = val
-}
-
-func (r *Config) SetReplica(val *contracts.Replica) {
-	r.replica = val
-}
-
-func (r *Config) SetDbFileName(val string) {
-	r.dbfilename = val
-}
-
-func (r *Config) GetDir() string { return r.dir }
-
-func (r *Config) GetDbFileName() string { return r.dbfilename }
-
-func (r *Config) GetPort() string { return r.port }
-
-func (r *Config) GetReplica() *contracts.Replica { return r.replica }
+func (r *Config) GetReplica() *ReplicationProps { return r.Replica }
 
 type Argument string
 
 const (
-	Directory  Argument = "--dir"
-	DbFilename Argument = "--dbfilename"
-	Port       Argument = "--port"
+	Directory  Argument = "--Dir"
+	DbFilename Argument = "--DbFileName"
+	Port       Argument = "--Port"
 	ReplicaOf  Argument = "--replicaof"
 )
 
-// FromArguments todo change dep
-func (r *Config) FromArguments(args []string) *contracts.Config {
-	cfg := createConfigFromArgs(args)
-	return &cfg
+func (r *Config) FromArguments(args []string) *Config {
+	return createConfigFromArgs(args)
 }
 
 func getArgumentMap(args []string) map[Argument][]string {
@@ -75,33 +57,33 @@ func getArgumentMap(args []string) map[Argument][]string {
 	return m
 }
 
-func createConfigFromArgs(args []string) contracts.Config {
+func createConfigFromArgs(args []string) *Config {
 	c := NewConfig()
 	m := getArgumentMap(args)
 
 	val, ok := m[Directory]
 	if ok && len(val) > 0 {
-		c.SetDir(val[0])
+		c.Dir = val[0]
 	}
 
 	val, ok = m[Port]
 	if ok && len(val) > 0 {
-		c.SetPort(val[0])
+		c.Port = val[0]
 	}
 
 	val, ok = m[DbFilename]
 	if ok && len(val) > 0 {
-		c.SetDbFileName(val[0])
+		c.DbFileName = val[0]
 	}
 
 	val, ok = m[ReplicaOf]
 	if ok && len(val) >= 2 {
-		c.SetReplica(contracts.NewReplica(val[0], val[1]))
+		c.Replica = NewReplica(val[0], val[1])
 	}
 
 	return c
 }
 
 func (r *Config) IsMaster() bool {
-	return r.replica == nil
+	return r.Replica == nil
 }

@@ -1,15 +1,15 @@
-package core
+package store
 
 import (
 	"time"
 )
 
-type InstanceValue struct {
+type StoreValue struct {
 	Value   string
 	Expired *time.Time
 }
 
-func (r *InstanceValue) IsExpired() bool {
+func (r *StoreValue) IsExpired() bool {
 	if r.Expired == nil {
 		return false
 	}
@@ -17,10 +17,10 @@ func (r *InstanceValue) IsExpired() bool {
 	return r.Expired.UnixNano() <= time.Now().UTC().UnixNano()
 }
 
-func (r *InstanceValue) SetExpired(expired time.Time) {
+func (r *StoreValue) SetExpired(expired time.Time) {
 	r.Expired = &expired
 }
 
-func (r *InstanceValue) GetValue() string {
+func (r *StoreValue) GetValue() string {
 	return r.Value
 }

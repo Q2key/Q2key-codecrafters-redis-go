@@ -1,6 +1,6 @@
-package contracts
+package db
 
-type DBFileConnector interface {
+type Connector interface {
 	IsFileExists(string) bool
 	Connect() error
 	Create() error

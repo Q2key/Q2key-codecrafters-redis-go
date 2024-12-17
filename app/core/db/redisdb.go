@@ -1,11 +1,10 @@
-package core
+package db
 
 import (
 	"errors"
 	"fmt"
+	"github.com/codecrafters-io/redis-starter-go/app/core/binary"
 	"os"
-
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 )
 
 type RedisDB struct {
@@ -16,7 +15,7 @@ type RedisDB struct {
 	expires map[string]uint64
 }
 
-func NewRedisDB(path string) contracts.DBFileConnector {
+func NewRedisDB(path string) Connector {
 	return &RedisDB{
 		Path: path,
 	}
@@ -75,11 +74,11 @@ func (r *RedisDB) Connect() error {
 
 	j := 0
 	for i, b := range buff {
-		if b == EOF {
+		if b == binary.EOF {
 			break
 		}
 
-		if b == RESIZEDB {
+		if b == binary.RESIZEDB {
 			x := i + 1
 
 			bs := (buff[x] >> 6) & 0b00000011
@@ -106,13 +105,13 @@ func (r *RedisDB) Connect() error {
 			}
 		}
 
-		if b == EXPIRETIMEMS {
+		if b == binary.EXPIRETIMEMS {
 			x := i + 1
 			y := x + 8
 
 			sb := buff[x:y]
-			exp := ParseMSecDateTimeStamp(&sb)
-			ok, key, _ := ParseValuePair(y+1, &buff)
+			exp := binary.ParseMSecDateTimeStamp(&sb)
+			ok, key, _ := binary.ParseValuePair(y+1, &buff)
 			if ok {
 				r.expires[*key] = exp
 			}
@@ -120,12 +119,12 @@ func (r *RedisDB) Connect() error {
 			j = y
 		}
 
-		if b == EXPIRETIME {
+		if b == binary.EXPIRETIME {
 			x := i + 1
 			y := x + 4
 			sb := buff[x:y]
-			exp := ParseSecDateTimeStamp(&sb)
-			ok, key, _ := ParseValuePair(y+1, &buff)
+			exp := binary.ParseSecDateTimeStamp(&sb)
+			ok, key, _ := binary.ParseValuePair(y+1, &buff)
 			if ok {
 				r.expires[*key] = exp
 			}
@@ -138,7 +137,7 @@ func (r *RedisDB) Connect() error {
 		}
 
 		if b == 0x00 {
-			ok, key, val := ParseValuePair(i+1, &buff)
+			ok, key, val := binary.ParseValuePair(i+1, &buff)
 			if ok {
 				r.data[*key] = *val
 			}

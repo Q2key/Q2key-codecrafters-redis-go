@@ -1,38 +1,35 @@
 package handlers
 
 import (
-	"log"
+	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
+	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
 	"strconv"
 
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
 
-func NewReplConfHandler(instance contracts.Instance) *ReplConfHandler {
+func NewReplConfHandler(instance core.Redis) *ReplConfHandler {
 	return &ReplConfHandler{
 		instance: instance,
 	}
 }
 
 type ReplConfHandler struct {
-	instance contracts.Instance
+	instance core.Redis
 }
 
-func (h *ReplConfHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
-	if c == nil || !c.Validate() {
-		log.Fatal()
-	}
+func (h *ReplConfHandler) Handle(conn rconn.RConn, args []string) {
 
-	if len(c.Args()) > 2 && c.Args()[1] == "ACK" {
-		cnt := c.Args()[2]
+	if len(args) > 2 && args[1] == "ACK" {
+		cnt := args[2]
 		num, _ := strconv.Atoi(cnt)
-		id := conn.Id()
+		id := conn.Id
 
 		h.instance.UpdateReplica(id, num)
-		*h.instance.GetAckChan() <- contracts.Ack{ConnId: id, Offset: num}
+		*h.instance.AckChan <- rconn.Ack{ConnId: id, Offset: num}
 
-		conn.Conn().Write([]byte(""))
+		conn.Conn.Write([]byte(""))
 	} else {
-		conn.Conn().Write([]byte(core.FromStringToRedisCommonString("OK")))
+		conn.Conn.Write([]byte(repr.FromStringToRedisCommonString("OK")))
 	}
 }

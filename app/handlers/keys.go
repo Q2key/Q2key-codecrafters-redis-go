@@ -1,30 +1,24 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
-	"log"
+	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
+	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
 )
 
-func NewKeysHandler(instance contracts.Instance) *KeysHandler {
+func NewKeysHandler(instance core.Redis) *KeysHandler {
 	return &KeysHandler{
 		instance: instance,
 	}
 }
 
 type KeysHandler struct {
-	instance contracts.Instance
+	instance core.Redis
 }
 
-func (h *KeysHandler) Handle(conn contracts.RedisConn, c contracts.Command) {
-	if c == nil || !c.Validate() {
-		log.Fatal()
-	}
-
-	args := c.Args()
-
+func (h *KeysHandler) Handle(conn rconn.RConn, args []string) {
 	t := args[1]
-	keys := h.instance.GetStore().GetKeys(t)
+	keys := h.instance.Store.GetKeys(t)
 
-	conn.Conn().Write([]byte(core.StringsToRedisStrings(keys)))
+	conn.Conn.Write([]byte(repr.StringsToRedisStrings(keys)))
 }
