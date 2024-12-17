@@ -5,5 +5,5 @@ import (
 )
 
 type Handler interface {
-	Handle(rconn.RConn, []string)
+	Handle(rconn.RConn, []string, *[]byte)
 }

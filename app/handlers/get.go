@@ -16,7 +16,7 @@ type GetHandler struct {
 	instance core.Redis
 }
 
-func (h *GetHandler) Handle(conn rconn.RConn, args []string) {
+func (h *GetHandler) Handle(conn rconn.RConn, args []string, _ *[]byte) {
 	key := args[1]
 	val, _ := h.instance.Store.Get(key)
 	if val.IsExpired() {

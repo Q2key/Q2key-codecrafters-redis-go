@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
-	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
 	"strconv"
 	"time"
+
+	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
+	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
 
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
@@ -19,7 +20,7 @@ type WaitHandler struct {
 	instance core.Redis
 }
 
-func (h *WaitHandler) Handle(conn rconn.RConn, args []string) {
+func (h *WaitHandler) Handle(conn rconn.RConn, args []string, _ *[]byte) {
 	rep, err := strconv.Atoi(args[1])
 	if err != nil {
 		return

@@ -5,8 +5,9 @@ import (
 )
 
 type StoreValue struct {
-	Value   string
-	Expired *time.Time
+	Value     string
+	Expired   *time.Time
+	ValueType string
 }
 
 func (r *StoreValue) IsExpired() bool {

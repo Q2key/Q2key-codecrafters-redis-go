@@ -1,16 +1,12 @@
 package store
 
 import (
-	"context"
-	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"testing"
 	"time"
 )
 
 func TestGetSetValue(t *testing.T) {
-	cfg := core.NewConfig()
-	ctx := context.Background()
-	s := core.NewRedis(ctx, cfg).GetStore()
+	s := *NewStore()
 
 	s.Set("Key0", "Value0")
 	s.Set("Key1", "Value1")
@@ -112,26 +108,6 @@ func TestShouldNotBeExpired4000(t *testing.T) {
 	}
 
 	if v.GetValue() != "value" {
-		t.Fail()
-	}
-
-	t.Log("OK!")
-}
-
-func TestReturnCorrectConfig(t *testing.T) {
-	s := &core.Redis{
-		Store:  NewStore(),
-		Config: core.NewConfig(),
-	}
-
-	s.Config.SetDbFileName("develop")
-	s.Config.SetDir("temp")
-
-	if s.Config.GetDbFileName() != "develop" {
-		t.Fail()
-	}
-
-	if s.Config.GetDir() != "temp" {
 		t.Fail()
 	}
 

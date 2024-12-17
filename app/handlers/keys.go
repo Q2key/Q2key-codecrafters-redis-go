@@ -16,7 +16,7 @@ type KeysHandler struct {
 	instance core.Redis
 }
 
-func (h *KeysHandler) Handle(conn rconn.RConn, args []string) {
+func (h *KeysHandler) Handle(conn rconn.RConn, args []string, _ *[]byte) {
 	t := args[1]
 	keys := h.instance.Store.GetKeys(t)
 

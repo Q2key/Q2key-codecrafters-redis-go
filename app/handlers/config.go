@@ -16,7 +16,7 @@ type ConfigHandler struct {
 	instance *core.Redis
 }
 
-func (h *ConfigHandler) Handle(conn rconn.RConn, args []string) {
+func (h *ConfigHandler) Handle(conn rconn.RConn, args []string, _ *[]byte) {
 	action, key := args[1], args[2]
 
 	if action == "GET" && key == "dir" {

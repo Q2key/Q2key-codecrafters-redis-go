@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
-	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
-	handlers2 "github.com/codecrafters-io/redis-starter-go/app/handlers"
 	"io"
 	"log"
 	"net"
 	"os"
+
+	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
+	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
+	handlers2 "github.com/codecrafters-io/redis-starter-go/app/handlers"
 
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
@@ -70,7 +71,7 @@ func handleRedisConnection(conn net.Conn, ins core.Redis, handlers map[string]ha
 		isWrite := name == "SET"
 
 		h := handlers[name]
-		h.Handle(*redisCon, args)
+		h.Handle(*redisCon, args, &payload)
 
 		if ins.Config.IsMaster() && isWrite {
 			ins.SendToReplicas(&payload)

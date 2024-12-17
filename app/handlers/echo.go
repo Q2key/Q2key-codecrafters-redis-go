@@ -16,6 +16,6 @@ type EchoHandler struct {
 	instance core.Redis
 }
 
-func (h *EchoHandler) Handle(conn rconn.RConn, args []string) {
+func (h *EchoHandler) Handle(conn rconn.RConn, args []string, _ *[]byte) {
 	conn.Conn.Write([]byte(repr.FromStringToRedisCommonString(args[1])))
 }

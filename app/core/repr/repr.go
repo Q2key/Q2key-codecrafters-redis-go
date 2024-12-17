@@ -41,6 +41,26 @@ func ToRedisErrorString() string {
 	return "$-1\r\n"
 }
 
+func GetValueType(q string) string {
+	if len(q) == 0 {
+		return "-"
+	}
+
+	if q[0] != '*' {
+		return "-"
+	}
+
+	if ReprToken(q[1]) == StringToken {
+		return "string"
+	}
+
+	if ReprToken(q[2]) == ArrayToken {
+		return "array"
+	}
+
+	return "-"
+}
+
 func FromRedisStringToStringArray(q string) (error, []string) {
 	if len(q) == 0 {
 		return errors.New("empty string"), []string{}

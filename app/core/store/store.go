@@ -1,8 +1,9 @@
 package store
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/core/binary"
 	"time"
+
+	"github.com/codecrafters-io/redis-starter-go/app/core/binary"
 )
 
 type Store struct {
@@ -20,7 +21,8 @@ func (r *Store) Get(key string) (StoreValue, bool) {
 
 func (r *Store) Set(key string, value string) {
 	r.kvs[key] = StoreValue{
-		Value: value,
+		Value:     value,
+		ValueType: "string",
 	}
 }
 

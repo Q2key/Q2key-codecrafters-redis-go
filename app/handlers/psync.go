@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/hex"
 	"fmt"
+
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
 	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
@@ -18,8 +19,7 @@ type PsyncHandler struct {
 	instance core.Redis
 }
 
-func (h *PsyncHandler) Handle(conn rconn.RConn, _ []string) {
-
+func (h *PsyncHandler) Handle(conn rconn.RConn, _ []string, _ *[]byte) {
 	h.instance.RegisterReplicaConn(&conn)
 
 	mess := fmt.Sprintf("FULLRESYNC %s 0", conn.Id)

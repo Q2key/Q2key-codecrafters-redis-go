@@ -13,6 +13,7 @@ type RConn struct {
 	Conn   net.Conn
 	Id     string
 	Offset int
+	RawQ   string
 }
 
 func NewRConn(conn *net.Conn) *RConn {

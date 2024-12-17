@@ -16,6 +16,6 @@ type PingHandler struct {
 	instance core.Redis
 }
 
-func (h *PingHandler) Handle(conn rconn.RConn, _ []string) {
+func (h *PingHandler) Handle(conn rconn.RConn, _ []string, _ *[]byte) {
 	conn.Conn.Write([]byte(repr.FromStringToRedisCommonString("PONG")))
 }

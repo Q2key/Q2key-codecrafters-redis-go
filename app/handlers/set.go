@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
 	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
-	"strconv"
 )
 
 func NewSetHandler(instance core.Redis) *SetHandler {
@@ -17,8 +19,11 @@ type SetHandler struct {
 	instance core.Redis
 }
 
-func (h *SetHandler) Handle(conn rconn.RConn, args []string) {
+func (h *SetHandler) Handle(conn rconn.RConn, args []string, raw *[]byte) {
 	key, val := args[1], args[2]
+
+	vtype := repr.GetValueType(string(*raw))
+	fmt.Println(vtype)
 
 	h.instance.Store.Set(key, val)
 
