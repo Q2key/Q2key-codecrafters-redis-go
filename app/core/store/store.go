@@ -7,20 +7,20 @@ import (
 )
 
 type Store struct {
-	kvs map[string]StoreValue
+	kvs map[string]*StoreValue
 }
 
 func NewStore() *Store {
-	return &Store{kvs: make(map[string]StoreValue)}
+	return &Store{kvs: make(map[string]*StoreValue)}
 }
 
-func (r *Store) Get(key string) (StoreValue, bool) {
+func (r *Store) Get(key string) (*StoreValue, bool) {
 	val, ok := r.kvs[key]
 	return val, ok
 }
 
 func (r *Store) Set(key string, value string) {
-	r.kvs[key] = StoreValue{
+	r.kvs[key] = &StoreValue{
 		Value:     value,
 		ValueType: "string",
 	}

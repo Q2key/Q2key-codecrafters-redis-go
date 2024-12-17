@@ -19,7 +19,7 @@ type GetHandler struct {
 func (h *GetHandler) Handle(conn rconn.RConn, args []string, _ *[]byte) {
 	key := args[1]
 	val, _ := h.instance.Store.Get(key)
-	if val.IsExpired() {
+	if val == nil || val.IsExpired() {
 		conn.Conn.Write([]byte(repr.ToRedisErrorString()))
 	} else {
 		conn.Conn.Write([]byte(repr.FromStringToRedisCommonString(val.GetValue())))
