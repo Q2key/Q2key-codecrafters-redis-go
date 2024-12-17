@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
 
@@ -14,9 +15,9 @@ type KeysHandler struct {
 	instance core.Redis
 }
 
-func (h *KeysHandler) Handle(conn core.RConn, args []string, _ *[]byte) {
+func (h *KeysHandler) Handle(conn contracts.Connector, args []string, _ *[]byte) {
 	t := args[1]
 	keys := h.instance.Store.GetKeys(t)
 
-	conn.Conn.Write([]byte(core.StringsToRedisStrings(keys)))
+	conn.Conn().Write([]byte(core.StringsToRedisStrings(keys)))
 }

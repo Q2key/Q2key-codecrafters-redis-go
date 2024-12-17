@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/core"
@@ -16,7 +17,7 @@ type SetHandler struct {
 	instance core.Redis
 }
 
-func (h *SetHandler) Handle(conn core.RConn, args []string, raw *[]byte) {
+func (h *SetHandler) Handle(conn contracts.Connector, args []string, raw *[]byte) {
 	key, val := args[1], args[2]
 
 	vtype := core.GetValueTypes(string(*raw))
@@ -34,5 +35,5 @@ func (h *SetHandler) Handle(conn core.RConn, args []string, raw *[]byte) {
 		h.instance.Store.SetExpiredIn(key, uint64(exp))
 	}
 
-	conn.Conn.Write([]byte(core.FromStringToRedisCommonString("OK")))
+	conn.Conn().Write([]byte(core.FromStringToRedisCommonString("OK")))
 }

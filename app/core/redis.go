@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"io"
 	"log"
 	"net"
@@ -15,8 +16,8 @@ import (
 type Redis struct {
 	Config      Config
 	Store       Store
-	RepConnPool *map[string]RConn
-	MasterConn  RConn
+	RepConnPool *map[string]contracts.Connector
+	MasterConn  contracts.Connector
 	AckChan     *chan Ack
 	Bytes       *int
 }
@@ -28,7 +29,7 @@ func NewRedis(_ context.Context, config Config) *Redis {
 	ins := &Redis{
 		Store:       *NewStore(),
 		Config:      config,
-		RepConnPool: &map[string]RConn{},
+		RepConnPool: &map[string]contracts.Connector{},
 		AckChan:     &ch,
 		Bytes:       &bytes,
 	}
@@ -154,21 +155,21 @@ func (r *Redis) TryReadDb() {
 func (r *Redis) SendToReplicas(buff *[]byte) {
 	*r.Bytes += len(*buff)
 	for _, r := range *r.RepConnPool {
-		r.Conn.Write(*buff)
+		r.Conn().Write(*buff)
 	}
 }
 
-func (r *Redis) RegisterReplicaConn(conn *RConn) {
-	(*r.RepConnPool)[(*conn).Id] = *conn
+func (r *Redis) RegisterReplicaConn(conn contracts.Connector) {
+	(*r.RepConnPool)[(conn).Id()] = conn
 }
 
-func (r *Redis) RegisterMasterConn(conn *RConn) {
-	r.MasterConn = *conn
+func (r *Redis) RegisterMasterConn(conn contracts.Connector) {
+	r.MasterConn = conn
 }
 
 func (r *Redis) UpdateReplica(id string, offset int) {
 	rep := (*r.RepConnPool)[id]
-	rep.Offset = offset
+	rep.SetOffset(offset)
 	(*r.RepConnPool)[id] = rep
 }
 

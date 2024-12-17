@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/core"
@@ -16,17 +17,17 @@ type ReplConfHandler struct {
 	instance core.Redis
 }
 
-func (h *ReplConfHandler) Handle(conn core.RConn, args []string, _ *[]byte) {
+func (h *ReplConfHandler) Handle(conn contracts.Connector, args []string, _ *[]byte) {
 	if len(args) > 2 && args[1] == "ACK" {
 		cnt := args[2]
 		num, _ := strconv.Atoi(cnt)
-		id := conn.Id
+		id := conn.Id()
 
 		h.instance.UpdateReplica(id, num)
 		*h.instance.AckChan <- core.Ack{ConnId: id, Offset: num}
 
-		conn.Conn.Write([]byte(""))
+		conn.Conn().Write([]byte(""))
 	} else {
-		conn.Conn.Write([]byte(core.FromStringToRedisCommonString("OK")))
+		conn.Conn().Write([]byte(core.FromStringToRedisCommonString("OK")))
 	}
 }
