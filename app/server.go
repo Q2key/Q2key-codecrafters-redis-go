@@ -3,7 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
+	"github.com/codecrafters-io/redis-starter-go/app/handlers"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -17,6 +20,20 @@ func RunInstance(ctx context.Context, ins core.Redis) {
 		log.Fatalf("\r\nFailed to bind to port %s", port)
 	}
 
+	hs := map[string]contracts.Handler{
+		"CONFIG":   handlers.NewConfigHandler(ins),
+		"GET":      handlers.NewGetHandler(ins),
+		"SET":      handlers.NewSetHandler(ins),
+		"PING":     handlers.NewPingHandler(ins),
+		"ECHO":     handlers.NewEchoHandler(ins),
+		"KEYS":     handlers.NewKeysHandler(ins),
+		"INFO":     handlers.NewInfoHandler(ins),
+		"REPLCONF": handlers.NewReplConfHandler(ins),
+		"PSYNC":    handlers.NewPsyncHandler(ins),
+		"WAIT":     handlers.NewWaitHandler(ins),
+		"TYPE":     handlers.NewTypeHandler(ins),
+	}
+
 	go ins.InitHandshakeWithMaster()
 
 	for {
@@ -25,7 +42,34 @@ func RunInstance(ctx context.Context, ins core.Redis) {
 			log.Fatal("Something went wrong with tcp connection...")
 		}
 
-		go ins.HandleRedisConnection(conn)
+		go handleRedisConnection(conn, ins, hs)
+	}
+}
+
+func handleRedisConnection(conn net.Conn, ins core.Redis, hs map[string]contracts.Handler) {
+	defer conn.Close()
+	buff := make([]byte, 215)
+
+	redisCon := core.NewRConn(&conn)
+	for {
+		n, err := conn.Read(buff)
+		if err == io.EOF {
+			continue
+		}
+
+		payload := buff[:n]
+
+		err, args := core.FromRedisStringToStringArray(string(payload))
+
+		name := args[0]
+		isWrite := name == "SET"
+
+		h := hs[name]
+		h.Handle(redisCon, args, &payload)
+
+		if ins.Config.IsMaster() && isWrite {
+			ins.SendToReplicas(&payload)
+		}
 	}
 }
 

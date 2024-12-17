@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/codecrafters-io/redis-starter-go/app/contracts"
-	"github.com/codecrafters-io/redis-starter-go/app/handlers"
 	"io"
 	"log"
 	"net"
@@ -21,7 +20,6 @@ type Redis struct {
 	MasterConn  contracts.Connector
 	AckChan     *chan Ack
 	Bytes       *int
-	Handlers    map[string]contracts.Handler
 }
 
 func NewRedis(_ context.Context, config Config) *Redis {
@@ -36,50 +34,9 @@ func NewRedis(_ context.Context, config Config) *Redis {
 		Bytes:       &bytes,
 	}
 
-	ins.Handlers = map[string]contracts.Handler{
-		"CONFIG":   handlers.NewConfigHandler(*ins),
-		"GET":      handlers.NewGetHandler(*ins),
-		"SET":      handlers.NewSetHandler(*ins),
-		"PING":     handlers.NewPingHandler(*ins),
-		"ECHO":     handlers.NewEchoHandler(*ins),
-		"KEYS":     handlers.NewKeysHandler(*ins),
-		"INFO":     handlers.NewInfoHandler(*ins),
-		"REPLCONF": handlers.NewReplConfHandler(*ins),
-		"PSYNC":    handlers.NewPsyncHandler(*ins),
-		"WAIT":     handlers.NewWaitHandler(*ins),
-		"TYPE":     handlers.NewTypeHandler(*ins),
-	}
-
 	ins.TryReadDb()
 
 	return ins
-}
-
-func (r *Redis) HandleRedisConnection(conn net.Conn) {
-	defer conn.Close()
-	buff := make([]byte, 215)
-
-	redisCon := NewRConn(&conn)
-	for {
-		n, err := conn.Read(buff)
-		if err == io.EOF {
-			continue
-		}
-
-		payload := buff[:n]
-
-		_, args := FromRedisStringToStringArray(string(payload))
-
-		name := args[0]
-		isWrite := name == "SET"
-
-		h := r.Handlers[name]
-		h.Handle(redisCon, args, &payload)
-
-		if r.Config.IsMaster() && isWrite {
-			r.SendToReplicas(&payload)
-		}
-	}
 }
 
 func (r *Redis) InitHandshakeWithMaster() {
