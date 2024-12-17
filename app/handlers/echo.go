@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"github.com/codecrafters-io/redis-starter-go/app/core"
-	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
-	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
 )
 
 func NewEchoHandler(instance core.Redis) *EchoHandler {
@@ -16,6 +14,6 @@ type EchoHandler struct {
 	instance core.Redis
 }
 
-func (h *EchoHandler) Handle(conn rconn.RConn, args []string, _ *[]byte) {
-	conn.Conn.Write([]byte(repr.FromStringToRedisCommonString(args[1])))
+func (h *EchoHandler) Handle(conn core.RConn, args []string, _ *[]byte) {
+	conn.Conn.Write([]byte(core.FromStringToRedisCommonString(args[1])))
 }

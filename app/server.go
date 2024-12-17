@@ -8,8 +8,6 @@ import (
 	"net"
 	"os"
 
-	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
-	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
 	handlers2 "github.com/codecrafters-io/redis-starter-go/app/handlers"
 
 	"github.com/codecrafters-io/redis-starter-go/app/core"
@@ -53,7 +51,7 @@ func handleRedisConnection(conn net.Conn, ins core.Redis, handlers map[string]ha
 	defer conn.Close()
 	buff := make([]byte, 215)
 
-	redisCon := rconn.NewRConn(&conn)
+	redisCon := core.NewRConn(&conn)
 	for {
 		n, err := conn.Read(buff)
 		if err == io.EOF {
@@ -62,7 +60,7 @@ func handleRedisConnection(conn net.Conn, ins core.Redis, handlers map[string]ha
 
 		payload := buff[:n]
 
-		err, args := repr.FromRedisStringToStringArray(string(payload))
+		err, args := core.FromRedisStringToStringArray(string(payload))
 		if err != nil || len(args) == 0 {
 			// log.Fatal("error reading from connection")
 		}

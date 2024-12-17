@@ -4,9 +4,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
-	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
-
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
 
@@ -20,7 +17,7 @@ type WaitHandler struct {
 	instance core.Redis
 }
 
-func (h *WaitHandler) Handle(conn rconn.RConn, args []string, _ *[]byte) {
+func (h *WaitHandler) Handle(conn core.RConn, args []string, _ *[]byte) {
 	rep, err := strconv.Atoi(args[1])
 	if err != nil {
 		return
@@ -65,5 +62,5 @@ awaitingLoop:
 	}
 
 	v := strconv.Itoa(len(done))
-	conn.Conn.Write([]byte(repr.FromStringToRedisInteger(v)))
+	conn.Conn.Write([]byte(core.FromStringToRedisInteger(v)))
 }

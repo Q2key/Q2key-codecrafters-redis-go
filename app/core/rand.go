@@ -1,4 +1,4 @@
-package rconn
+package core
 
 import "math/rand"
 

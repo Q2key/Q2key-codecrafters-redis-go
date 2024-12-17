@@ -1,9 +1,7 @@
-package store
+package core
 
 import (
 	"time"
-
-	"github.com/codecrafters-io/redis-starter-go/app/core/binary"
 )
 
 type Store struct {
@@ -38,7 +36,7 @@ func (r *Store) GetKeys(key string) []string {
 }
 
 func (r *Store) SetExpiredAt(key string, expiredAt uint64) {
-	tm := binary.GetDateFromTimeStamp(expiredAt)
+	tm := GetDateFromTimeStamp(expiredAt)
 	val, ok := r.kvs[key]
 	if ok {
 		val.SetExpired(tm)

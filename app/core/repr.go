@@ -1,4 +1,4 @@
-package repr
+package core
 
 import (
 	"errors"

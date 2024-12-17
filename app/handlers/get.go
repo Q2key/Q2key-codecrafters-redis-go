@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"github.com/codecrafters-io/redis-starter-go/app/core"
-	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
-	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
 )
 
 func NewGetHandler(instance core.Redis) *GetHandler {
@@ -16,12 +14,12 @@ type GetHandler struct {
 	instance core.Redis
 }
 
-func (h *GetHandler) Handle(conn rconn.RConn, args []string, _ *[]byte) {
+func (h *GetHandler) Handle(conn core.RConn, args []string, _ *[]byte) {
 	key := args[1]
 	val, _ := h.instance.Store.Get(key)
 	if val == nil || val.IsExpired() {
-		conn.Conn.Write([]byte(repr.ToRedisErrorString()))
+		conn.Conn.Write([]byte(core.ToRedisErrorString()))
 	} else {
-		conn.Conn.Write([]byte(repr.FromStringToRedisCommonString(val.GetValue())))
+		conn.Conn.Write([]byte(core.FromStringToRedisCommonString(val.GetValue())))
 	}
 }

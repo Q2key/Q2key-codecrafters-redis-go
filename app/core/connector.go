@@ -1,4 +1,4 @@
-package db
+package core
 
 type Connector interface {
 	IsFileExists(string) bool

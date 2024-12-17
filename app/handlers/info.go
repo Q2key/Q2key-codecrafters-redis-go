@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"github.com/codecrafters-io/redis-starter-go/app/core"
-	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
-	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
 )
 
 func NewInfoHandler(instance core.Redis) *InfoHandler {
@@ -16,7 +14,7 @@ type InfoHandler struct {
 	instance core.Redis
 }
 
-func (h *InfoHandler) Handle(conn rconn.RConn, args []string, _ *[]byte) {
+func (h *InfoHandler) Handle(conn core.RConn, args []string, _ *[]byte) {
 	r := h.instance.Config.GetReplica()
 	res := "role:master"
 	if r != nil {
@@ -30,5 +28,5 @@ func (h *InfoHandler) Handle(conn rconn.RConn, args []string, _ *[]byte) {
 		}
 	}
 
-	conn.Conn.Write([]byte(repr.FromStringToRedisBulkString(res)))
+	conn.Conn.Write([]byte(core.FromStringToRedisBulkString(res)))
 }

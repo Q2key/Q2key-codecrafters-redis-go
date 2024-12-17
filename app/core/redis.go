@@ -10,30 +10,25 @@ import (
 	"net"
 	"os"
 	"strconv"
-
-	"github.com/codecrafters-io/redis-starter-go/app/core/db"
-	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
-	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
-	"github.com/codecrafters-io/redis-starter-go/app/core/store"
 )
 
 type Redis struct {
 	Config      Config
-	Store       store.Store
-	RepConnPool *map[string]rconn.RConn
-	MasterConn  rconn.RConn
-	AckChan     *chan rconn.Ack
+	Store       Store
+	RepConnPool *map[string]RConn
+	MasterConn  RConn
+	AckChan     *chan Ack
 	Bytes       *int
 }
 
 func NewRedis(_ context.Context, config Config) *Redis {
-	ch := make(chan rconn.Ack)
+	ch := make(chan Ack)
 
 	bytes := 0
 	ins := &Redis{
-		Store:       *store.NewStore(),
+		Store:       *NewStore(),
 		Config:      config,
-		RepConnPool: &map[string]rconn.RConn{},
+		RepConnPool: &map[string]RConn{},
 		AckChan:     &ch,
 		Bytes:       &bytes,
 	}
@@ -55,7 +50,7 @@ func (r *Redis) InitHandshakeWithMaster() {
 		log.Fatal("Handshake connection error")
 	}
 
-	masterConn := rconn.NewRConn(&conn)
+	masterConn := NewRConn(&conn)
 
 	r.RegisterMasterConn(masterConn)
 	defer conn.Close()
@@ -76,17 +71,17 @@ func (r *Redis) InitHandshakeWithMaster() {
 	reader := bufio.NewReader(conn)
 
 	// Handshake 2.1
-	req := repr.StringsToRedisStrings([]string{"REPLCONF", "listening-port", r.Config.Port})
+	req := StringsToRedisStrings([]string{"REPLCONF", "listening-port", r.Config.Port})
 	conn.Write([]byte(req))
 	reader.ReadBytes('\n')
 
 	// Handshake 2.2
-	req = repr.StringsToRedisStrings([]string{"REPLCONF", "capa", "psync2"})
+	req = StringsToRedisStrings([]string{"REPLCONF", "capa", "psync2"})
 	conn.Write([]byte(req))
 	reader.ReadBytes('\n')
 
 	// Handshake 3
-	req = repr.StringsToRedisStrings([]string{"PSYNC", "?", "-1"})
+	req = StringsToRedisStrings([]string{"PSYNC", "?", "-1"})
 
 	conn.Write([]byte(req))
 	reader.ReadBytes('\n')
@@ -112,7 +107,7 @@ func (r *Redis) InitHandshakeWithMaster() {
 		res.Write(sbuf)
 		if bytes.Contains(sbuf, repb) {
 			lx := res.Len() - shift
-			req = repr.StringsToRedisStrings([]string{"REPLCONF", "ACK", strconv.Itoa(lx - rshift)})
+			req = StringsToRedisStrings([]string{"REPLCONF", "ACK", strconv.Itoa(lx - rshift)})
 			conn.Write([]byte(req))
 		}
 
@@ -130,7 +125,7 @@ func (r *Redis) TryReadDb() {
 
 	path := fmt.Sprintf("%s/%s", r.Config.Dir, r.Config.DbFileName)
 
-	db := db.NewRedisDB(path)
+	db := NewRedisDB(path)
 	if !db.IsFileExists(r.Config.DbFileName) {
 		_ = os.Mkdir(r.Config.Dir, os.ModeDir)
 	}
@@ -163,11 +158,11 @@ func (r *Redis) SendToReplicas(buff *[]byte) {
 	}
 }
 
-func (r *Redis) RegisterReplicaConn(conn *rconn.RConn) {
+func (r *Redis) RegisterReplicaConn(conn *RConn) {
 	(*r.RepConnPool)[(*conn).Id] = *conn
 }
 
-func (r *Redis) RegisterMasterConn(conn *rconn.RConn) {
+func (r *Redis) RegisterMasterConn(conn *RConn) {
 	r.MasterConn = *conn
 }
 
@@ -181,8 +176,8 @@ func (r *Redis) GetWrittenBytes() int {
 	return *r.Bytes
 }
 
-func (r *Redis) bytesToCommandMap(buf []byte) map[string]store.StoreValue {
-	res := map[string]store.StoreValue{}
+func (r *Redis) bytesToCommandMap(buf []byte) map[string]StoreValue {
+	res := map[string]StoreValue{}
 
 	j := 0
 	for i, ch := range buf {
@@ -192,10 +187,10 @@ func (r *Redis) bytesToCommandMap(buf []byte) map[string]store.StoreValue {
 		}
 	}
 
-	_, arr := repr.FromRedisStringToStringArray(string(buf)[j:])
+	_, arr := FromRedisStringToStringArray(string(buf)[j:])
 	for i, v := range arr {
 		if v == "SET" && i+2 <= len(arr) {
-			res[arr[i+1]] = store.StoreValue{
+			res[arr[i+1]] = StoreValue{
 				Value: arr[i+2],
 			}
 		}

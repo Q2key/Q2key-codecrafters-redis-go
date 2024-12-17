@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"github.com/codecrafters-io/redis-starter-go/app/core"
-	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
-	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
 )
 
 func NewPingHandler(instance core.Redis) *PingHandler {
@@ -16,6 +14,6 @@ type PingHandler struct {
 	instance core.Redis
 }
 
-func (h *PingHandler) Handle(conn rconn.RConn, _ []string, _ *[]byte) {
-	conn.Conn.Write([]byte(repr.FromStringToRedisCommonString("PONG")))
+func (h *PingHandler) Handle(conn core.RConn, _ []string, _ *[]byte) {
+	conn.Conn.Write([]byte(core.FromStringToRedisCommonString("PONG")))
 }

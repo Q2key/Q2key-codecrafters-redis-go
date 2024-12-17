@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
+	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
 
 type Handler interface {
-	Handle(rconn.RConn, []string, *[]byte)
+	Handle(core.RConn, []string, *[]byte)
 }

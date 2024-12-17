@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	"github.com/codecrafters-io/redis-starter-go/app/core"
-	"github.com/codecrafters-io/redis-starter-go/app/core/rconn"
-	"github.com/codecrafters-io/redis-starter-go/app/core/repr"
 )
 
 func NewPsyncHandler(instance core.Redis) *PsyncHandler {
@@ -19,11 +17,11 @@ type PsyncHandler struct {
 	instance core.Redis
 }
 
-func (h *PsyncHandler) Handle(conn rconn.RConn, _ []string, _ *[]byte) {
+func (h *PsyncHandler) Handle(conn core.RConn, _ []string, _ *[]byte) {
 	h.instance.RegisterReplicaConn(&conn)
 
 	mess := fmt.Sprintf("FULLRESYNC %s 0", conn.Id)
-	resp := repr.FromStringToRedisCommonString(mess)
+	resp := core.FromStringToRedisCommonString(mess)
 
 	rdb := "524544495330303131fa0972656469732d76657205372e322e30fa0a72656469732d62697473c040fa056374696d65c26d08bc65fa08757365642d6d656dc2b0c41000fa08616f662d62617365c000fff06e3bfec0ff5aa2"
 	rdbBuff, _ := hex.DecodeString(rdb)
