@@ -7,14 +7,14 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
 
-func NewReplConfHandler(instance core.Redis) *ReplConfHandler {
+func NewReplConfHandler(redis core.Redis) *ReplConfHandler {
 	return &ReplConfHandler{
-		instance: instance,
+		redis: redis,
 	}
 }
 
 type ReplConfHandler struct {
-	instance core.Redis
+	redis core.Redis
 }
 
 func (h *ReplConfHandler) Handle(conn contracts.Connector, args []string, _ *[]byte) {
@@ -23,8 +23,8 @@ func (h *ReplConfHandler) Handle(conn contracts.Connector, args []string, _ *[]b
 		num, _ := strconv.Atoi(cnt)
 		id := conn.Id()
 
-		h.instance.UpdateReplica(id, num)
-		*h.instance.AckChan <- core.Ack{ConnId: id, Offset: num}
+		h.redis.UpdateReplica(id, num)
+		*h.redis.AckChan <- core.Ack{ConnId: id, Offset: num}
 
 		conn.Conn().Write([]byte(""))
 	} else {
