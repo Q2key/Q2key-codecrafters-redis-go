@@ -52,7 +52,7 @@ func (r *Redis) InitHandshakeWithMaster() {
 
 	masterConn := NewRConn(&conn)
 
-	r.RegisterMasterConn(masterConn)
+	r.RegisterMasterConn(*masterConn)
 	defer conn.Close()
 
 	if conn == nil {

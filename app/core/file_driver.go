@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-type RedisDB struct {
+type FileDriver struct {
 	Path    string
 	Meta    map[string]string
 	Aux     map[string]string
@@ -15,12 +15,12 @@ type RedisDB struct {
 }
 
 func NewRedisDB(path string) DbDriver {
-	return &RedisDB{
+	return &FileDriver{
 		Path: path,
 	}
 }
 
-func (r *RedisDB) Create() error {
+func (r *FileDriver) Create() error {
 	if r.IsFileExists(r.Path) {
 		return errors.New("file exists")
 	}
@@ -35,7 +35,7 @@ func (r *RedisDB) Create() error {
 	return nil
 }
 
-func (r *RedisDB) IsFileExists(path string) bool {
+func (r *FileDriver) IsFileExists(path string) bool {
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		return false
 	}
@@ -45,7 +45,7 @@ func (r *RedisDB) IsFileExists(path string) bool {
 
 // Connect https://app.codecrafters.io/courses/redis/stages/jz6
 // Connect https://rdb.fnordig.de/file_format.html
-func (r *RedisDB) Connect() error {
+func (r *FileDriver) Connect() error {
 	if !r.IsFileExists(r.Path) {
 		return errors.New("file not exists")
 	}
@@ -146,10 +146,10 @@ func (r *RedisDB) Connect() error {
 	return nil
 }
 
-func (r *RedisDB) GetData() map[string]string {
+func (r *FileDriver) GetData() map[string]string {
 	return r.data
 }
 
-func (r *RedisDB) GetExpires() map[string]uint64 {
+func (r *FileDriver) GetExpires() map[string]uint64 {
 	return r.expires
 }

@@ -31,6 +31,7 @@ func RunInstance(ctx context.Context, ins core.Redis) {
 		"PSYNC":    handlers.NewPsyncHandler(ins),
 		"WAIT":     handlers.NewWaitHandler(ins),
 		"TYPE":     handlers.NewTypeHandler(ins),
+		"XADD":     handlers.NewXaddHandler(ins),
 	}
 
 	go ins.InitHandshakeWithMaster()
@@ -64,7 +65,8 @@ func handleRedisConnection(conn net.Conn, ins core.Redis, hs map[string]handlers
 		isWrite := name == "SET"
 
 		h := hs[name]
-		h.Handle(redisCon, args, &payload)
+
+		h.Handle(*redisCon, args, &payload)
 
 		if ins.Config.IsMaster() && isWrite {
 			ins.SendToReplicas(&payload)

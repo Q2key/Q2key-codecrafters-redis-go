@@ -9,32 +9,32 @@ type Ack struct {
 	Offset int
 }
 
-type RConn struct {
+type Conn struct {
 	conn   net.Conn
 	id     string
 	offset int
 }
 
-func NewRConn(conn *net.Conn) Conn {
-	return &RConn{
+func NewRConn(conn *net.Conn) *Conn {
+	return &Conn{
 		conn:   *conn,
 		id:     randStringBytes(10),
 		offset: 0,
 	}
 }
 
-func (r *RConn) Conn() net.Conn {
+func (r *Conn) Conn() net.Conn {
 	return r.conn
 }
 
-func (r *RConn) Id() string {
+func (r *Conn) Id() string {
 	return r.id
 }
 
-func (r *RConn) Offset() int {
+func (r *Conn) Offset() int {
 	return r.offset
 }
 
-func (r *RConn) SetOffset(offset int) {
+func (r *Conn) SetOffset(offset int) {
 	r.offset = offset
 }
