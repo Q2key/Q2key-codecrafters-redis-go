@@ -1,20 +1,16 @@
-package handlers
+package core
 
-import (
-	"github.com/codecrafters-io/redis-starter-go/app/core"
-)
-
-func NewInfoHandler(instance core.Redis) *InfoHandler {
+func NewInfoHandler(instance Redis) *InfoHandler {
 	return &InfoHandler{
 		instance: instance,
 	}
 }
 
 type InfoHandler struct {
-	instance core.Redis
+	instance Redis
 }
 
-func (h *InfoHandler) Handle(conn core.Conn, args []string, _ *[]byte) {
+func (h *InfoHandler) Handle(conn Conn, args []string, _ *[]byte) {
 	r := h.instance.Config.GetReplica()
 	res := "role:master"
 	if r != nil {
@@ -28,5 +24,5 @@ func (h *InfoHandler) Handle(conn core.Conn, args []string, _ *[]byte) {
 		}
 	}
 
-	conn.Conn().Write([]byte(core.FromStringToRedisBulkString(res)))
+	conn.Conn().Write([]byte(FromStringToRedisBulkString(res)))
 }

@@ -1,23 +1,21 @@
-package handlers
+package core
 
 import (
 	"strconv"
 	"time"
-
-	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
 
-func NewWaitHandler(instance core.Redis) *WaitHandler {
+func NewWaitHandler(instance Redis) *WaitHandler {
 	return &WaitHandler{
 		instance: instance,
 	}
 }
 
 type WaitHandler struct {
-	instance core.Redis
+	instance Redis
 }
 
-func (h *WaitHandler) Handle(conn core.Conn, args []string, _ *[]byte) {
+func (h *WaitHandler) Handle(conn Conn, args []string, _ *[]byte) {
 	rep, err := strconv.Atoi(args[1])
 	if err != nil {
 		return
@@ -62,5 +60,5 @@ awaitingLoop:
 	}
 
 	v := strconv.Itoa(len(done))
-	conn.Conn().Write([]byte(core.FromStringToRedisInteger(v)))
+	conn.Conn().Write([]byte(FromStringToRedisInteger(v)))
 }

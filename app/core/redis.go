@@ -13,29 +13,48 @@ import (
 )
 
 type Redis struct {
-	Config      Config
-	Store       Store
-	RepConnPool *map[string]Conn
-	MasterConn  Conn
-	AckChan     *chan Ack
-	Bytes       *int
+	Config        Config
+	Store         Store
+	RepConnPool   *map[string]Conn
+	MasterConn    Conn
+	AckChan       *chan Ack
+	ReceivedBytes *int
+	Handlers      map[string]Handler
 }
 
 func NewRedis(_ context.Context, config Config) *Redis {
 	ch := make(chan Ack)
 
-	bytes := 0
+	receivedBytes := 0
 	ins := &Redis{
-		Store:       *NewStore(),
-		Config:      config,
-		RepConnPool: &map[string]Conn{},
-		AckChan:     &ch,
-		Bytes:       &bytes,
+		Store:         *NewStore(),
+		Config:        config,
+		RepConnPool:   &map[string]Conn{},
+		AckChan:       &ch,
+		ReceivedBytes: &receivedBytes,
 	}
 
 	ins.TryReadDb()
+	ins.MakeHandlers()
 
 	return ins
+}
+
+func (r *Redis) MakeHandlers() {
+	r.Handlers = map[string]Handler{
+		"CONFIG":   NewConfigHandler(*r),
+		"GET":      NewGetHandler(*r),
+		"SET":      NewSetHandler(*r),
+		"PING":     NewPingHandler(*r),
+		"ECHO":     NewEchoHandler(*r),
+		"KEYS":     NewKeysHandler(*r),
+		"INFO":     NewInfoHandler(*r),
+		"REPLCONF": NewReplConfHandler(*r),
+		"PSYNC":    NewPsyncHandler(*r),
+		"WAIT":     NewWaitHandler(*r),
+		"TYPE":     NewTypeHandler(*r),
+		"XADD":     NewXaddHandler(*r),
+	}
 }
 
 func (r *Redis) InitHandshakeWithMaster() {
@@ -152,7 +171,7 @@ func (r *Redis) TryReadDb() {
 }
 
 func (r *Redis) SendToReplicas(buff *[]byte) {
-	*r.Bytes += len(*buff)
+	*r.ReceivedBytes += len(*buff)
 	for _, r := range *r.RepConnPool {
 		r.Conn().Write(*buff)
 	}
@@ -173,7 +192,7 @@ func (r *Redis) UpdateReplica(id string, offset int) {
 }
 
 func (r *Redis) GetWrittenBytes() int {
-	return *r.Bytes
+	return *r.ReceivedBytes
 }
 
 func (r *Redis) bytesToCommandMap(buf []byte) map[string]StoreValue {
@@ -197,4 +216,32 @@ func (r *Redis) bytesToCommandMap(buf []byte) map[string]StoreValue {
 	}
 
 	return res
+}
+
+func (r *Redis) InternalHandleRedisConnection(conn net.Conn) {
+	defer conn.Close()
+	buff := make([]byte, 215)
+
+	redisCon := NewRConn(&conn)
+	for {
+		n, err := conn.Read(buff)
+		if err == io.EOF {
+			continue
+		}
+
+		payload := buff[:n]
+
+		_, args := FromRedisStringToStringArray(string(payload))
+
+		name := args[0]
+		isWrite := name == "SET"
+
+		h := r.Handlers[name]
+
+		h.Handle(*redisCon, args, &payload)
+
+		if r.Config.IsMaster() && isWrite {
+			r.SendToReplicas(&payload)
+		}
+	}
 }
