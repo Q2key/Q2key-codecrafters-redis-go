@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/core"
@@ -17,7 +16,7 @@ type ReplConfHandler struct {
 	redis core.Redis
 }
 
-func (h *ReplConfHandler) Handle(conn contracts.Connection, args []string, _ *[]byte) {
+func (h *ReplConfHandler) Handle(conn core.Conn, args []string, _ *[]byte) {
 	if len(args) > 2 && args[1] == "ACK" {
 		cnt := args[2]
 		num, _ := strconv.Atoi(cnt)

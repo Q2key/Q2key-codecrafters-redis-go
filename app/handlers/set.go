@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/core"
@@ -17,7 +16,7 @@ type SetHandler struct {
 	instance core.Redis
 }
 
-func (h *SetHandler) Handle(conn contracts.Connection, args []string, raw *[]byte) {
+func (h *SetHandler) Handle(conn core.Conn, args []string, raw *[]byte) {
 	key, val := args[1], args[2]
 
 	vtype := core.GetValueTypes(string(*raw))

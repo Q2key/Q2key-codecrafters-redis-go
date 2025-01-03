@@ -3,8 +3,6 @@ package handlers
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
-
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
 
@@ -18,7 +16,7 @@ type PsyncHandler struct {
 	instance core.Redis
 }
 
-func (h *PsyncHandler) Handle(conn contracts.Connection, _ []string, _ *[]byte) {
+func (h *PsyncHandler) Handle(conn core.Conn, _ []string, _ *[]byte) {
 
 	h.instance.RegisterReplicaConn(conn)
 

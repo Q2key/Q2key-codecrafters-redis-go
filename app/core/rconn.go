@@ -1,7 +1,6 @@
 package core
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"net"
 )
 
@@ -16,7 +15,7 @@ type RConn struct {
 	offset int
 }
 
-func NewRConn(conn *net.Conn) contracts.Connection {
+func NewRConn(conn *net.Conn) Conn {
 	return &RConn{
 		conn:   *conn,
 		id:     randStringBytes(10),

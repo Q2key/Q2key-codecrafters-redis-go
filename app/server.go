@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 	"github.com/codecrafters-io/redis-starter-go/app/handlers"
 	"io"
@@ -20,7 +19,7 @@ func RunInstance(ctx context.Context, ins core.Redis) {
 		log.Fatalf("\r\nFailed to bind to port %s", port)
 	}
 
-	hs := map[string]contracts.Handler{
+	hs := map[string]handlers.Handler{
 		"CONFIG":   handlers.NewConfigHandler(ins),
 		"GET":      handlers.NewGetHandler(ins),
 		"SET":      handlers.NewSetHandler(ins),
@@ -46,7 +45,7 @@ func RunInstance(ctx context.Context, ins core.Redis) {
 	}
 }
 
-func handleRedisConnection(conn net.Conn, ins core.Redis, hs map[string]contracts.Handler) {
+func handleRedisConnection(conn net.Conn, ins core.Redis, hs map[string]handlers.Handler) {
 	defer conn.Close()
 	buff := make([]byte, 215)
 

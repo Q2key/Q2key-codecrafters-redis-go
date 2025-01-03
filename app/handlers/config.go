@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
 
@@ -15,7 +14,7 @@ type ConfigHandler struct {
 	instance *core.Redis
 }
 
-func (h *ConfigHandler) Handle(conn contracts.Connection, args []string, _ *[]byte) {
+func (h *ConfigHandler) Handle(conn core.Conn, args []string, _ *[]byte) {
 	action, key := args[1], args[2]
 
 	if action == "GET" && key == "dir" {

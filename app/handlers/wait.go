@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"strconv"
 	"time"
 
@@ -18,7 +17,7 @@ type WaitHandler struct {
 	instance core.Redis
 }
 
-func (h *WaitHandler) Handle(conn contracts.Connection, args []string, _ *[]byte) {
+func (h *WaitHandler) Handle(conn core.Conn, args []string, _ *[]byte) {
 	rep, err := strconv.Atoi(args[1])
 	if err != nil {
 		return

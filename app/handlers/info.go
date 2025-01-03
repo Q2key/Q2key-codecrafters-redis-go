@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
 
@@ -15,7 +14,7 @@ type InfoHandler struct {
 	instance core.Redis
 }
 
-func (h *InfoHandler) Handle(conn contracts.Connection, args []string, _ *[]byte) {
+func (h *InfoHandler) Handle(conn core.Conn, args []string, _ *[]byte) {
 	r := h.instance.Config.GetReplica()
 	res := "role:master"
 	if r != nil {

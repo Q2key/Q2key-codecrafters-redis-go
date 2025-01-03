@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/app/contracts"
 	"github.com/codecrafters-io/redis-starter-go/app/core"
 )
 
@@ -15,7 +14,7 @@ type GetHandler struct {
 	instance core.Redis
 }
 
-func (h *GetHandler) Handle(conn contracts.Connection, args []string, _ *[]byte) {
+func (h *GetHandler) Handle(conn core.Conn, args []string, _ *[]byte) {
 	key := args[1]
 	val, _ := h.instance.Store.Get(key)
 	if val == nil || val.IsExpired() {

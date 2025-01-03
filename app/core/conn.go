@@ -1,8 +1,8 @@
-package contracts
+package core
 
 import "net"
 
-type Connection interface {
+type Conn interface {
 	Conn() net.Conn
 	Id() string
 	Offset() int
