@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-type FileDriver struct {
+type Rdb struct {
 	Path    string
 	Meta    map[string]string
 	Aux     map[string]string
@@ -14,13 +14,13 @@ type FileDriver struct {
 	expires map[string]uint64
 }
 
-func NewRedisDB(path string) DbDriver {
-	return &FileDriver{
+func NewRedisDB(path string) *Rdb {
+	return &Rdb{
 		Path: path,
 	}
 }
 
-func (r *FileDriver) Create() error {
+func (r *Rdb) Create() error {
 	if r.IsFileExists(r.Path) {
 		return errors.New("file exists")
 	}
@@ -35,7 +35,7 @@ func (r *FileDriver) Create() error {
 	return nil
 }
 
-func (r *FileDriver) IsFileExists(path string) bool {
+func (r *Rdb) IsFileExists(path string) bool {
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		return false
 	}
@@ -45,7 +45,7 @@ func (r *FileDriver) IsFileExists(path string) bool {
 
 // Connect https://app.codecrafters.io/courses/redis/stages/jz6
 // Connect https://rdb.fnordig.de/file_format.html
-func (r *FileDriver) Connect() error {
+func (r *Rdb) Connect() error {
 	if !r.IsFileExists(r.Path) {
 		return errors.New("file not exists")
 	}
@@ -146,10 +146,10 @@ func (r *FileDriver) Connect() error {
 	return nil
 }
 
-func (r *FileDriver) GetData() map[string]string {
+func (r *Rdb) GetData() map[string]string {
 	return r.data
 }
 
-func (r *FileDriver) GetExpires() map[string]uint64 {
+func (r *Rdb) GetExpires() map[string]uint64 {
 	return r.expires
 }
