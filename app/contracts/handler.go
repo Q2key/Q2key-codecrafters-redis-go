@@ -1,5 +1,5 @@
 package contracts
 
 type Handler interface {
-	Handle(Connector, []string, *[]byte)
+	Handle(Connection, []string, *[]byte)
 }

@@ -16,7 +16,7 @@ type RConn struct {
 	offset int
 }
 
-func NewRConn(conn *net.Conn) contracts.Connector {
+func NewRConn(conn *net.Conn) contracts.Connection {
 	return &RConn{
 		conn:   *conn,
 		id:     randStringBytes(10),

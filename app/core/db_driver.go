@@ -1,6 +1,6 @@
 package core
 
-type Connector interface {
+type DbDriver interface {
 	IsFileExists(string) bool
 	Connect() error
 	Create() error

@@ -18,7 +18,7 @@ type WaitHandler struct {
 	instance core.Redis
 }
 
-func (h *WaitHandler) Handle(conn contracts.Connector, args []string, _ *[]byte) {
+func (h *WaitHandler) Handle(conn contracts.Connection, args []string, _ *[]byte) {
 	rep, err := strconv.Atoi(args[1])
 	if err != nil {
 		return

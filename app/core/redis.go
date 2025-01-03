@@ -16,8 +16,8 @@ import (
 type Redis struct {
 	Config      Config
 	Store       Store
-	RepConnPool *map[string]contracts.Connector
-	MasterConn  contracts.Connector
+	RepConnPool *map[string]contracts.Connection
+	MasterConn  contracts.Connection
 	AckChan     *chan Ack
 	Bytes       *int
 }
@@ -29,7 +29,7 @@ func NewRedis(_ context.Context, config Config) *Redis {
 	ins := &Redis{
 		Store:       *NewStore(),
 		Config:      config,
-		RepConnPool: &map[string]contracts.Connector{},
+		RepConnPool: &map[string]contracts.Connection{},
 		AckChan:     &ch,
 		Bytes:       &bytes,
 	}
@@ -159,11 +159,11 @@ func (r *Redis) SendToReplicas(buff *[]byte) {
 	}
 }
 
-func (r *Redis) RegisterReplicaConn(conn contracts.Connector) {
+func (r *Redis) RegisterReplicaConn(conn contracts.Connection) {
 	(*r.RepConnPool)[(conn).Id()] = conn
 }
 
-func (r *Redis) RegisterMasterConn(conn contracts.Connector) {
+func (r *Redis) RegisterMasterConn(conn contracts.Connection) {
 	r.MasterConn = conn
 }
 

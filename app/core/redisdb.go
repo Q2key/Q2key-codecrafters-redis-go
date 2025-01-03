@@ -14,7 +14,7 @@ type RedisDB struct {
 	expires map[string]uint64
 }
 
-func NewRedisDB(path string) Connector {
+func NewRedisDB(path string) DbDriver {
 	return &RedisDB{
 		Path: path,
 	}

@@ -15,7 +15,7 @@ type KeysHandler struct {
 	instance core.Redis
 }
 
-func (h *KeysHandler) Handle(conn contracts.Connector, args []string, _ *[]byte) {
+func (h *KeysHandler) Handle(conn contracts.Connection, args []string, _ *[]byte) {
 	t := args[1]
 	keys := h.instance.Store.GetKeys(t)
 

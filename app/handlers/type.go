@@ -15,7 +15,7 @@ type TypeHandler struct {
 	instance core.Redis
 }
 
-func (h *TypeHandler) Handle(conn contracts.Connector, args []string, _ *[]byte) {
+func (h *TypeHandler) Handle(conn contracts.Connection, args []string, _ *[]byte) {
 	if len(args) < 1 {
 		return
 	}

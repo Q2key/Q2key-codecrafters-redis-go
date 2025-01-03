@@ -15,7 +15,7 @@ type InfoHandler struct {
 	instance core.Redis
 }
 
-func (h *InfoHandler) Handle(conn contracts.Connector, args []string, _ *[]byte) {
+func (h *InfoHandler) Handle(conn contracts.Connection, args []string, _ *[]byte) {
 	r := h.instance.Config.GetReplica()
 	res := "role:master"
 	if r != nil {

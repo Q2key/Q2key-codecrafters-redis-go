@@ -17,7 +17,7 @@ type ReplConfHandler struct {
 	redis core.Redis
 }
 
-func (h *ReplConfHandler) Handle(conn contracts.Connector, args []string, _ *[]byte) {
+func (h *ReplConfHandler) Handle(conn contracts.Connection, args []string, _ *[]byte) {
 	if len(args) > 2 && args[1] == "ACK" {
 		cnt := args[2]
 		num, _ := strconv.Atoi(cnt)

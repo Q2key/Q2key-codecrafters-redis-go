@@ -2,7 +2,7 @@ package contracts
 
 import "net"
 
-type Connector interface {
+type Connection interface {
 	Conn() net.Conn
 	Id() string
 	Offset() int

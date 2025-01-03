@@ -18,7 +18,7 @@ type PsyncHandler struct {
 	instance core.Redis
 }
 
-func (h *PsyncHandler) Handle(conn contracts.Connector, _ []string, _ *[]byte) {
+func (h *PsyncHandler) Handle(conn contracts.Connection, _ []string, _ *[]byte) {
 
 	h.instance.RegisterReplicaConn(conn)
 
