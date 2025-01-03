@@ -20,6 +20,7 @@ type Redis struct {
 	AckChan       *chan Ack
 	ReceivedBytes *int
 	Handlers      map[string]Handler
+	Bytes         *[]byte
 }
 
 func NewRedis(_ context.Context, config Config) *Redis {
@@ -230,6 +231,9 @@ func (r *Redis) InternalHandleRedisConnection(conn net.Conn) {
 		}
 
 		payload := buff[:n]
+
+		//what we do here?
+		//*(r.Bytes) = payload
 
 		_, args := FromRedisStringToStringArray(string(payload))
 
