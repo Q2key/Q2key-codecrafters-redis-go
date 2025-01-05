@@ -87,8 +87,8 @@ func FromRedisStringToStringArray(q string) (error, []string) {
 	return nil, sli
 }
 
-func GetValueTypes(q string) map[string]string {
-	out := map[string]string{}
+func GetValueTypes(q string) map[string]ValueType {
+	out := map[string]ValueType{}
 	if len(q) == 0 {
 		return out
 	}
@@ -100,15 +100,14 @@ func GetValueTypes(q string) map[string]string {
 
 	sq := q[1:]
 	n := len(sq)
-	sli := make([]string, 0)
 
 	for i := 0; i < n; i++ {
 		isValid := false
-		vTypte := "string"
+		vTypte := STRING
 
 		if ReprToken(sq[i]) == StringToken {
 			isValid = true
-			vTypte = "string"
+			vTypte = STRING
 		}
 
 		if !isValid {
@@ -140,8 +139,6 @@ func GetValueTypes(q string) map[string]string {
 		}
 
 		out[sq[st:fi]] = vTypte
-
-		sli = append(sli, sq[st:fi])
 	}
 
 	return out

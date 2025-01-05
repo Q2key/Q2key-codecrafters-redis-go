@@ -79,3 +79,11 @@ func CheckByte(b byte) bool {
 	}
 	return true
 }
+
+func CombineBuffers(buffs ...[]byte) []byte {
+	buff := make([]byte, 0)
+	for _, b := range buffs {
+		buff = append(buff, b...)
+	}
+	return buff
+}

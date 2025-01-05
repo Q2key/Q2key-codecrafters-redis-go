@@ -8,9 +8,9 @@ import (
 func TestGetSetValue(t *testing.T) {
 	s := *NewStore()
 
-	s.Set("Key0", "Value0")
-	s.Set("Key1", "Value1")
-	s.Set("Key2", "Value2")
+	s.Set("Key0", "Value0", STRING)
+	s.Set("Key1", "Value1", STRING)
+	s.Set("Key2", "Value2", STRING)
 
 	v1, _ := s.Get("Key0")
 	if v1.GetValue() != "Value0" {
@@ -33,7 +33,7 @@ func TestGetSetValue(t *testing.T) {
 func TestShouldBeExpired2000(t *testing.T) {
 	r := NewStore()
 
-	r.Set("key", "value")
+	r.Set("key", "value", STRING)
 	r.SetExpiredIn("key", 2000)
 
 	time.Sleep(3 * time.Second)
@@ -49,7 +49,7 @@ func TestShouldBeExpired2000(t *testing.T) {
 func TestShouldBeExpired100(t *testing.T) {
 	r := NewStore()
 
-	r.Set("key", "value")
+	r.Set("key", "value", STRING)
 	r.SetExpiredIn("key", 100)
 
 	time.Sleep(101 * time.Millisecond)
@@ -65,7 +65,7 @@ func TestShouldBeExpired100(t *testing.T) {
 func TestShouldBeExpired101(t *testing.T) {
 	r := NewStore()
 
-	r.Set("key", "value")
+	r.Set("key", "value", STRING)
 	r.SetExpiredIn("key", 101)
 
 	time.Sleep(101 * time.Millisecond)
@@ -81,7 +81,7 @@ func TestShouldBeExpired101(t *testing.T) {
 func TestShouldNotBeExpired0(t *testing.T) {
 	r := NewStore()
 
-	r.Set("key", "value")
+	r.Set("key", "value", STRING)
 	v, _ := r.Get("key")
 
 	if v.IsExpired() {
@@ -97,7 +97,7 @@ func TestShouldNotBeExpired0(t *testing.T) {
 
 func TestShouldNotBeExpired4000(t *testing.T) {
 	r := NewStore()
-	r.Set("key", "value")
+	r.Set("key", "value", STRING)
 	r.SetExpiredIn("key", 4000)
 	v, _ := r.Get("key")
 

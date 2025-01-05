@@ -4,6 +4,16 @@ import (
 	"time"
 )
 
+type ValueType string
+
+const (
+	NA         ValueType = "na"
+	INT        ValueType = "integer"
+	BULTSTRING ValueType = "bulkstring"
+	STRING     ValueType = "string"
+	STREAM     ValueType = "stream"
+)
+
 type Store struct {
 	kvs map[string]*StoreValue
 }
@@ -12,15 +22,39 @@ func NewStore() *Store {
 	return &Store{kvs: make(map[string]*StoreValue)}
 }
 
+func (r *Store) BytesToCommandMap(buf []byte) map[string]StoreValue {
+	res := map[string]StoreValue{}
+
+	j := 0
+	for i, ch := range buf {
+		if string(ch) == "*" {
+			j = i
+			break
+		}
+	}
+
+	_, arr := FromRedisStringToStringArray(string(buf)[j:])
+	for i, v := range arr {
+		if v == "SET" && i+2 <= len(arr) {
+			res[arr[i+1]] = StoreValue{
+				Value:     arr[i+2],
+				ValueType: STRING,
+			}
+		}
+	}
+
+	return res
+}
+
 func (r *Store) Get(key string) (*StoreValue, bool) {
 	val, ok := r.kvs[key]
 	return val, ok
 }
 
-func (r *Store) Set(key string, value string) {
+func (r *Store) Set(key string, value string, valueType ValueType) {
 	r.kvs[key] = &StoreValue{
 		Value:     value,
-		ValueType: "string",
+		ValueType: valueType,
 	}
 }
 
@@ -56,7 +90,7 @@ func (r *Store) SetExpiredIn(key string, expiredIn uint64) {
 type StoreValue struct {
 	Value     string
 	Expired   *time.Time
-	ValueType string
+	ValueType ValueType
 }
 
 func (r *StoreValue) IsExpired() bool {

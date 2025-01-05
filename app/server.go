@@ -18,7 +18,7 @@ func RunInstance(ctx context.Context, ins core.Redis) {
 		log.Fatalf("\r\nFailed to bind to port %s", port)
 	}
 
-	go ins.InitHandshakeWithMaster()
+	go ins.Handshake()
 
 	for {
 		conn, err := ln.Accept()
@@ -26,7 +26,7 @@ func RunInstance(ctx context.Context, ins core.Redis) {
 			log.Fatal("Something went wrong with tcp connection...")
 		}
 
-		go ins.InternalHandleRedisConnection(conn)
+		go ins.HandleTCP(conn)
 	}
 }
 
