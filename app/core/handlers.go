@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -15,12 +16,9 @@ func RespondString(conn Conn, data string) {
 	}
 }
 
-func RespondBytes(conn Conn, data []byte) {
-	_, err := conn.Conn().Write(data)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
+const (
+	MockDbContent = "524544495330303131fa0972656469732d76657205372e322e30fa0a72656469732d62697473c040fa056374696d65c26d08bc65fa08757365642d6d656dc2b0c41000fa08616f662d62617365c000fff06e3bfec0ff5aa2"
+)
 
 func handleINFO(h *Redis, conn Conn, args []string) {
 	r := h.Config.GetReplica()
@@ -64,16 +62,20 @@ func handleGET(h *Redis, conn Conn, args []string) {
 
 func handlePSYNC(h *Redis, conn Conn) {
 	h.RegisterReplicaConn(conn)
-	mess := fmt.Sprintf("FULLRESYNC %s 0", conn.Id())
-	resp := ToRedisSimpleString(mess)
-	rdb := "524544495330303131fa0972656469732d76657205372e322e30fa0a72656469732d62697473c040fa056374696d65c26d08bc65fa08757365642d6d656dc2b0c41000fa08616f662d62617365c000fff06e3bfec0ff5aa2"
-	rdbBuff, _ := hex.DecodeString(rdb)
-	chunkA := []byte(resp)
-	chunkB := []byte("$88\r\n")
-	chunkC := rdbBuff
-	res := CombineBuffers(chunkA, chunkB, chunkC)
 
-	RespondBytes(conn, res)
+	resp := ToRedisSimpleString(fmt.Sprintf("FULLRESYNC %s 0", conn.Id()))
+	rdbBuff, err := hex.DecodeString(MockDbContent)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var sb strings.Builder
+	defer sb.Reset()
+	sb.WriteString(resp)
+	sb.WriteString("$88\r\n")
+	sb.Write(rdbBuff)
+
+	RespondString(conn, sb.String())
 }
 
 func handleCONFIG(h *Redis, conn Conn, args []string) {
@@ -155,9 +157,7 @@ func handleWAIT(h *Redis, conn Conn, args []string) {
 			continue
 		}
 
-		go func() {
-			RespondString(r, "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n")
-		}()
+		go RespondString(r, "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n")
 
 	}
 
@@ -179,8 +179,7 @@ awaitingLoop:
 		}
 	}
 
-	v := strconv.Itoa(len(done))
-	RespondString(conn, ToRedisInteger(v))
+	RespondString(conn, ToRedisInteger(strconv.Itoa(len(done))))
 }
 
 func handleXADD(h *Redis, conn Conn, args []string) {
