@@ -1,12 +1,105 @@
 package core
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"log"
+	"net"
 	"os"
 )
 
-func (r *Redis) SendToReplicas(buff *[]byte) {
+type Master struct {
+	Config        Config
+	Store         Store
+	RepConnPool   *map[string]Conn
+	MasterConn    Conn
+	AckChan       *chan Ack
+	ReceivedBytes *int
+}
+
+func NewMaster(_ context.Context, config Config) *Master {
+	ch := make(chan Ack)
+
+	receivedBytes := 0
+	ins := &Master{
+		Store:         *NewStore(),
+		Config:        config,
+		RepConnPool:   &map[string]Conn{},
+		AckChan:       &ch,
+		ReceivedBytes: &receivedBytes,
+	}
+
+	return ins
+}
+
+func (r *Master) Init() {
+	r.TryReadDb()
+}
+
+func (r *Master) GetConfig() *Config {
+	return &r.Config
+}
+
+func (r *Master) GetStore() *Store {
+	return &r.Store
+}
+
+func (r *Master) HandleTCP(conn net.Conn) {
+
+	defer conn.Close()
+	buff := make([]byte, 215)
+
+	redisCon := NewRConn(&conn)
+	for {
+		n, err := conn.Read(buff)
+		if err == io.EOF {
+			continue
+		}
+
+		payload := buff[:n]
+
+		args := FromRedisStringToStringArray(string(payload))
+		if len(args) == 0 {
+			return
+		}
+		command := args[0]
+		switch command {
+		case "PING":
+			handlePING(*redisCon)
+		case "INFO":
+			handleINFO(r, *redisCon, args)
+		case "KEYS":
+			handleKEYS(r, *redisCon, args)
+		case "GET":
+			handleGET(r, *redisCon, args)
+		case "SET":
+			handleSET(r, *redisCon, args)
+		case "ECHO":
+			handleECHO(*redisCon, args)
+		case "CONFIG":
+			handleCONFIG(r, *redisCon, args)
+		case "WAIT":
+			handleWAIT(r, *redisCon, args)
+		case "REPLCONF":
+			handleREPLCONF(r, *redisCon, args)
+		case "PSYNC":
+			handlePSYNC(r, *redisCon)
+		case "TYPE":
+			handleTYPE(r, *redisCon, args)
+		case "XADD":
+			handleXADD(r, *redisCon, args)
+		default:
+			log.Fatal("Unknown command")
+		}
+
+		if IsWriteCommand(command) {
+			r.SendToReplicas(&payload)
+		}
+	}
+}
+
+func (r *Master) SendToReplicas(buff *[]byte) {
 	*r.ReceivedBytes += len(*buff)
 	for _, r := range *r.RepConnPool {
 		_, err := r.Conn().Write(*buff)
@@ -16,17 +109,17 @@ func (r *Redis) SendToReplicas(buff *[]byte) {
 	}
 }
 
-func (r *Redis) RegisterReplicaConn(conn Conn) {
+func (r *Master) RegisterReplicaConn(conn Conn) {
 	(*r.RepConnPool)[(conn).Id()] = conn
 }
 
-func (r *Redis) UpdateReplica(id string, offset int) {
+func (r *Master) UpdateReplica(id string, offset int) {
 	rep := (*r.RepConnPool)[id]
 	rep.SetOffset(offset)
 	(*r.RepConnPool)[id] = rep
 }
 
-func (r *Redis) TryReadDb() {
+func (r *Master) TryReadDb() {
 	if r.Config.DbFileName == "" || r.Config.Dir == "" {
 		return
 	}

@@ -3,13 +3,96 @@ package core
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"io"
 	"log"
 	"net"
 	"strconv"
 )
 
-func (r *Redis) Handshake() {
+type Replica struct {
+	Config        Config
+	Store         Store
+	RepConnPool   *map[string]Conn
+	MasterConn    Conn
+	AckChan       *chan Ack
+	ReceivedBytes *int
+}
+
+func NewReplica(_ context.Context, config Config) *Replica {
+	ch := make(chan Ack)
+
+	receivedBytes := 0
+	ins := &Replica{
+		Store:         *NewStore(),
+		Config:        config,
+		AckChan:       &ch,
+		ReceivedBytes: &receivedBytes,
+	}
+
+	return ins
+}
+
+func (r *Replica) Init() {
+	go r.Handshake()
+}
+
+func (r *Replica) GetConfig() *Config {
+	return &r.Config
+}
+
+func (r *Replica) GetStore() *Store {
+	return &r.Store
+}
+
+func (r *Replica) HandleTCP(conn net.Conn) {
+	defer conn.Close()
+	buff := make([]byte, 215)
+	redisCon := NewRConn(&conn)
+	for {
+		n, err := conn.Read(buff)
+		if err == io.EOF {
+			continue
+		}
+
+		payload := buff[:n]
+
+		args := FromRedisStringToStringArray(string(payload))
+		if len(args) == 0 {
+			return
+		}
+
+		command := args[0]
+		switch command {
+		case "PING":
+			handlePING(*redisCon)
+		case "INFO":
+			handleINFO(r, *redisCon, args)
+		case "KEYS":
+			handleKEYS(r, *redisCon, args)
+		case "GET":
+			handleGET(r, *redisCon, args)
+		case "SET":
+			handleSET(r, *redisCon, args)
+		case "ECHO":
+			handleECHO(*redisCon, args)
+		case "CONFIG":
+			handleCONFIG(r, *redisCon, args)
+		case "TYPE":
+			handleTYPE(r, *redisCon, args)
+		case "XADD":
+			handleXADD(r, *redisCon, args)
+		default:
+			log.Fatal("Unknown command")
+		}
+	}
+}
+
+func (r *Replica) RegisterMasterConn(conn Conn) {
+	r.MasterConn = conn
+}
+
+func (r *Replica) Handshake() {
 	rep := r.Config.Replica
 	if rep == nil {
 		return

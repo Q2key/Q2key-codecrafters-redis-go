@@ -20,47 +20,20 @@ const (
 	MockDbContent = "524544495330303131fa0972656469732d76657205372e322e30fa0a72656469732d62697473c040fa056374696d65c26d08bc65fa08757365642d6d656dc2b0c41000fa08616f662d62617365c000fff06e3bfec0ff5aa2"
 )
 
-func handleINFO(h *Redis, conn Conn, args []string) {
-	r := h.Config.GetReplica()
-	res := "role:master"
-	if r != nil {
-		res = "role:slave"
-	}
+func handleREPLCONF(h *Master, conn Conn, args []string) {
+	if len(args) > 2 && args[1] == "ACK" {
+		cnt := args[2]
+		num, _ := strconv.Atoi(cnt)
+		id := conn.Id()
 
-	for _, v := range args {
-		if v == "replication" {
-			res += ":master_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
-			res += ":master_repl_offset:0"
-		}
-	}
-
-	RespondString(conn, ToRedisBulkString(res))
-}
-
-func handleKEYS(h *Redis, conn Conn, args []string) {
-	keys := h.Store.GetKeys(args[1])
-	RespondString(conn, ToRedisStrings(keys))
-}
-
-func handlePING(conn Conn) {
-	RespondString(conn, ToRedisSimpleString("PONG"))
-}
-
-func handleECHO(conn Conn, args []string) {
-	RespondString(conn, ToRedisSimpleString(args[1]))
-}
-
-func handleGET(h *Redis, conn Conn, args []string) {
-	key := args[1]
-	val, _ := h.Store.Get(key)
-	if val == nil || val.IsExpired() {
-		RespondString(conn, ToRedisNullBulkString())
+		h.UpdateReplica(id, num)
+		*h.AckChan <- Ack{ConnId: id, Offset: num}
 	} else {
-		RespondString(conn, ToRedisSimpleString(val.GetValue()))
+		RespondString(conn, ToRedisSimpleString("OK"))
 	}
 }
 
-func handlePSYNC(h *Redis, conn Conn) {
+func handlePSYNC(h *Master, conn Conn) {
 	h.RegisterReplicaConn(conn)
 
 	resp := ToRedisSimpleString(fmt.Sprintf("FULLRESYNC %s 0", conn.Id()))
@@ -78,67 +51,7 @@ func handlePSYNC(h *Redis, conn Conn) {
 	RespondString(conn, sb.String())
 }
 
-func handleCONFIG(h *Redis, conn Conn, args []string) {
-	action, key := args[1], args[2]
-
-	if action == "GET" && key == "dir" {
-		resp := []string{key, (*h).Config.Dir}
-		RespondString(conn, ToRedisStrings(resp))
-		return
-	}
-
-	if action == "GET" && key == "dbfilename" {
-		resp := []string{key, (*h).Config.DbFileName}
-		RespondString(conn, ToRedisStrings(resp))
-		return
-	}
-
-	RespondString(conn, ToRedisNullBulkString())
-}
-
-func handleREPLCONF(h *Redis, conn Conn, args []string) {
-	if len(args) > 2 && args[1] == "ACK" {
-		cnt := args[2]
-		num, _ := strconv.Atoi(cnt)
-		id := conn.Id()
-
-		h.UpdateReplica(id, num)
-		*h.AckChan <- Ack{ConnId: id, Offset: num}
-	} else {
-		RespondString(conn, ToRedisSimpleString("OK"))
-	}
-}
-
-func handleSET(h *Redis, conn Conn, args []string) {
-	key, val := args[1], args[2]
-
-	// according to the doc set is always setting the string value type
-	h.Store.Set(key, val, STRING)
-
-	if len(args) >= 4 {
-		exp, _ := strconv.Atoi(args[4])
-		h.Store.SetExpiredIn(key, uint64(exp))
-	}
-
-	RespondString(conn, ToRedisSimpleString("OK"))
-}
-
-func handleTYPE(h *Redis, conn Conn, args []string) {
-	if len(args) < 1 {
-		return
-	}
-
-	key := args[1]
-
-	val, ok := h.Store.Get(key)
-	if !ok {
-		RespondString(conn, ToRedisSimpleString("none"))
-	} else {
-		RespondString(conn, ToRedisSimpleString(string(val.ValueType)))
-	}
-}
-
-func handleWAIT(h *Redis, conn Conn, args []string) {
+func handleWAIT(h *Master, conn Conn, args []string) {
 	rep, err := strconv.Atoi(args[1])
 	if err != nil {
 		return
@@ -182,7 +95,94 @@ awaitingLoop:
 	RespondString(conn, ToRedisInteger(strconv.Itoa(len(done))))
 }
 
-func handleXADD(h *Redis, conn Conn, args []string) {
+func handleINFO(h RedisInstance, conn Conn, args []string) {
+	r := h.GetConfig().GetReplica()
+	res := "role:master"
+	if r != nil {
+		res = "role:slave"
+	}
+
+	for _, v := range args {
+		if v == "replication" {
+			res += ":master_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
+			res += ":master_repl_offset:0"
+		}
+	}
+
+	RespondString(conn, ToRedisBulkString(res))
+}
+
+func handleKEYS(h RedisInstance, conn Conn, args []string) {
+	keys := h.GetStore().GetKeys(args[1])
+	RespondString(conn, ToRedisStrings(keys))
+}
+
+func handlePING(conn Conn) {
+	RespondString(conn, ToRedisSimpleString("PONG"))
+}
+
+func handleECHO(conn Conn, args []string) {
+	RespondString(conn, ToRedisSimpleString(args[1]))
+}
+
+func handleGET(h RedisInstance, conn Conn, args []string) {
+	key := args[1]
+	val, _ := h.GetStore().Get(key)
+	if val == nil || val.IsExpired() {
+		RespondString(conn, ToRedisNullBulkString())
+	} else {
+		RespondString(conn, ToRedisSimpleString(val.GetValue()))
+	}
+}
+
+func handleCONFIG(h RedisInstance, conn Conn, args []string) {
+	action, key := args[1], args[2]
+
+	if action == "GET" && key == "dir" {
+		resp := []string{key, h.GetConfig().Dir}
+		RespondString(conn, ToRedisStrings(resp))
+		return
+	}
+
+	if action == "GET" && key == "dbfilename" {
+		resp := []string{key, h.GetConfig().DbFileName}
+		RespondString(conn, ToRedisStrings(resp))
+		return
+	}
+
+	RespondString(conn, ToRedisNullBulkString())
+}
+
+func handleSET(h RedisInstance, conn Conn, args []string) {
+	key, val := args[1], args[2]
+
+	// according to the doc set is always setting the string value type
+	h.GetStore().Set(key, val, STRING)
+
+	if len(args) >= 4 {
+		exp, _ := strconv.Atoi(args[4])
+		h.GetStore().SetExpiredIn(key, uint64(exp))
+	}
+
+	RespondString(conn, ToRedisSimpleString("OK"))
+}
+
+func handleTYPE(h RedisInstance, conn Conn, args []string) {
+	if len(args) < 1 {
+		return
+	}
+
+	key := args[1]
+
+	val, ok := h.GetStore().Get(key)
+	if !ok {
+		RespondString(conn, ToRedisSimpleString("none"))
+	} else {
+		RespondString(conn, ToRedisSimpleString(string(val.ValueType)))
+	}
+}
+
+func handleXADD(h RedisInstance, conn Conn, args []string) {
 	if len(args) < 1 {
 		return
 	}
@@ -212,7 +212,7 @@ func handleXADD(h *Redis, conn Conn, args []string) {
 		ValueType: "stream",
 	}
 
-	h.Store.kvs[key[0]] = val
+	h.GetStore().kvs[key[0]] = val
 
 	RespondString(conn, ToRedisSimpleString(id[0]))
 }

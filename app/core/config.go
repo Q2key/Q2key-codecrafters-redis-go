@@ -9,7 +9,7 @@ type ReplicationProps struct {
 	OriginPort string
 }
 
-func NewReplica(originHost string, originPort string) *ReplicationProps {
+func NewReplicationProps(originHost string, originPort string) *ReplicationProps {
 	return &ReplicationProps{originHost, originPort}
 }
 
@@ -78,7 +78,7 @@ func createConfigFromArgs(args []string) *Config {
 
 	val, ok = m[ReplicaOf]
 	if ok && len(val) >= 2 {
-		c.Replica = NewReplica(val[0], val[1])
+		c.Replica = NewReplicationProps(val[0], val[1])
 	}
 
 	return c
