@@ -3,9 +3,24 @@ package core
 import (
 	"encoding/hex"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 )
+
+func RespondString(conn Conn, data string) {
+	_, err := conn.Conn().Write([]byte(data))
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func RespondBytes(conn Conn, data []byte) {
+	_, err := conn.Conn().Write(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 func handleINFO(h *Redis, conn Conn, args []string) {
 	r := h.Config.GetReplica()
@@ -21,43 +36,44 @@ func handleINFO(h *Redis, conn Conn, args []string) {
 		}
 	}
 
-	conn.Conn().Write([]byte(FromStringToRedisBulkString(res)))
+	RespondString(conn, ToRedisBulkString(res))
 }
 
 func handleKEYS(h *Redis, conn Conn, args []string) {
 	keys := h.Store.GetKeys(args[1])
-	conn.Conn().Write([]byte(StringsToRedisStrings(keys)))
+	RespondString(conn, ToRedisStrings(keys))
 }
 
 func handlePING(conn Conn) {
-	conn.Conn().Write([]byte(FromStringToRedisCommonString("PONG")))
+	RespondString(conn, ToRedisSimpleString("PONG"))
 }
 
 func handleECHO(conn Conn, args []string) {
-	conn.Conn().Write([]byte(FromStringToRedisCommonString(args[1])))
+	RespondString(conn, ToRedisSimpleString(args[1]))
 }
 
 func handleGET(h *Redis, conn Conn, args []string) {
 	key := args[1]
 	val, _ := h.Store.Get(key)
 	if val == nil || val.IsExpired() {
-		conn.Conn().Write([]byte(ToRedisErrorString()))
+		RespondString(conn, ToRedisNullBulkString())
 	} else {
-		conn.Conn().Write([]byte(FromStringToRedisCommonString(val.GetValue())))
+		RespondString(conn, ToRedisSimpleString(val.GetValue()))
 	}
 }
 
 func handlePSYNC(h *Redis, conn Conn) {
 	h.RegisterReplicaConn(conn)
 	mess := fmt.Sprintf("FULLRESYNC %s 0", conn.Id())
-	resp := FromStringToRedisCommonString(mess)
+	resp := ToRedisSimpleString(mess)
 	rdb := "524544495330303131fa0972656469732d76657205372e322e30fa0a72656469732d62697473c040fa056374696d65c26d08bc65fa08757365642d6d656dc2b0c41000fa08616f662d62617365c000fff06e3bfec0ff5aa2"
 	rdbBuff, _ := hex.DecodeString(rdb)
 	chunkA := []byte(resp)
 	chunkB := []byte("$88\r\n")
 	chunkC := rdbBuff
 	res := CombineBuffers(chunkA, chunkB, chunkC)
-	conn.Conn().Write(res)
+
+	RespondBytes(conn, res)
 }
 
 func handleCONFIG(h *Redis, conn Conn, args []string) {
@@ -65,17 +81,17 @@ func handleCONFIG(h *Redis, conn Conn, args []string) {
 
 	if action == "GET" && key == "dir" {
 		resp := []string{key, (*h).Config.Dir}
-		conn.Conn().Write([]byte(StringsToRedisStrings(resp)))
+		RespondString(conn, ToRedisStrings(resp))
 		return
 	}
 
 	if action == "GET" && key == "dbfilename" {
 		resp := []string{key, (*h).Config.DbFileName}
-		conn.Conn().Write([]byte(StringsToRedisStrings(resp)))
+		RespondString(conn, ToRedisStrings(resp))
 		return
 	}
 
-	conn.Conn().Write([]byte(ToRedisErrorString()))
+	RespondString(conn, ToRedisNullBulkString())
 }
 
 func handleREPLCONF(h *Redis, conn Conn, args []string) {
@@ -86,30 +102,23 @@ func handleREPLCONF(h *Redis, conn Conn, args []string) {
 
 		h.UpdateReplica(id, num)
 		*h.AckChan <- Ack{ConnId: id, Offset: num}
-
-		conn.Conn().Write([]byte(""))
 	} else {
-		conn.Conn().Write([]byte(FromStringToRedisCommonString("OK")))
+		RespondString(conn, ToRedisSimpleString("OK"))
 	}
 }
 
-func handleSET(h *Redis, conn Conn, args []string, bytes *[]byte) {
+func handleSET(h *Redis, conn Conn, args []string) {
 	key, val := args[1], args[2]
 
-	valueTypes := GetValueTypes(string(*bytes))
-	valueType, ok := valueTypes[key]
-	if !ok {
-		return
-	}
-
-	h.Store.Set(key, val, valueType)
+	// according to the doc set is always setting the string value type
+	h.Store.Set(key, val, STRING)
 
 	if len(args) >= 4 {
 		exp, _ := strconv.Atoi(args[4])
 		h.Store.SetExpiredIn(key, uint64(exp))
 	}
 
-	conn.Conn().Write([]byte(FromStringToRedisCommonString("OK")))
+	RespondString(conn, ToRedisSimpleString("OK"))
 }
 
 func handleTYPE(h *Redis, conn Conn, args []string) {
@@ -121,9 +130,9 @@ func handleTYPE(h *Redis, conn Conn, args []string) {
 
 	val, ok := h.Store.Get(key)
 	if !ok {
-		conn.Conn().Write([]byte(FromStringToRedisCommonString("none")))
+		RespondString(conn, ToRedisSimpleString("none"))
 	} else {
-		conn.Conn().Write([]byte(FromStringToRedisCommonString(string(val.ValueType))))
+		RespondString(conn, ToRedisSimpleString(string(val.ValueType)))
 	}
 }
 
@@ -147,7 +156,7 @@ func handleWAIT(h *Redis, conn Conn, args []string) {
 		}
 
 		go func() {
-			r.Conn().Write([]byte("*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n"))
+			RespondString(r, "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n")
 		}()
 
 	}
@@ -171,7 +180,7 @@ awaitingLoop:
 	}
 
 	v := strconv.Itoa(len(done))
-	conn.Conn().Write([]byte(FromStringToRedisInteger(v)))
+	RespondString(conn, ToRedisInteger(v))
 }
 
 func handleXADD(h *Redis, conn Conn, args []string) {
@@ -206,5 +215,5 @@ func handleXADD(h *Redis, conn Conn, args []string) {
 
 	h.Store.kvs[key[0]] = val
 
-	conn.Conn().Write([]byte(FromStringToRedisCommonString(id[0])))
+	RespondString(conn, ToRedisSimpleString(id[0]))
 }

@@ -9,7 +9,10 @@ import (
 func (r *Redis) SendToReplicas(buff *[]byte) {
 	*r.ReceivedBytes += len(*buff)
 	for _, r := range *r.RepConnPool {
-		r.Conn().Write(*buff)
+		_, err := r.Conn().Write(*buff)
+		if err != nil {
+			return
+		}
 	}
 }
 

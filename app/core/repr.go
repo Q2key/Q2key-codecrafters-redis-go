@@ -1,145 +1,42 @@
 package core
 
 import (
-	"errors"
 	"fmt"
-	"strconv"
 )
 
-type ReprToken string
+type REPRToken string
 
 const (
-	StringToken ReprToken = "$"
-	ArrayToken  ReprToken = "*"
+	IntegerToken      REPRToken = ":"
+	SimpleErrorToken  REPRToken = "-"
+	SimpleStringToken REPRToken = "+"
+	BulkStringToken   REPRToken = "$"
+	ArrayToken        REPRToken = "*"
 )
 
-func StringsToRedisStrings(input []string) string {
-	n := len(input)
-	r := fmt.Sprintf("*%d", n)
+func ToRedisStrings(str []string) string {
+	n := len(str)
+	r := fmt.Sprintf("%s%d", ArrayToken, n)
 	for i := 0; i < n; i++ {
-		s := input[i]
+		s := str[i]
 		r += fmt.Sprintf("\r\n$%d\r\n%s", len(s), s)
 	}
 	r += "\r\n"
 	return r
 }
 
-func FromStringToRedisBulkString(input string) string {
-	l := len(input)
-	return fmt.Sprintf("$%d\r\n%s\r\n", l, input)
+func ToRedisBulkString(str string) string {
+	return fmt.Sprintf("%s%d\r\n%s\r\n", BulkStringToken, len(str), str)
 }
 
-func FromStringToRedisCommonString(input string) string {
-	return fmt.Sprintf("+%s\r\n", input)
+func ToRedisSimpleString(str string) string {
+	return fmt.Sprintf("%s%s\r\n", SimpleStringToken, str)
 }
 
-func FromStringToRedisInteger(str string) string {
-	return fmt.Sprintf(":%s\r\n", str)
+func ToRedisInteger(str string) string {
+	return fmt.Sprintf("%s%s\r\n", IntegerToken, str)
 }
 
-func ToRedisErrorString() string {
-	return "$-1\r\n"
-}
-
-func FromRedisStringToStringArray(q string) (error, []string) {
-	if len(q) == 0 {
-		return errors.New("empty string"), []string{}
-	}
-
-	// todo seems we have an error here :(
-	if q[0] != '*' {
-		return errors.New("invalid argument"), []string{}
-	}
-
-	sq := q[1:]
-	n := len(sq)
-	sli := make([]string, 0)
-	for i := 0; i < n; i++ {
-		if ReprToken(sq[i]) == StringToken {
-			j := i + 1
-			k := j
-
-			for {
-				ch := string(sq[k])
-				if ch == "\r" {
-					break
-				} else {
-					k += 1
-				}
-			}
-
-			sl, err := strconv.Atoi(sq[j:k])
-			if sl == 0 || err != nil {
-				break
-			}
-
-			st := k + 2
-			fi := st + sl
-
-			if fi > len(sq) {
-				break
-			}
-
-			sli = append(sli, sq[st:fi])
-		}
-	}
-
-	return nil, sli
-}
-
-func GetValueTypes(q string) map[string]ValueType {
-	out := map[string]ValueType{}
-	if len(q) == 0 {
-		return out
-	}
-
-	// todo seems we have an error here :(
-	if q[0] != '*' {
-		return out
-	}
-
-	sq := q[1:]
-	n := len(sq)
-
-	for i := 0; i < n; i++ {
-		isValid := false
-		vTypte := STRING
-
-		if ReprToken(sq[i]) == StringToken {
-			isValid = true
-			vTypte = STRING
-		}
-
-		if !isValid {
-			continue
-		}
-
-		j := i + 1
-		k := j
-
-		for {
-			ch := string(sq[k])
-			if ch == "\r" {
-				break
-			} else {
-				k += 1
-			}
-		}
-
-		sl, err := strconv.Atoi(sq[j:k])
-		if sl == 0 || err != nil {
-			break
-		}
-
-		st := k + 2
-		fi := st + sl
-
-		if fi > len(sq) {
-			break
-		}
-
-		out[sq[st:fi]] = vTypte
-	}
-
-	return out
+func ToRedisNullBulkString() string {
+	return fmt.Sprintf("%s%s1\r\n", BulkStringToken, SimpleErrorToken)
 }

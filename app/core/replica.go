@@ -42,17 +42,17 @@ func (r *Redis) Handshake() {
 	reader := bufio.NewReader(conn)
 
 	// Handshake 2.1
-	req := StringsToRedisStrings([]string{"REPLCONF", "listening-port", r.Config.Port})
+	req := ToRedisStrings([]string{"REPLCONF", "listening-port", r.Config.Port})
 	conn.Write([]byte(req))
 	reader.ReadBytes('\n')
 
 	// Handshake 2.2
-	req = StringsToRedisStrings([]string{"REPLCONF", "capa", "psync2"})
+	req = ToRedisStrings([]string{"REPLCONF", "capa", "psync2"})
 	conn.Write([]byte(req))
 	reader.ReadBytes('\n')
 
 	// Handshake 3
-	req = StringsToRedisStrings([]string{"PSYNC", "?", "-1"})
+	req = ToRedisStrings([]string{"PSYNC", "?", "-1"})
 
 	conn.Write([]byte(req))
 	reader.ReadBytes('\n')
@@ -78,7 +78,7 @@ func (r *Redis) Handshake() {
 		res.Write(sbuf)
 		if bytes.Contains(sbuf, repb) {
 			lx := res.Len() - shift
-			req = StringsToRedisStrings([]string{"REPLCONF", "ACK", strconv.Itoa(lx - rshift)})
+			req = ToRedisStrings([]string{"REPLCONF", "ACK", strconv.Itoa(lx - rshift)})
 			conn.Write([]byte(req))
 		}
 

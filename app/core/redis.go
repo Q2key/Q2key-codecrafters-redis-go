@@ -50,8 +50,8 @@ func (r *Redis) HandleTCP(conn net.Conn) {
 
 		payload := buff[:n]
 
-		err, args := FromRedisStringToStringArray(string(payload))
-		if err != nil || len(args) == 0 {
+		args := FromRedisStringToStringArray(string(payload))
+		if len(args) == 0 {
 			return
 		}
 		command := args[0]
@@ -65,7 +65,7 @@ func (r *Redis) HandleTCP(conn net.Conn) {
 		case "GET":
 			handleGET(r, *redisCon, args)
 		case "SET":
-			handleSET(r, *redisCon, args, &payload)
+			handleSET(r, *redisCon, args)
 		case "ECHO":
 			handleECHO(*redisCon, args)
 		case "REPLCONF":

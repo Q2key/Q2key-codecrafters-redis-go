@@ -33,7 +33,7 @@ func (r *Store) BytesToCommandMap(buf []byte) map[string]StoreValue {
 		}
 	}
 
-	_, arr := FromRedisStringToStringArray(string(buf)[j:])
+	arr := FromRedisStringToStringArray(string(buf)[j:])
 	for i, v := range arr {
 		if v == "SET" && i+2 <= len(arr) {
 			res[arr[i+1]] = StoreValue{
