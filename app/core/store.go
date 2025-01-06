@@ -7,19 +7,15 @@ import (
 type ValueType string
 
 const (
-	NA         ValueType = "na"
-	INT        ValueType = "integer"
-	BULTSTRING ValueType = "bulkstring"
-	STRING     ValueType = "string"
-	STREAM     ValueType = "stream"
+	STRING ValueType = "string"
 )
 
 type Store struct {
 	kvs map[string]*StoreValue
 }
 
-func NewStore() *Store {
-	return &Store{kvs: make(map[string]*StoreValue)}
+func NewStore() Store {
+	return Store{kvs: make(map[string]*StoreValue)}
 }
 
 func (r *Store) BytesToCommandMap(buf []byte) map[string]StoreValue {

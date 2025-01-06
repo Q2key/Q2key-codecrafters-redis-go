@@ -11,9 +11,7 @@ import (
 )
 
 type Replica struct {
-	Config        Config
-	Store         Store
-	RepConnPool   *map[string]Conn
+	Redis
 	MasterConn    Conn
 	AckChan       *chan Ack
 	ReceivedBytes *int
@@ -21,11 +19,21 @@ type Replica struct {
 
 func NewReplica(_ context.Context, config Config) *Replica {
 	ch := make(chan Ack)
-
 	receivedBytes := 0
 	ins := &Replica{
-		Store:         *NewStore(),
-		Config:        config,
+		Redis: Redis{
+			Store:  NewStore(),
+			Config: config,
+			Commands: map[string]CommandHandler{
+				"PING":   handlePing,
+				"INFO":   handleInfo,
+				"KEYS":   handleKeys,
+				"GET":    handleGet,
+				"CONFIG": handleConfig,
+				"ECHO":   handleEcho,
+				"TYPE":   handleType,
+			},
+		},
 		AckChan:       &ch,
 		ReceivedBytes: &receivedBytes,
 	}
@@ -48,7 +56,9 @@ func (r *Replica) GetStore() *Store {
 func (r *Replica) HandleTCP(conn net.Conn) {
 	defer conn.Close()
 	buff := make([]byte, 215)
+
 	redisCon := NewRConn(&conn)
+
 	for {
 		n, err := conn.Read(buff)
 		if err == io.EOF {
@@ -61,30 +71,13 @@ func (r *Replica) HandleTCP(conn net.Conn) {
 		if len(args) == 0 {
 			return
 		}
-
 		command := args[0]
-		switch command {
-		case "PING":
-			handlePING(*redisCon)
-		case "INFO":
-			handleINFO(r, *redisCon, args)
-		case "KEYS":
-			handleKEYS(r, *redisCon, args)
-		case "GET":
-			handleGET(r, *redisCon, args)
-		case "SET":
-			handleSET(r, *redisCon, args)
-		case "ECHO":
-			handleECHO(*redisCon, args)
-		case "CONFIG":
-			handleCONFIG(r, *redisCon, args)
-		case "TYPE":
-			handleTYPE(r, *redisCon, args)
-		case "XADD":
-			handleXADD(r, *redisCon, args)
-		default:
-			log.Fatal("Unknown command")
+		handler, ok := r.Commands[command]
+		if !ok {
+			continue
 		}
+
+		handler(r, *redisCon, args)
 	}
 }
 

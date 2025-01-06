@@ -10,10 +10,8 @@ import (
 )
 
 type Master struct {
-	Config        Config
-	Store         Store
+	Redis
 	RepConnPool   *map[string]Conn
-	MasterConn    Conn
 	AckChan       *chan Ack
 	ReceivedBytes *int
 }
@@ -23,8 +21,24 @@ func NewMaster(_ context.Context, config Config) *Master {
 
 	receivedBytes := 0
 	ins := &Master{
-		Store:         *NewStore(),
-		Config:        config,
+		Redis: Redis{
+			Store:  NewStore(),
+			Config: config,
+			Commands: map[string]CommandHandler{
+				"PING":     handlePing,
+				"INFO":     handleInfo,
+				"KEYS":     handleKeys,
+				"GET":      handleGet,
+				"SET":      handleSet,
+				"CONFIG":   handleConfig,
+				"XADD":     handleXadd,
+				"ECHO":     handleEcho,
+				"WAIT":     handleWaitAsMaster,
+				"REPLCONF": handleReplconf,
+				"PSYNC":    handlePsync,
+				"TYPE":     handleType,
+			},
+		},
 		RepConnPool:   &map[string]Conn{},
 		AckChan:       &ch,
 		ReceivedBytes: &receivedBytes,
@@ -46,11 +60,11 @@ func (r *Master) GetStore() *Store {
 }
 
 func (r *Master) HandleTCP(conn net.Conn) {
-
 	defer conn.Close()
 	buff := make([]byte, 215)
 
 	redisCon := NewRConn(&conn)
+
 	for {
 		n, err := conn.Read(buff)
 		if err == io.EOF {
@@ -64,34 +78,12 @@ func (r *Master) HandleTCP(conn net.Conn) {
 			return
 		}
 		command := args[0]
-		switch command {
-		case "PING":
-			handlePING(*redisCon)
-		case "INFO":
-			handleINFO(r, *redisCon, args)
-		case "KEYS":
-			handleKEYS(r, *redisCon, args)
-		case "GET":
-			handleGET(r, *redisCon, args)
-		case "SET":
-			handleSET(r, *redisCon, args)
-		case "ECHO":
-			handleECHO(*redisCon, args)
-		case "CONFIG":
-			handleCONFIG(r, *redisCon, args)
-		case "WAIT":
-			handleWAIT(r, *redisCon, args)
-		case "REPLCONF":
-			handleREPLCONF(r, *redisCon, args)
-		case "PSYNC":
-			handlePSYNC(r, *redisCon)
-		case "TYPE":
-			handleTYPE(r, *redisCon, args)
-		case "XADD":
-			handleXADD(r, *redisCon, args)
-		default:
-			log.Fatal("Unknown command")
+		handler, ok := r.Commands[command]
+		if !ok {
+			continue
 		}
+
+		handler(r, *redisCon, args)
 
 		if IsWriteCommand(command) {
 			r.SendToReplicas(&payload)
