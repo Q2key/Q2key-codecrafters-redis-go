@@ -192,40 +192,14 @@ func handleType(h RedisInstance, conn Conn, args []string) {
 }
 
 func handleXadd(h RedisInstance, conn Conn, args []string) {
-	if len(args) < 1 {
+	if len(args) < 4 {
 		return
 	}
 
-	pairs := map[string][]string{
-		"pairs": {},
-	}
-
-	fmt.Println(args)
-	for i, a := range args {
-		if i == 1 {
-			pairs["key"] = []string{a}
-		}
-
-		if i == 2 {
-			pairs["id"] = []string{a}
-		}
-
-		if i > 2 {
-			pairs["pairs"] = append(pairs["pairs"], a)
-		}
-	}
-
-	fmt.Println(pairs["id"])
-	key := pairs["key"]
-	id := pairs["id"]
-
-	parts := strings.Split(pairs["id"][0], "-")
-	if len(parts) != 2 {
-		return
-	}
-
+	parts := strings.Split(args[2], "-")
+	fmt.Println(parts)
 	// <millisecondsTime>-<sequenceNumber>
-	msTime, err := strconv.Atoi(parts[0])
+	msTime, err := strconv.ParseFloat(parts[0], 64)
 	if err != nil {
 		return
 	}
@@ -235,18 +209,32 @@ func handleXadd(h RedisInstance, conn Conn, args []string) {
 		return
 	}
 
-	fmt.Println(msTime, seqNum)
+	storeKey := args[1]
+	payload := strings.Join(args[3:], ":")
 
-	fmt.Println(parts)
-
-	val := &StreamValue{
-		Value:     map[string]interface{}{},
-		ValueType: STREAM,
+	store := h.GetStore()
+	stream, ok := store.Get(storeKey)
+	if !ok {
+		val := NewStreamValue(msTime, seqNum)
+		val.WriteSequence(msTime, seqNum, payload)
+		store.SetRedisValue(storeKey, val)
+		RespondString(conn, ToRedisSimpleString(val.ToString()))
+		return
 	}
 
-	h.GetStore().kvs[key[0]] = val
+	existingStream, _ := stream.(*StreamValue)
 
-	RespondString(conn, ToRedisSimpleString(id[0]))
+	if !existingStream.KeyExists(msTime) {
+		existingStream.WriteSequence(msTime, seqNum, payload)
+	}
+	ok, reason := existingStream.CanSave(msTime, seqNum)
+	if ok {
+		existingStream.WriteSequence(msTime, seqNum, payload)
+		store.SetRedisValue(storeKey, existingStream)
+		RespondString(conn, ToRedisSimpleString(existingStream.ToString()))
+	} else {
+		RespondString(conn, ToSimpleError(reason))
+	}
 }
 
 func handlePing(_ RedisInstance, conn Conn, _ []string) {

@@ -55,6 +55,10 @@ func (r *Store) Set(key string, value string, valueType ValueType) {
 	}
 }
 
+func (r *Store) SetRedisValue(key string, redisValue RedisValue) {
+	r.kvs[key] = redisValue
+}
+
 func (r *Store) GetKeys(key string) []string {
 	res := make([]string, 0)
 	switch key {

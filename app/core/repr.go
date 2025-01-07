@@ -40,3 +40,7 @@ func ToRedisInteger(str string) string {
 func ToRedisNullBulkString() string {
 	return fmt.Sprintf("%s%s1\r\n", BulkStringToken, SimpleErrorToken)
 }
+
+func ToSimpleError(str string) string {
+	return fmt.Sprintf("%s%s\r\n", SimpleErrorToken, str)
+}
