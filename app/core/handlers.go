@@ -197,8 +197,6 @@ func handleXadd(h RedisInstance, conn Conn, args []string) {
 	}
 
 	parts := strings.Split(args[2], "-")
-	fmt.Println(parts)
-	// <millisecondsTime>-<sequenceNumber>
 	msTime, err := strconv.ParseFloat(parts[0], 64)
 	if err != nil {
 		return
@@ -209,36 +207,33 @@ func handleXadd(h RedisInstance, conn Conn, args []string) {
 		return
 	}
 
+	store := h.GetStore()
 	storeKey := args[1]
 	payload := strings.Join(args[3:], ":")
 
-	var ok bool
+	var value *StreamValue
 
-	store := h.GetStore()
-
-	stream, ok := store.Get(storeKey)
-
-	var storeStreamValue *StreamValue
-	if !ok {
-		storeStreamValue = NewStreamValue(msTime, seqNum)
-		storeStreamValue.WriteSequence(msTime, seqNum, payload)
-		store.SetRedisValue(storeKey, storeStreamValue)
-		RespondString(conn, ToRedisSimpleString(storeStreamValue.ToString()))
+	stream, canSave := store.Get(storeKey)
+	if !canSave {
+		value = NewStreamValue(msTime, seqNum)
+		value.WriteSequence(msTime, seqNum, payload)
+		store.SetRedisValue(storeKey, value)
+		RespondString(conn, ToRedisSimpleString(value.ToString()))
 		return
 	}
 
-	storeStreamValue, _ = stream.(*StreamValue)
-
-	if !storeStreamValue.KeyExists(msTime) {
-		storeStreamValue.WriteSequence(msTime, seqNum, payload)
+	value, _ = stream.(*StreamValue)
+	if !value.KeyExists(msTime) {
+		value.WriteSequence(msTime, seqNum, payload)
 	}
-	ok, reason := storeStreamValue.CanSave(msTime, seqNum)
-	if ok {
-		storeStreamValue.WriteSequence(msTime, seqNum, payload)
-		store.SetRedisValue(storeKey, storeStreamValue)
-		RespondString(conn, ToRedisSimpleString(storeStreamValue.ToString()))
+
+	canSave, cause := value.CanSave(msTime, seqNum)
+	if canSave {
+		value.WriteSequence(msTime, seqNum, payload)
+		store.SetRedisValue(storeKey, value)
+		RespondString(conn, ToRedisSimpleString(value.ToString()))
 	} else {
-		RespondString(conn, ToSimpleError(reason))
+		RespondString(conn, ToSimpleError(*cause))
 	}
 }
 

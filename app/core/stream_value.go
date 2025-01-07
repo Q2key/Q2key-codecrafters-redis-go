@@ -70,23 +70,20 @@ func (r *StreamValue) WriteSequence(newTime float64, newSequence int, payload st
 	r.LSTime = newTime
 }
 
-func (r *StreamValue) CanSave(newTime float64, newSequence int) (bool, string) {
-	fmt.Printf("\r\noldTime: %f newTime: %f oldSeq: %d newSeq: %d\r\n", r.LSTime, newTime, r.LSSeqn, newSequence)
+func (r *StreamValue) CanSave(newTime float64, newSequence int) (bool, *string) {
 	if newTime == r.LSTime && newSequence > r.LSSeqn {
-		return true, "ok"
+		return true, nil
 	}
 
 	if newTime == 0 && newSequence == 0 {
-		return false, "ERR The ID specified in XADD must be greater than 0-0"
+		mess := "ERR The ID specified in XADD must be greater than 0-0"
+		return false, &mess
 	}
 
 	if newTime == r.LSTime && r.LSSeqn >= newSequence {
-		return false, "ERR The ID specified in XADD is equal or smaller than the target stream top item"
+		mess := "ERR The ID specified in XADD is equal or smaller than the target stream top item"
+		return false, &mess
 	}
 
-	if newTime < r.LSTime {
-		return false, "asdasdasd"
-	}
-
-	return false, "unknown error"
+	return false, nil
 }
