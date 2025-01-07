@@ -212,26 +212,31 @@ func handleXadd(h RedisInstance, conn Conn, args []string) {
 	storeKey := args[1]
 	payload := strings.Join(args[3:], ":")
 
+	var ok bool
+
 	store := h.GetStore()
+
 	stream, ok := store.Get(storeKey)
+
+	var storeStreamValue *StreamValue
 	if !ok {
-		val := NewStreamValue(msTime, seqNum)
-		val.WriteSequence(msTime, seqNum, payload)
-		store.SetRedisValue(storeKey, val)
-		RespondString(conn, ToRedisSimpleString(val.ToString()))
+		storeStreamValue = NewStreamValue(msTime, seqNum)
+		storeStreamValue.WriteSequence(msTime, seqNum, payload)
+		store.SetRedisValue(storeKey, storeStreamValue)
+		RespondString(conn, ToRedisSimpleString(storeStreamValue.ToString()))
 		return
 	}
 
-	existingStream, _ := stream.(*StreamValue)
+	storeStreamValue, _ = stream.(*StreamValue)
 
-	if !existingStream.KeyExists(msTime) {
-		existingStream.WriteSequence(msTime, seqNum, payload)
+	if !storeStreamValue.KeyExists(msTime) {
+		storeStreamValue.WriteSequence(msTime, seqNum, payload)
 	}
-	ok, reason := existingStream.CanSave(msTime, seqNum)
+	ok, reason := storeStreamValue.CanSave(msTime, seqNum)
 	if ok {
-		existingStream.WriteSequence(msTime, seqNum, payload)
-		store.SetRedisValue(storeKey, existingStream)
-		RespondString(conn, ToRedisSimpleString(existingStream.ToString()))
+		storeStreamValue.WriteSequence(msTime, seqNum, payload)
+		store.SetRedisValue(storeKey, storeStreamValue)
+		RespondString(conn, ToRedisSimpleString(storeStreamValue.ToString()))
 	} else {
 		RespondString(conn, ToSimpleError(reason))
 	}
