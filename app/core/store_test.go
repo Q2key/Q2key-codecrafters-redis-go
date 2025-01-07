@@ -6,24 +6,24 @@ import (
 )
 
 func TestGetSetValue(t *testing.T) {
-	s := *NewStore()
+	s := NewStore()
 
 	s.Set("Key0", "Value0", STRING)
 	s.Set("Key1", "Value1", STRING)
 	s.Set("Key2", "Value2", STRING)
 
 	v1, _ := s.Get("Key0")
-	if v1.GetValue() != "Value0" {
+	if v1.ToString() != "Value0" {
 		t.Fail()
 	}
 
 	v2, _ := s.Get("Key1")
-	if v2.GetValue() != "Value1" {
+	if v2.ToString() != "Value1" {
 		t.Fail()
 	}
 
 	v3, _ := s.Get("Key2")
-	if v3.GetValue() != "Value2" {
+	if v3.ToString() != "Value2" {
 		t.Fail()
 	}
 
@@ -88,7 +88,7 @@ func TestShouldNotBeExpired0(t *testing.T) {
 		t.Fail()
 	}
 
-	if v.GetValue() != "value" {
+	if v.ToString() != "value" {
 		t.Fail()
 	}
 
@@ -107,7 +107,7 @@ func TestShouldNotBeExpired4000(t *testing.T) {
 		t.Fail()
 	}
 
-	if v.GetValue() != "value" {
+	if v.ToString() != "value" {
 		t.Fail()
 	}
 

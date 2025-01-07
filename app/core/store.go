@@ -8,18 +8,19 @@ type ValueType string
 
 const (
 	STRING ValueType = "string"
+	STREAM ValueType = "stream"
 )
 
 type Store struct {
-	kvs map[string]*StoreValue
+	kvs map[string]RedisValue
 }
 
 func NewStore() Store {
-	return Store{kvs: make(map[string]*StoreValue)}
+	return Store{kvs: make(map[string]RedisValue)}
 }
 
-func (r *Store) BytesToCommandMap(buf []byte) map[string]StoreValue {
-	res := map[string]StoreValue{}
+func (r *Store) BytesToCommandMap(buf []byte) map[string]StringValue {
+	res := map[string]StringValue{}
 
 	j := 0
 	for i, ch := range buf {
@@ -32,7 +33,7 @@ func (r *Store) BytesToCommandMap(buf []byte) map[string]StoreValue {
 	arr := FromRedisStringToStringArray(string(buf)[j:])
 	for i, v := range arr {
 		if v == "SET" && i+2 <= len(arr) {
-			res[arr[i+1]] = StoreValue{
+			res[arr[i+1]] = StringValue{
 				Value:     arr[i+2],
 				ValueType: STRING,
 			}
@@ -42,13 +43,13 @@ func (r *Store) BytesToCommandMap(buf []byte) map[string]StoreValue {
 	return res
 }
 
-func (r *Store) Get(key string) (*StoreValue, bool) {
+func (r *Store) Get(key string) (RedisValue, bool) {
 	val, ok := r.kvs[key]
 	return val, ok
 }
 
 func (r *Store) Set(key string, value string, valueType ValueType) {
-	r.kvs[key] = &StoreValue{
+	r.kvs[key] = &StringValue{
 		Value:     value,
 		ValueType: valueType,
 	}
@@ -81,26 +82,4 @@ func (r *Store) SetExpiredIn(key string, expiredIn uint64) {
 		val.SetExpired(exp)
 		r.kvs[key] = val
 	}
-}
-
-type StoreValue struct {
-	Value     string
-	Expired   *time.Time
-	ValueType ValueType
-}
-
-func (r *StoreValue) IsExpired() bool {
-	if r.Expired == nil {
-		return false
-	}
-
-	return r.Expired.UnixNano() <= time.Now().UTC().UnixNano()
-}
-
-func (r *StoreValue) SetExpired(expired time.Time) {
-	r.Expired = &expired
-}
-
-func (r *StoreValue) GetValue() string {
-	return r.Value
 }

@@ -77,6 +77,7 @@ func (r *Master) HandleTCP(conn net.Conn) {
 		if len(args) == 0 {
 			return
 		}
+
 		command := args[0]
 		handler, ok := r.Commands[command]
 		if !ok {
@@ -143,3 +144,5 @@ func (r *Master) TryReadDb() {
 		}
 	}
 }
+
+

@@ -140,7 +140,7 @@ func handleGet(h RedisInstance, conn Conn, args []string) {
 	if val == nil || val.IsExpired() {
 		RespondString(conn, ToRedisNullBulkString())
 	} else {
-		RespondString(conn, ToRedisSimpleString(val.GetValue()))
+		RespondString(conn, ToRedisSimpleString(val.ToString()))
 	}
 }
 
@@ -187,7 +187,7 @@ func handleType(h RedisInstance, conn Conn, args []string) {
 	if !ok {
 		RespondString(conn, ToRedisSimpleString("none"))
 	} else {
-		RespondString(conn, ToRedisSimpleString(string(val.ValueType)))
+		RespondString(conn, ToRedisSimpleString(string(val.GetType())))
 	}
 }
 
@@ -199,6 +199,8 @@ func handleXadd(h RedisInstance, conn Conn, args []string) {
 	pairs := map[string][]string{
 		"pairs": {},
 	}
+
+	fmt.Println(args)
 	for i, a := range args {
 		if i == 1 {
 			pairs["key"] = []string{a}
@@ -213,12 +215,33 @@ func handleXadd(h RedisInstance, conn Conn, args []string) {
 		}
 	}
 
+	fmt.Println(pairs["id"])
 	key := pairs["key"]
 	id := pairs["id"]
 
-	val := &StoreValue{
-		Value:     "val",
-		ValueType: "stream",
+	parts := strings.Split(pairs["id"][0], "-")
+	if len(parts) != 2 {
+		return
+	}
+
+	// <millisecondsTime>-<sequenceNumber>
+	msTime, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return
+	}
+
+	seqNum, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return
+	}
+
+	fmt.Println(msTime, seqNum)
+
+	fmt.Println(parts)
+
+	val := &StreamValue{
+		Value:     map[string]interface{}{},
+		ValueType: STREAM,
 	}
 
 	h.GetStore().kvs[key[0]] = val
