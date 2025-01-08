@@ -213,6 +213,7 @@ func handleXadd(h RedisInstance, conn Conn, args []string) {
 
 		value.WriteSequence(msTime, seqNum, payload)
 		store.SetRedisValue(storeKey, value)
+
 		RespondString(conn, ToRedisBulkString(value.ToString()))
 		return
 	}
@@ -235,8 +236,10 @@ func handleXadd(h RedisInstance, conn Conn, args []string) {
 		if seqNum == -1 {
 			seqNum = value.UpdateSeqKey(msTime)
 		}
+
 		value.WriteSequence(msTime, seqNum, payload)
 		store.SetRedisValue(storeKey, value)
+
 		RespondString(conn, ToRedisSimpleString(value.ToString()))
 		return
 	}
@@ -252,8 +255,10 @@ func handleXadd(h RedisInstance, conn Conn, args []string) {
 
 	canSave, cause := value.CanSave(msTime, seqNum)
 	if canSave {
+
 		value.WriteSequence(msTime, seqNum, payload)
 		store.SetRedisValue(storeKey, value)
+
 		RespondString(conn, ToRedisSimpleString(value.ToString()))
 
 	} else {
