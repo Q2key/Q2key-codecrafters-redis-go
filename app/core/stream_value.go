@@ -99,7 +99,6 @@ func (r *StreamValue) WriteSequence(newTime float64, seq int, payload string) {
 		r.HMap[seq][parts[0]] = parts[1]
 	}
 
-	fmt.Println(r.HMap)
 	r.LSSeqn = seq
 	r.LSTime = newTime
 }

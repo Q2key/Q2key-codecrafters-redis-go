@@ -197,14 +197,20 @@ func handleXadd(h RedisInstance, conn Conn, args []string) {
 	}
 
 	parts := strings.Split(args[2], "-")
-	// <millisecondsTime>-<sequenceNumber>
-	msTime, err := strconv.ParseFloat(parts[0], 64)
-	if err != nil {
-		return
+
+	var err error
+	var msTime float64 = -1
+	seqNum := -1
+
+	if parts[0] != "*" {
+		msTime, err = strconv.ParseFloat(parts[0], 64)
+		if err != nil {
+			return
+		}
+	} else {
+		msTime = float64(time.Now().UnixMilli())
 	}
 
-	seqNum := -1
-	fmt.Println(parts)
 	if parts[1] != "*" {
 		seqNum, err = strconv.Atoi(parts[1])
 		if err != nil {
