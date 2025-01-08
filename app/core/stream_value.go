@@ -2,11 +2,13 @@ package core
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
 type StreamValue struct {
 	Value     map[float64][]int
+	HMap      map[int]map[string]string
 	LSTime    float64
 	LSSeqn    int
 	Expired   *time.Time
@@ -25,6 +27,7 @@ func NewStreamValue(lsTime float64) *StreamValue {
 
 	return &StreamValue{
 		Value:     map[float64][]int{},
+		HMap:      map[int]map[string]string{},
 		LSTime:    lsTime,
 		LSSeqn:    seq,
 		ValueType: STREAM,
@@ -85,6 +88,18 @@ func (r *StreamValue) WriteSequence(newTime float64, seq int, payload string) {
 		r.Value[newTime] = append(v, seq)
 	}
 
+	parts := strings.Split(payload, ":")
+
+	_, ok = r.HMap[seq]
+	if !ok {
+		r.HMap[seq] = map[string]string{
+			parts[0]: parts[1],
+		}
+	} else {
+		r.HMap[seq][parts[0]] = parts[1]
+	}
+
+	fmt.Println(r.HMap)
 	r.LSSeqn = seq
 	r.LSTime = newTime
 }
