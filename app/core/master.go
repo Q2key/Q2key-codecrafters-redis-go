@@ -32,6 +32,7 @@ func NewMaster(_ context.Context, config Config) *Master {
 				"SET":      handleSet,
 				"CONFIG":   handleConfig,
 				"XADD":     handleXadd,
+				"XRANGE":   handleXrange,
 				"ECHO":     handleEcho,
 				"WAIT":     handleWaitAsMaster,
 				"REPLCONF": handleReplconf,
@@ -144,5 +145,3 @@ func (r *Master) TryReadDb() {
 		}
 	}
 }
-
-
