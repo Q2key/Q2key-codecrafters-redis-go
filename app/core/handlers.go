@@ -192,7 +192,7 @@ func handleType(h RedisInstance, conn Conn, args []string) {
 }
 
 func handleXadd(h RedisInstance, conn Conn, args []string) {
-	if len(args) < 4 {
+	if len(args) < 3 {
 		return
 	}
 
@@ -202,13 +202,24 @@ func handleXadd(h RedisInstance, conn Conn, args []string) {
 	var msTime float64 = -1
 	seqNum := -1
 
-	if parts[0] != "*" {
-		msTime, err = strconv.ParseFloat(parts[0], 64)
-		if err != nil {
-			return
-		}
-	} else {
+	store := h.GetStore()
+	storeKey := args[1]
+	payload := strings.Join(args[3:], ":")
+
+	if args[2] == "*" {
 		msTime = float64(time.Now().UnixMilli())
+		seqNum = 0
+		value := NewStreamValue(msTime)
+
+		value.WriteSequence(msTime, seqNum, payload)
+		store.SetRedisValue(storeKey, value)
+		RespondString(conn, ToRedisBulkString(value.ToString()))
+		return
+	}
+
+	msTime, err = strconv.ParseFloat(parts[0], 64)
+	if err != nil {
+		return
 	}
 
 	if parts[1] != "*" {
@@ -217,10 +228,6 @@ func handleXadd(h RedisInstance, conn Conn, args []string) {
 			return
 		}
 	}
-
-	store := h.GetStore()
-	storeKey := args[1]
-	payload := strings.Join(args[3:], ":")
 
 	stream, ok := store.Get(storeKey)
 	if !ok {
