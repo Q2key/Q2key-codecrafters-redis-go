@@ -10,25 +10,24 @@ func TestCreateDatabaseShouldBeOk1(t *testing.T) {
 	defer func(name string) {
 		err := os.Remove(name)
 		if err != nil {
-			t.Errorf(err.Error())
+			t.FailNow()
 		}
 	}(fp)
 
 	db := NewRedisDB(fp)
 	if db == nil {
-		t.Error("db is nil")
+		t.FailNow()
 		return
 	}
 
 	err := db.Create()
 	if err != nil {
-		t.Error(err)
+		t.FailNow()
 		return
 	}
 
 	if !db.IsFileExists(fp) {
-		t.Error("db is not exists")
-		return
+		t.FailNow()
 	}
 
 	t.Log("OK!")
@@ -39,22 +38,20 @@ func TestConnectDatabaseShouldBeOk2(t *testing.T) {
 	db := NewRedisDB(fp)
 	err := db.Connect()
 	if err != nil {
-		t.Errorf(err.Error())
-		return
+		t.FailNow()
 	}
 
 	if db.GetData()["foo"] != "bar" {
-		t.Error("foo is not bar")
+		t.FailNow()
 	}
 
 	if db.GetData()["bas"] != "jazz" {
-		t.Error("foo is not bar")
+		t.FailNow()
 	}
 
 	if db.GetData()["nas"] != "lil" {
-		t.Error("foo is not bar")
+		t.FailNow()
 	}
 
 	t.Log("OK!")
-
 }

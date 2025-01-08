@@ -7,6 +7,7 @@ import (
 func TestParseMSecDateTimeStamp(t *testing.T) {
 	buff := []byte{0x15, 0x72, 0xE7, 0x07, 0x8F, 0x01, 0x00, 0x00}
 	ext := ParseMSecDateTimeStamp(&buff)
+
 	if ext != 1713824559637 {
 		t.Fail()
 	}

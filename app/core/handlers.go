@@ -197,34 +197,44 @@ func handleXadd(h RedisInstance, conn Conn, args []string) {
 	}
 
 	parts := strings.Split(args[2], "-")
+	// <millisecondsTime>-<sequenceNumber>
 	msTime, err := strconv.ParseFloat(parts[0], 64)
 	if err != nil {
 		return
 	}
 
-	seqNum, err := strconv.Atoi(parts[1])
-	if err != nil {
-		return
+	seqNum := -1
+	fmt.Println(parts)
+	if parts[1] != "*" {
+		seqNum, err = strconv.Atoi(parts[1])
+		if err != nil {
+			return
+		}
 	}
 
 	store := h.GetStore()
 	storeKey := args[1]
 	payload := strings.Join(args[3:], ":")
 
-	var value *StreamValue
-
-	stream, canSave := store.Get(storeKey)
-	if !canSave {
-		value = NewStreamValue(msTime, seqNum)
+	stream, ok := store.Get(storeKey)
+	if !ok {
+		value := NewStreamValue(msTime)
+		if seqNum == -1 {
+			seqNum = value.UpdateSeqKey(msTime)
+		}
 		value.WriteSequence(msTime, seqNum, payload)
 		store.SetRedisValue(storeKey, value)
 		RespondString(conn, ToRedisSimpleString(value.ToString()))
 		return
 	}
 
-	value, _ = stream.(*StreamValue)
+	value, _ := stream.(*StreamValue)
 	if !value.KeyExists(msTime) {
 		value.WriteSequence(msTime, seqNum, payload)
+	}
+
+	if seqNum == -1 {
+		seqNum = value.UpdateSeqKey(msTime)
 	}
 
 	canSave, cause := value.CanSave(msTime, seqNum)
@@ -232,6 +242,7 @@ func handleXadd(h RedisInstance, conn Conn, args []string) {
 		value.WriteSequence(msTime, seqNum, payload)
 		store.SetRedisValue(storeKey, value)
 		RespondString(conn, ToRedisSimpleString(value.ToString()))
+
 	} else {
 		RespondString(conn, ToSimpleError(*cause))
 	}

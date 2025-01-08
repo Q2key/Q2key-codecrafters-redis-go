@@ -10,8 +10,8 @@ func TestGetArgsMap(t *testing.T) {
 	res := getArgumentMap(args)
 
 	exp := map[Argument][]string{
-		"--Port":      []string{"9000"},
-		"--replicaof": []string{"localhost", "9000"},
+		"--Port":      {"9000"},
+		"--replicaof": {"localhost", "9000"},
 	}
 
 	if !reflect.DeepEqual(exp, res) {

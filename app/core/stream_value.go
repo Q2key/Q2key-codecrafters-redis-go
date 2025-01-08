@@ -7,7 +7,6 @@ import (
 
 type StreamValue struct {
 	Value     map[float64][]int
-	HashM     map[int]string
 	LSTime    float64
 	LSSeqn    int
 	Expired   *time.Time
@@ -18,12 +17,16 @@ type StreamDescriptor struct {
 	id int
 }
 
-func NewStreamValue(lsTime float64, lsSeq int) *StreamValue {
+func NewStreamValue(lsTime float64) *StreamValue {
+	var seq int = 0
+	if lsTime == 0 {
+		seq = 1
+	}
+
 	return &StreamValue{
 		Value:     map[float64][]int{},
-		HashM:     map[int]string{},
 		LSTime:    lsTime,
-		LSSeqn:    lsSeq,
+		LSSeqn:    seq,
 		ValueType: STREAM,
 	}
 }
@@ -56,17 +59,33 @@ func (r *StreamValue) KeyExists(newTime float64) bool {
 	return ok
 }
 
-func (r *StreamValue) WriteSequence(newTime float64, newSequence int, payload string) {
+func (r *StreamValue) UpdateSeqKey(newTime float64) int {
 	v, ok := r.Value[newTime]
+
 	if !ok {
-		r.Value[newTime] = []int{newSequence}
-	} else {
-		r.Value[newTime] = append(v, newSequence)
+		return 1
 	}
 
-	r.HashM[newSequence] = payload
+	l := len(v)
+	s := v[l-1]
 
-	r.LSSeqn = newSequence
+	if l > 1 {
+		return s + 1
+	}
+
+	return 0
+}
+
+func (r *StreamValue) WriteSequence(newTime float64, seq int, payload string) {
+	v, ok := r.Value[newTime]
+
+	if !ok {
+		r.Value[newTime] = []int{seq}
+	} else {
+		r.Value[newTime] = append(v, seq)
+	}
+
+	r.LSSeqn = seq
 	r.LSTime = newTime
 }
 
