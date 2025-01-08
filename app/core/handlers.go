@@ -276,5 +276,6 @@ func handleEcho(_ RedisInstance, conn Conn, args []string) {
 
 func handleXrange(_ RedisInstance, conn Conn, args []string) {
 	fmt.Println(args)
+
 	RespondString(conn, ToRedisSimpleString("HELLO"))
 }
