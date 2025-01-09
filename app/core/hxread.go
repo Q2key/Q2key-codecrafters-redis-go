@@ -54,7 +54,9 @@ func xread(
 	var sb strings.Builder
 
 	sb.WriteString("*1\r\n")
+	sb.WriteString("*1\r\n")
 	sb.WriteString(ToRedisBulkString(key))
+	sb.WriteString("*1\r\n")
 	sb.WriteString("*1\r\n")
 	sb.WriteString(ToRedisStrings(val))
 
