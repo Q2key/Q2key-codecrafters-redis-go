@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -9,6 +10,7 @@ import (
 func handleXread(ins RedisInstance, conn Conn, args []string) {
 	key, from := args[1], args[2]
 
+	fmt.Println(args)
 	var fromTs float64
 	var err error
 	var fromSeq int

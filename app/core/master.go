@@ -34,6 +34,7 @@ func NewMaster(_ context.Context, config Config) *Master {
 				"CONFIG":   handleConfig,
 				"XADD":     handleXadd,
 				"XRANGE":   handleXrange,
+				"XREAD":    handleXread,
 				"ECHO":     handleEcho,
 				"WAIT":     handleWaitAsMaster,
 				"REPLCONF": handleReplconf,
