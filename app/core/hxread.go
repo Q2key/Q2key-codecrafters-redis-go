@@ -51,5 +51,31 @@ func xread(
 	k := formKey(fromTs, rv.LastSidx)
 	val := (*rv).Paris[k]
 
-	return nil, nil
+	var sb strings.Builder
+	sb.WriteString("*1\r\n")
+	sb.WriteString("*2\r\n")
+	sb.WriteString(ToRedisBulkString(key))
+	sb.WriteString("*1\r\n")
+	sb.WriteString("*2\r\n")
+	sb.WriteString(ToRedisBulkString(k))
+	sb.WriteString(ToRedisStrings(val))
+	/*
+		[
+			[
+			  "stream_key",
+			  [
+			      [
+			        "0-1",
+			        [
+			          "temperature",
+			          "96"
+			        ]
+			      ]
+			  ]
+			]
+		]
+	*/
+
+	res := sb.String()
+	return &res, nil
 }
