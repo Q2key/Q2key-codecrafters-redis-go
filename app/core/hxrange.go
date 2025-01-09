@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -68,15 +69,22 @@ func xrange(ins RedisInstance, key string, fromTs, toTs float64, fromSeq, toSeq 
 		]
 	*/
 
+	keys := []string{}
 	for ts, v := range rv.Value {
 		if ts >= fromTs && ts <= toTs {
-			tmp := []string{}
-			_ = tmp
-			for i, idx := range v {
-				_, _ = i, idx
+			for _, idx := range v {
+				if idx >= fromSeq && idx <= toSeq {
+					keys = append(keys, formKey(ts, idx))
+				}
 			}
 		}
 	}
+
+	for _, k := range keys {
+		fmt.Println(ToRedisBulkString(k))
+	}
+
+	fmt.Println(keys)
 
 	return "not implemented yet", nil
 }
