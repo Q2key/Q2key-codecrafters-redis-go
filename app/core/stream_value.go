@@ -6,31 +6,36 @@ import (
 	"time"
 )
 
-type StreamValue struct {
-	Value     map[float64][]int
-	HMap      map[int]map[string]string
-	LSTime    float64
-	LSSeqn    int
-	Expired   *time.Time
-	ValueType ValueType
-}
+type SequenceKeysByTsMark map[float64][]int
+
+type (
+	PairsBySequenceIdx map[string][]string
+	StreamValue        struct {
+		Value      SequenceKeysByTsMark
+		Paris      PairsBySequenceIdx
+		lastTsMark float64
+		LastSidx   int
+		Expired    *time.Time
+		ValueType  ValueType
+	}
+)
 
 type StreamDescriptor struct {
 	id int
 }
 
-func NewStreamValue(lsTime float64) *StreamValue {
+func NewStreamValue(tsMark float64) *StreamValue {
 	var seq int = 0
-	if lsTime == 0 {
+	if tsMark == 0 {
 		seq = 1
 	}
 
 	return &StreamValue{
-		Value:     map[float64][]int{},
-		HMap:      map[int]map[string]string{},
-		LSTime:    lsTime,
-		LSSeqn:    seq,
-		ValueType: STREAM,
+		Value:      SequenceKeysByTsMark{},
+		Paris:      PairsBySequenceIdx{},
+		lastTsMark: tsMark,
+		LastSidx:   seq,
+		ValueType:  STREAM,
 	}
 }
 
@@ -43,7 +48,7 @@ func (r *StreamValue) IsExpired() bool {
 }
 
 func (r *StreamValue) ToString() string {
-	return fmt.Sprintf("%.0f-%d", r.LSTime, r.LSSeqn)
+	return fmt.Sprintf("%.0f-%d", r.lastTsMark, r.LastSidx)
 }
 
 func (r *StreamValue) GetType() string {
@@ -62,8 +67,8 @@ func (r *StreamValue) KeyExists(newTime float64) bool {
 	return ok
 }
 
-func (r *StreamValue) UpdateSeqKey(newTime float64) int {
-	v, ok := r.Value[newTime]
+func (r *StreamValue) UpdateSeqKey(tsMark float64) int {
+	v, ok := r.Value[tsMark]
 
 	if !ok {
 		return 1
@@ -79,44 +84,41 @@ func (r *StreamValue) UpdateSeqKey(newTime float64) int {
 	return 0
 }
 
-func (r *StreamValue) WriteSequence(newTime float64, seq int, payload string) {
-	v, ok := r.Value[newTime]
+func (r *StreamValue) WriteSequence(tsMark float64, sidx int, payload string) {
+	v, ok := r.Value[tsMark]
 
 	if !ok {
-		r.Value[newTime] = []int{seq}
+		r.Value[tsMark] = []int{sidx}
 	} else {
-		r.Value[newTime] = append(v, seq)
+		r.Value[tsMark] = append(v, sidx)
 	}
 
 	parts := strings.Split(payload, ":")
 
-	_, ok = r.HMap[seq]
-	if !ok {
-		r.HMap[seq] = map[string]string{
-			parts[0]: parts[1],
-		}
-	} else {
-		r.HMap[seq][parts[0]] = parts[1]
-	}
+	r.Paris[formKey(tsMark, sidx)] = []string{parts[0], parts[1]}
 
-	r.LSSeqn = seq
-	r.LSTime = newTime
+	r.LastSidx = sidx
+	r.lastTsMark = tsMark
 }
 
-func (r *StreamValue) CanSave(newTime float64, newSequence int) (bool, *string) {
-	if newTime == r.LSTime && newSequence > r.LSSeqn {
+func (r *StreamValue) CanSave(tsMark float64, sequence int) (bool, *string) {
+	if tsMark == r.lastTsMark && sequence > r.LastSidx {
 		return true, nil
 	}
 
-	if newTime == 0 && newSequence == 0 {
+	if tsMark == 0 && sequence == 0 {
 		mess := "ERR The ID specified in XADD must be greater than 0-0"
 		return false, &mess
 	}
 
-	if newTime == r.LSTime && r.LSSeqn >= newSequence {
+	if tsMark == r.lastTsMark && r.LastSidx >= sequence {
 		mess := "ERR The ID specified in XADD is equal or smaller than the target stream top item"
 		return false, &mess
 	}
 
 	return false, nil
+}
+
+func formKey(ts float64, idx int) string {
+	return fmt.Sprintf("%f-%d", ts, idx)
 }

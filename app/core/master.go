@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 )
 
 type Master struct {
@@ -80,7 +81,7 @@ func (r *Master) HandleTCP(conn net.Conn) {
 		}
 
 		command := args[0]
-		handler, ok := r.Commands[command]
+		handler, ok := r.Commands[strings.ToUpper(command)]
 		if !ok {
 			continue
 		}

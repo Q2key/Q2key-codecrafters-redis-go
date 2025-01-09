@@ -33,6 +33,7 @@ func main() {
 	ctx := context.Background()
 	config := core.NewConfig().FromArguments(os.Args)
 	var instance core.RedisInstance
+
 	if config.IsMaster() {
 		instance = core.NewMaster(ctx, *config)
 	} else {

@@ -16,5 +16,3 @@ type Redis struct {
 	Config   Config
 	Commands map[string]CommandHandler
 }
-
-type CommandHandler func(instance RedisInstance, conn Conn, args []string)
