@@ -51,18 +51,5 @@ func xread(
 	k := formKey(fromTs, rv.LastSidx)
 	val := (*rv).Paris[k]
 
-	var sb strings.Builder
-
-	sb.WriteString("*1\r\n")
-	sb.WriteString("*2\r\n")
-	sb.WriteString(ToRedisBulkString(key))
-	sb.WriteString("*1\r\n")
-	sb.WriteString("*2\r\n")
-	sb.WriteString(ToRedisStrings(val))
-
-	sb.WriteString("\r\n")
-	fmt.Println(sb.String())
-
-	res := sb.String()
-	return &res, nil
+	return nil, nil
 }
