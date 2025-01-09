@@ -31,11 +31,20 @@ func handleXrange(ins RedisInstance, conn Conn, args []string) {
 		return
 	}
 
-	res, _ := xrange(ins, key, fromTs, toTs, fromSeq, toSeq)
-	RespondString(conn, res)
+	res, err := xrange(ins, key, fromTs, toTs, fromSeq, toSeq)
+	if err != nil {
+		RespondString(conn, ToSimpleError(err.Error()))
+	} else {
+		RespondString(conn, res)
+	}
 }
 
-func xrange(ins RedisInstance, key string, fromTs, toTs float64, fromSeq, toSeq int) (string, error) {
+func xrange(
+	ins RedisInstance,
+	key string,
+	fromTs, toTs float64,
+	fromSeq, toSeq int,
+) (string, error) {
 	v, ok := ins.GetStore().Get(key)
 	if !ok {
 		return "", errors.New("something went wrong")
@@ -45,29 +54,6 @@ func xrange(ins RedisInstance, key string, fromTs, toTs float64, fromSeq, toSeq 
 	if !ok {
 		return "", errors.New("something went wrong")
 	}
-
-	/*
-		[
-		  [
-		    "1526985054069-0",
-		    [
-		      "temperature",
-		      "36",
-		      "humidity",
-		      "95"
-		    ]
-		  ],
-		  [
-		    "1526985054079-0",
-		    [
-		      "temperature",
-		      "37",
-		      "humidity",
-		      "94"
-		    ]
-		  ],
-		]
-	*/
 
 	keys := []string{}
 	for ts, v := range rv.Value {
@@ -80,11 +66,15 @@ func xrange(ins RedisInstance, key string, fromTs, toTs float64, fromSeq, toSeq 
 		}
 	}
 
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("*%d\r\n", len(keys)))
 	for _, k := range keys {
-		fmt.Println(ToRedisBulkString(k))
+		values := rv.Paris[k]
+		sb.WriteString(fmt.Sprintf("*%d\r\n", len(values)))
+		sb.WriteString(ToRedisBulkString(k))
+		sb.WriteString(ToRedisStrings(values))
 	}
 
-	fmt.Println(keys)
-
-	return "not implemented yet", nil
+	sb.WriteString("\r\n")
+	return sb.String(), nil
 }

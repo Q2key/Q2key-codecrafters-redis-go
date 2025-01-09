@@ -120,5 +120,5 @@ func (r *StreamValue) CanSave(tsMark float64, sequence int) (bool, *string) {
 }
 
 func formKey(ts float64, idx int) string {
-	return fmt.Sprintf("%f-%d", ts, idx)
+	return fmt.Sprintf("%.0f-%d", ts, idx)
 }
