@@ -8,7 +8,10 @@ import (
 )
 
 func handleXread(ins RedisInstance, conn Conn, args []string) {
-	key, from := args[1], args[2]
+	if args[1] != "streams" {
+		return
+	}
+	key, from := args[2], args[3]
 
 	fmt.Println(args)
 	var fromTs float64
@@ -45,8 +48,19 @@ func xread(
 		return nil, errors.New("something went wrong")
 	}
 
-	keys := []string{formKey(fromTs, fromSeq)}
+	k := formKey(fromTs, rv.LastSidx)
+	val := (*rv).Paris[k]
 
-	result := write(*rv, keys)
-	return &result, nil
+	var sb strings.Builder
+
+	sb.WriteString("*1\r\n")
+	sb.WriteString(ToRedisBulkString(key))
+	sb.WriteString("*1\r\n")
+	sb.WriteString(ToRedisStrings(val))
+
+	sb.WriteString("\r\n")
+	fmt.Println(sb.String())
+
+	res := sb.String()
+	return &res, nil
 }
