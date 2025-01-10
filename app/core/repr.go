@@ -14,6 +14,10 @@ const (
 	ArrayToken        REPRToken = "*"
 )
 
+const (
+	CLRF = "\r\n"
+)
+
 func ToRedisStrings(str []string) string {
 	n := len(str)
 	r := fmt.Sprintf("%s%d", ArrayToken, n)
@@ -27,6 +31,10 @@ func ToRedisStrings(str []string) string {
 
 func ToRedisBulkString(str string) string {
 	return fmt.Sprintf("%s%d\r\n%s\r\n", BulkStringToken, len(str), str)
+}
+
+func ToArrayDefString(n int) string {
+	return fmt.Sprintf("%s%d\r\n", ArrayToken, n)
 }
 
 func ToRedisSimpleString(str string) string {

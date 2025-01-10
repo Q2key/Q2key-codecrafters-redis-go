@@ -2,55 +2,15 @@ package core
 
 import (
 	"errors"
-	"fmt"
-	"strconv"
 	"strings"
 )
 
 func handleXrange(ins RedisInstance, conn Conn, args []string) {
-	key, from, to := args[1], args[2], args[3]
+	key, iidx, jidx := args[1], args[2], args[3]
+	fts, fs := parseId(iidx)
+	tts, ts := parseId(jidx)
 
-	toParts := strings.Split(to, "-")
-
-	var fromTs float64
-	var toTs float64
-	var err error
-	var fromSeq int
-	var toSeq int
-	var res *string
-
-	if from == "-" {
-		fromTs = -1
-		fromSeq = -1
-	} else {
-		fromParts := strings.Split(from, "-")
-		fromTs, err = strconv.ParseFloat(fromParts[0], 64)
-		if err != nil {
-			return
-		}
-
-		fromSeq, err = strconv.Atoi(fromParts[1])
-		if err != nil {
-			return
-		}
-	}
-
-	if to == "+" {
-		toTs = -1
-		toSeq = -1
-	} else {
-		toTs, err = strconv.ParseFloat(toParts[0], 64)
-		if err != nil {
-			return
-		}
-
-		toSeq, err = strconv.Atoi(toParts[1])
-		if err != nil {
-			return
-		}
-	}
-
-	res, err = xrange(ins, key, fromTs, toTs, fromSeq, toSeq)
+	res, err := xrange(ins, key, fts, tts, fs, ts)
 	if err != nil {
 		RespondString(conn, ToSimpleError(err.Error()))
 	} else {
@@ -61,8 +21,8 @@ func handleXrange(ins RedisInstance, conn Conn, args []string) {
 func xrange(
 	ins RedisInstance,
 	key string,
-	fromTs, toTs float64,
-	fromSeq, toSeq int,
+	its, iseq float64,
+	jts, jset int,
 ) (*string, error) {
 	v, ok := ins.GetStore().Get(key)
 	if !ok {
@@ -75,12 +35,12 @@ func xrange(
 	}
 
 	var keys []string
-	if fromTs == -1 {
-		keys = xrangeTill(*rv, toTs, toSeq)
-	} else if toTs == -1 {
-		keys = xrangeFrom(*rv, fromTs, fromSeq)
+	if its == -1 {
+		keys = xrangeTill(*rv, iseq, jset)
+	} else if iseq == -1 {
+		keys = xrangeFrom(*rv, its, jts)
 	} else {
-		keys = xrangeRage(*rv, fromTs, toTs, fromSeq, toSeq)
+		keys = xrangeRage(*rv, its, iseq, jts, jset)
 	}
 
 	result := write(*rv, keys)
@@ -141,14 +101,14 @@ func xrangeFrom(
 
 func write(rv StreamValue, keys []string) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("*%d\r\n", len(keys)))
+	sb.WriteString(ToArrayDefString(len(keys)))
 	for _, k := range keys {
 		values := rv.Paris[k]
-		sb.WriteString(fmt.Sprintf("*%d\r\n", len(values)))
+		sb.WriteString(ToArrayDefString(len(values)))
 		sb.WriteString(ToRedisBulkString(k))
 		sb.WriteString(ToRedisStrings(values))
 	}
 
-	sb.WriteString("\r\n")
+	sb.WriteString(CLRF)
 	return sb.String()
 }
