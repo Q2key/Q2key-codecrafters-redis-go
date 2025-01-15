@@ -1,15 +1,11 @@
 package core
 
-import (
-	"log"
-)
-
 type CommandHandler func(instance RedisInstance, conn Conn, args []string)
 
 func RespondString(conn Conn, data string) {
 	_, err := conn.Conn().Write([]byte(data))
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
 	}
 }
 

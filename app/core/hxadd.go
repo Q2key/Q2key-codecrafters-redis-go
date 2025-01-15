@@ -70,6 +70,7 @@ func handleXadd(h RedisInstance, conn Conn, args []string) {
 		value.WriteSequence(msTime, seqNum, payload)
 		store.SetRedisValue(storeKey, value)
 		RespondString(conn, ToRedisSimpleString(value.ToString()))
+		*value.C <- true
 	} else {
 		RespondString(conn, ToSimpleError(*cause))
 	}

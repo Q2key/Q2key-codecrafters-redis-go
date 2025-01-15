@@ -11,12 +11,14 @@ type SequenceKeysByTsMark map[float64][]int
 type (
 	PairsBySequenceIdx map[string][]string
 	StreamValue        struct {
-		Value      SequenceKeysByTsMark
-		Paris      PairsBySequenceIdx
-		lastTsMark float64
-		LastSidx   int
-		Expired    *time.Time
-		ValueType  ValueType
+		Value          SequenceKeysByTsMark
+		Paris          PairsBySequenceIdx
+		lastTsMark     float64
+		LastSidx       int
+		Expired        *time.Time
+		ValueType      ValueType
+		BlockTimeoutMs int
+		C              *chan bool
 	}
 )
 
@@ -30,12 +32,15 @@ func NewStreamValue(tsMark float64) *StreamValue {
 		seq = 1
 	}
 
+	ch := make(chan bool, 10)
 	return &StreamValue{
-		Value:      SequenceKeysByTsMark{},
-		Paris:      PairsBySequenceIdx{},
-		lastTsMark: tsMark,
-		LastSidx:   seq,
-		ValueType:  STREAM,
+		Value:          SequenceKeysByTsMark{},
+		Paris:          PairsBySequenceIdx{},
+		lastTsMark:     tsMark,
+		LastSidx:       seq,
+		ValueType:      STREAM,
+		BlockTimeoutMs: 0,
+		C:              &ch,
 	}
 }
 
@@ -96,7 +101,6 @@ func (r *StreamValue) WriteSequence(tsMark float64, sidx int, payload string) {
 	parts := strings.Split(payload, ":")
 
 	r.Paris[formKey(tsMark, sidx)] = []string{parts[0], parts[1]}
-
 	r.LastSidx = sidx
 	r.lastTsMark = tsMark
 }

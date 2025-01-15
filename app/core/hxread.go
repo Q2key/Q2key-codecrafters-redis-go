@@ -1,13 +1,11 @@
 package core
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
-
-func isMultiRead(args []string) bool {
-	return isIdPair(args[3])
-}
 
 var excludedMarks = map[string]bool{
 	"*": true,
@@ -17,6 +15,22 @@ var excludedMarks = map[string]bool{
 
 func isIdPair(mark string) bool {
 	return excludedMarks[mark] || strings.Contains(mark, "-")
+}
+
+func tryGetBlockParams(args []string) (bool, *int) {
+	if args[1] != "block" {
+		return false, nil
+	}
+
+	var val int
+	var err error
+
+	val, err = strconv.Atoi(args[2])
+	if err != nil {
+		return false, nil
+	}
+
+	return true, &val
 }
 
 func getArgMap(args []string) [][]string {
@@ -59,8 +73,57 @@ func parseId(from string) (float64, int) {
 }
 
 func handleXread(ins RedisInstance, conn Conn, args []string) {
+	needBlock, blockForMs := tryGetBlockParams(args)
+
+	_ = needBlock
+	_ = blockForMs
+
+	if needBlock {
+		key := args[4]
+		tsi, seq := parseId(args[5])
+
+		s, _ := ins.GetStore().Get(key)
+		v, _ := s.(*StreamValue)
+
+		_ = tsi
+		_ = seq
+
+		go func() {
+		loop:
+			for {
+				select {
+				case <-*v.C:
+					fmt.Println("sending updated value (new value occured)")
+
+					/* res */
+					var sb strings.Builder
+					sb.WriteString(ToArrayDefString(1))
+					buildResponse(&sb, v, key, tsi)
+					RespondString(conn, sb.String())
+
+					break loop
+				case <-time.After(time.Duration(*blockForMs) * time.Millisecond):
+					fmt.Println("sending existing value (time is over)")
+
+					/* res */
+					var sb strings.Builder
+					sb.WriteString(ToArrayDefString(1))
+					buildResponse(&sb, v, key, tsi)
+					RespondString(conn, sb.String())
+
+					break loop
+				}
+			}
+
+			RespondString(conn, "$-1\r\n")
+		}()
+
+		return
+	}
+
 	argMap := getArgMap(args)
 
+	/* */
 	var sb strings.Builder
 	sb.WriteString(ToArrayDefString(len(argMap)))
 	for _, a := range argMap {
@@ -68,6 +131,7 @@ func handleXread(ins RedisInstance, conn Conn, args []string) {
 		tsi, _ := parseId(val)
 		v, _ := ins.GetStore().Get(key)
 		rv, _ := v.(*StreamValue)
+
 		buildResponse(&sb, rv, key, tsi)
 	}
 

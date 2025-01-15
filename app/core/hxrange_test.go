@@ -5,20 +5,7 @@ import (
 	"testing"
 )
 
-func TestIsMultiRead(t *testing.T) {
-	if !isMultiRead([]string{"xread", "streams", "mango", "pear", "0-0", "0-1"}) {
-		t.FailNow()
-	}
-
-	if isMultiRead([]string{"xread", "streams", "mango", "0-0"}) {
-		t.FailNow()
-	}
-
-	t.Log("OK!")
-}
-
 func TestGetArgMap(t *testing.T) {
-
 	if !reflect.DeepEqual(
 		[][]string{{"mango", "0-0"}, {"pear", "0-1"}},
 		getArgMap([]string{"xread", "streams", "mango", "pear", "0-0", "0-1"})) {
@@ -50,6 +37,15 @@ func TestParseId(t *testing.T) {
 	ts, seq = parseId("*")
 	if ts != -1 && seq != -1 {
 		t.FailNow()
+	}
+
+	t.Log("OK!")
+}
+
+func TestTryGetBlock(t *testing.T) {
+	ok, _ := tryGetBlockParams([]string{"xread", "block", "1000", "streams", "mango", "0-1"})
+	if !ok {
+		t.Fail()
 	}
 
 	t.Log("OK!")
